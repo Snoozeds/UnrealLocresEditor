@@ -1,0 +1,291 @@
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
+using Avalonia.Data;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
+using CsvHelper;
+using CsvHelper.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Text;
+
+#nullable disable
+
+namespace UnrealLocresEditor.Views
+{
+    public partial class MainWindow : Window
+    {
+        public DataGrid _dataGrid;
+        private TextBox _searchTextBox;
+        public ObservableCollection<DataRow> _rows;
+        private string _currentLocresFilePath;
+        private WindowNotificationManager _notificationManager;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            this.Loaded += OnWindowLoaded;
+#if DEBUG
+            this.AttachDevTools();
+#endif
+            _rows = new ObservableCollection<DataRow>();
+            DataContext = this;
+        }
+
+        private void OnWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            _notificationManager = new WindowNotificationManager(this)
+            {
+                Position = NotificationPosition.TopRight,
+                MaxItems = 1
+            };
+        }
+
+        private async void OpenMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var storageProvider = StorageProvider;
+            var result = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                FileTypeFilter = new[] { new FilePickerFileType("Localization Files") { Patterns = new[] { "*.locres" } } },
+                AllowMultiple = false
+            });
+
+            if (result != null && result.Count > 0)
+            {
+                _currentLocresFilePath = result[0].Path.LocalPath;
+                var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + ".csv";
+                var csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
+
+                // Check if UnrealLocres.exe exists
+                var unrealLocresExePath = Path.Combine(Directory.GetCurrentDirectory(), "UnrealLocres.exe");
+                if (!File.Exists(unrealLocresExePath))
+                {
+                    _notificationManager.Show(new Notification("Error", "UnrealLocres.exe not found. Please ensure it is in the application directory.", NotificationType.Error));
+                    return;
+                }
+
+                // Run UnrealLocres.exe
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "UnrealLocres.exe",
+                        Arguments = $"export \"{_currentLocresFilePath}\"",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                    }
+                };
+
+                process.Start();
+                process.WaitForExit();
+
+                if (process.ExitCode == 0)
+                {
+                    try
+                    {
+                        var importedLocresDir = Path.Combine(Directory.GetCurrentDirectory(), "LocresFiles");
+
+                        if (!Directory.Exists(importedLocresDir))
+                        {
+                            Directory.CreateDirectory(importedLocresDir);
+                        }
+
+                        var importedLocresPath = Path.Combine(importedLocresDir, Path.GetFileName(_currentLocresFilePath));
+                        File.Copy(_currentLocresFilePath, importedLocresPath, true);
+
+                        _currentLocresFilePath = importedLocresPath;
+                        LoadCsv(csvFile);
+                    }
+                    finally
+                    {
+                        if (File.Exists(csvFile))
+                        {
+                            File.Delete(csvFile);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Error reading locres data: {process.StandardOutput.ReadToEnd()}");
+                    _notificationManager.Show(new Notification("Error reading locres data:", $"{process.StandardOutput.ReadToEnd()}", NotificationType.Error));
+                    if (File.Exists(csvFile))
+                    {
+                        File.Delete(csvFile); // Clean up if UnrealLocres failed
+                    }
+                }
+            }
+        }
+
+        private void LoadCsv(string csvFile)
+        {
+            _rows.Clear();
+            var columns = new List<DataGridColumn>();
+
+            using (var reader = new StreamReader(csvFile))
+            using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            {
+                bool isFirstRow = true;
+                while (csv.Read())
+                {
+                    string[] stringValues = new string[csv.Parser.Count];
+                    for (int i = 0; i < csv.Parser.Count; i++)
+                    {
+                        stringValues[i] = csv.GetField(i);
+                    }
+
+                    if (isFirstRow)
+                    {
+                        for (int i = 0; i < stringValues.Length; i++)
+                        {
+                            columns.Add(new DataGridTextColumn { Header = stringValues[i], Binding = new Binding($"Values[{i}]"), IsReadOnly = false });
+                        }
+                        _dataGrid.Columns.Clear();
+                        foreach (var column in columns)
+                        {
+                            _dataGrid.Columns.Add(column);
+                        }
+                        isFirstRow = false;
+                    }
+                    else
+                    {
+                        _rows.Add(new DataRow { Values = stringValues });
+                    }
+                }
+            }
+            _dataGrid.ItemsSource = _rows;
+        }
+
+        public class DataRow : INotifyPropertyChanged
+        {
+            private string[] _values;
+            public string[] Values
+            {
+                get => _values;
+                set
+                {
+                    if (_values != value)
+                    {
+                        _values = value;
+                        OnPropertyChanged(nameof(Values));
+                    }
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            protected void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentLocresFilePath == null)
+            {
+                _notificationManager.Show(new Notification("No File Open", "Please open a locres file first.", NotificationType.Error));
+                return;
+            }
+            if (_rows != null && _rows.Count > 0)
+            {
+                SaveEditedData();
+            }
+            else
+            {
+                _notificationManager.Show(new Notification("No Data", "There's no data to export.", NotificationType.Information));
+            }
+        }
+
+        private void SaveEditedData()
+        {
+            var exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + "_edited.csv";
+            var csvFile = Path.Combine(exeDirectory, csvFileName);
+
+            // Save edited data to CSV
+            using (var writer = new StreamWriter(csvFile, false, Encoding.UTF8))
+            using (var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            {
+                for (int i = 0; i < _dataGrid.Columns.Count; i++)
+                {
+                    csv.WriteField(((DataGridTextColumn)_dataGrid.Columns[i]).Header);
+                }
+                csv.NextRecord();
+
+                foreach (DataRow row in _rows)
+                {
+                    for (int i = 0; i < row.Values.Length; i++)
+                    {
+                        csv.WriteField(row.Values[i]);
+                    }
+                    csv.NextRecord();
+                }
+            }
+
+            // Run UnrealLocres.exe to import edited CSV
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "UnrealLocres.exe",
+                    WorkingDirectory = exeDirectory,
+                    Arguments = $"import \"{_currentLocresFilePath}\" \"{csvFileName}\"",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                }
+            };
+
+            process.Start();
+            process.WaitForExit();
+
+            if (process.ExitCode == 0)
+            {
+                var modifiedLocres = _currentLocresFilePath + ".new";
+                try {
+                    _notificationManager.Show(new Notification("Success!", $"File saved as {Path.GetFileName(_currentLocresFilePath)}.new in {Path.Combine(Directory.GetCurrentDirectory(), "LocresFiles")}", NotificationType.Success));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error moving file: {ex.Message}");
+                    _notificationManager.Show(new Notification("Error moving file:", $"{ex.Message}", NotificationType.Error));
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Error importing: {process.StandardOutput.ReadToEnd()}");
+                _notificationManager.Show(new Notification("Error importing:", $"{process.StandardOutput.ReadToEnd()}", NotificationType.Error));
+            }
+            File.Delete(csvFile);
+        }
+
+        private FindDialog _findDialog;
+        private void FindMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            _findDialog = new FindDialog();
+            _findDialog.MainWindow = this;
+
+            _findDialog.ShowDialog(this);
+        }
+
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
+            _dataGrid = this.FindControl<DataGrid>("uiDataGrid");
+
+            _searchTextBox = this.FindControl<TextBox>("uiSearchTextBox");
+
+            var saveMenuItem = this.FindControl<MenuItem>("uiSaveMenuItem");
+            saveMenuItem.Click += SaveMenuItem_Click;
+
+            var openMenuItem = this.FindControl<MenuItem>("uiOpenMenuItem");
+            openMenuItem.Click += OpenMenuItem_Click;
+        }
+    }
+}

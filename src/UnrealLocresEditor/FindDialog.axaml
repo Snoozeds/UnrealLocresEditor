@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="UnrealLocresEditor.Views.FindDialog"
+        Title="Find"
+        Width="350"
+        Height="200">
+
+	<Grid RowDefinitions="Auto,Auto,*,Auto, Auto" ColumnDefinitions="*,Auto" Margin="10">
+		<TextBox x:Name="uiSearchTextBox" Watermark="Find" Grid.Row="0" Grid.Column="0" Margin="0,0,5,0" />
+		<Button Name="uiFindButton" Content="Find" Grid.Row="0" Grid.Column="1" />
+		<TextBlock x:Name="uiMatchCountTextBlock" Grid.Row="1" Grid.ColumnSpan="2" 
+           HorizontalAlignment="Center" VerticalAlignment="Center" Text="" />
+		<StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Spacing="10">
+			<Button x:Name="uiFindNextButton" Content="Next" Width="100" />
+			<Button x:Name="uiFindPreviousButton" Content="Previous" Width="100" />
+		</StackPanel>
+		<StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
+			<CheckBox x:Name="uiMatchCaseCheckBox" Content="Match Case" Margin="10" />
+			<CheckBox x:Name="uiMatchWholeWordCheckBox" Content="Match Whole Word"/>
+		</StackPanel>
+		<StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
+			<CheckBox x:Name="uiMatchCellCheckBox" Content="Match Entire Cell Contents" />
+		</StackPanel>
+	</Grid>
+
+</Window>

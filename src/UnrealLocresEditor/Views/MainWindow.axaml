@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="UnrealLocresEditor.Views.MainWindow"
+        Title="Unreal Locres Editor"
+        Width="800"
+        Height="450">
+
+	<Window.Styles>
+		<Style Selector="DataGridCell">
+			<Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
+		</Style>
+	</Window.Styles>
+
+	<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*,Auto">
+		<Menu Grid.Row="0" Grid.ColumnSpan="2">
+			<MenuItem Header="_File">
+				<MenuItem Header="Open locres" Name="uiOpenMenuItem"/>
+				<MenuItem Header="Export locres" Name="uiSaveMenuItem" Click="SaveMenuItem_Click"/>
+			</MenuItem>
+			<MenuItem Header="_Edit">
+				<MenuItem Header="Find" Name="uiFindMenuItem" Click="FindMenuItem_Click"/>
+			</MenuItem>
+		</Menu>
+
+		<DataGrid x:Name="uiDataGrid"
+                  Grid.Row="1"
+                  Grid.ColumnSpan="2"
+                  AutoGenerateColumns="False"
+                  CanUserResizeColumns="True"
+                  IsReadOnly="False"
+                  GridLinesVisibility="All"
+                  BorderThickness="2"
+                  BorderBrush="Gray"
+                  MinColumnWidth="50"/>
+	</Grid>
+</Window>

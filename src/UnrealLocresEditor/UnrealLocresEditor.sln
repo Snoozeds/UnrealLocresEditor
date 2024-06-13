@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnrealLocresEditor", "UnrealLocresEditor.csproj", "{EFFC4CF0-00AB-4DC5-A708-2FFDAB8BF101}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnrealLocresEditor.Desktop", "..\UnrealLocresEditor.Desktop\UnrealLocresEditor.Desktop.csproj", "{F1BF1FA8-45D6-4A11-AEC7-F6D403C03D49}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EFFC4CF0-00AB-4DC5-A708-2FFDAB8BF101}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFFC4CF0-00AB-4DC5-A708-2FFDAB8BF101}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFFC4CF0-00AB-4DC5-A708-2FFDAB8BF101}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFFC4CF0-00AB-4DC5-A708-2FFDAB8BF101}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1BF1FA8-45D6-4A11-AEC7-F6D403C03D49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1BF1FA8-45D6-4A11-AEC7-F6D403C03D49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1BF1FA8-45D6-4A11-AEC7-F6D403C03D49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1BF1FA8-45D6-4A11-AEC7-F6D403C03D49}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {195E8B2A-FD4B-4D70-B6EE-13AF8B1CCD0B}
+	EndGlobalSection
+EndGlobal
