@@ -14,6 +14,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 
 #nullable disable
@@ -47,6 +48,79 @@ namespace UnrealLocresEditor.Views
                 MaxItems = 1
             };
         }
+        private static string winePrefixDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wineprefix");
+
+        private static bool IsLinux()
+        {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        }
+
+        private static string GetExecutablePath()
+        {
+            return IsLinux() ? "wine" : "UnrealLocres.exe";
+        }
+
+        private static string GetArguments(string command, string locresFilePath, string csvFileName = null)
+        {
+            if (IsLinux())
+            {
+                return csvFileName == null
+                    ? $"UnrealLocres.exe {command} \"{locresFilePath}\""
+                    : $"UnrealLocres.exe {command} \"{locresFilePath}\" \"{csvFileName}\"";
+            }
+            else
+            {
+                return csvFileName == null
+                    ? $"{command} \"{locresFilePath}\""
+                    : $"{command} \"{locresFilePath}\" \"{csvFileName}\"";
+            }
+        }
+
+        private static ProcessStartInfo GetProcessStartInfo(string command, string locresFilePath, string csvFileName = null)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = GetExecutablePath(),
+                Arguments = GetArguments(command, locresFilePath, csvFileName),
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+            };
+
+            if (IsLinux())
+            {
+                startInfo.Environment["WINEPREFIX"] = winePrefixDirectory;
+            }
+
+            return startInfo;
+        }
+
+        private static void InitializeWinePrefix()
+        {
+            if (IsLinux() && !Directory.Exists(winePrefixDirectory))
+            {
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "wineboot",
+                        Arguments = $"--init",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    }
+                };
+
+                process.StartInfo.Environment["WINEPREFIX"] = winePrefixDirectory;
+                process.Start();
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    throw new Exception($"Error initializing wine prefix: {process.StandardError.ReadToEnd()}");
+                }
+            }
+        }
 
         private async void OpenMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -74,13 +148,7 @@ namespace UnrealLocresEditor.Views
                 // Run UnrealLocres.exe
                 var process = new Process
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "UnrealLocres.exe",
-                        Arguments = $"export \"{_currentLocresFilePath}\"",
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                    }
+                    StartInfo = GetProcessStartInfo("export", _currentLocresFilePath)
                 };
 
                 process.Start();
@@ -232,14 +300,7 @@ namespace UnrealLocresEditor.Views
             // Run UnrealLocres.exe to import edited CSV
             var process = new Process
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "UnrealLocres.exe",
-                    WorkingDirectory = exeDirectory,
-                    Arguments = $"import \"{_currentLocresFilePath}\" \"{csvFileName}\"",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                }
+                StartInfo = GetProcessStartInfo("import", _currentLocresFilePath, csvFileName)
             };
 
             process.Start();
@@ -248,7 +309,8 @@ namespace UnrealLocresEditor.Views
             if (process.ExitCode == 0)
             {
                 var modifiedLocres = _currentLocresFilePath + ".new";
-                try {
+                try
+                {
                     _notificationManager.Show(new Notification("Success!", $"File saved as {Path.GetFileName(_currentLocresFilePath)}.new in {Path.Combine(Directory.GetCurrentDirectory(), "LocresFiles")}", NotificationType.Success));
                 }
                 catch (Exception ex)
@@ -265,15 +327,6 @@ namespace UnrealLocresEditor.Views
             File.Delete(csvFile);
         }
 
-        private FindDialog _findDialog;
-        private void FindMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            _findDialog = new FindDialog();
-            _findDialog.MainWindow = this;
-
-            _findDialog.ShowDialog(this);
-        }
-
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
@@ -286,6 +339,23 @@ namespace UnrealLocresEditor.Views
 
             var openMenuItem = this.FindControl<MenuItem>("uiOpenMenuItem");
             openMenuItem.Click += OpenMenuItem_Click;
+
+            var winePrefixMenuItem = this.FindControl<MenuItem>("uiWinePrefix");
+            winePrefixMenuItem.Click += WinePrefix_Click;
+            winePrefixMenuItem.IsVisible = IsLinux();
+        }
+
+        private void WinePrefix_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                InitializeWinePrefix();
+                _notificationManager.Show(new Notification("Success", "Success. Make sure to install Wine MONO and set to 32 bit.", NotificationType.Success));
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.Show(new Notification("Error", $"Failed to initialize Wine prefix: {ex.Message}", NotificationType.Error));
+            }
         }
     }
 }
