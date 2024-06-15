@@ -21,6 +21,13 @@
 				<MenuItem Header="Find" Name="uiFindMenuItem"/>
 				<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>
 			</MenuItem>
+			<MenuItem Header="_Preferences">
+				<MenuItem Header="Discord Activity" Name="uiDiscordRPCMenuItem">
+					<MenuItem.Icon>
+						<CheckBox Name="uiDiscordActivityCheckBox"/>
+					</MenuItem.Icon>
+				</MenuItem>
+			</MenuItem>
 		</Menu>
 
 		<DataGrid x:Name="uiDataGrid"

@@ -7,6 +7,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using CsvHelper;
 using CsvHelper.Configuration;
+using DiscordRPC;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -29,16 +30,25 @@ namespace UnrealLocresEditor.Views
         private string _currentLocresFilePath;
         private WindowNotificationManager _notificationManager;
 
+        public bool DiscordRPCEnabled { get; set; }
+
         public MainWindow()
         {
             InitializeComponent();
             this.Loaded += OnWindowLoaded;
+            this.Closing += OnWindowClosing;
 #if DEBUG
             this.AttachDevTools();
 #endif
             _rows = new ObservableCollection<DataRow>();
             DataContext = this;
+
+            idleStartTime = DateTime.UtcNow;
         }
+
+        public DiscordRpcClient client;
+        private DateTime? editStartTime;
+        private DateTime? idleStartTime;
 
         private void OnWindowLoaded(object sender, RoutedEventArgs e)
         {
@@ -47,7 +57,78 @@ namespace UnrealLocresEditor.Views
                 Position = NotificationPosition.TopRight,
                 MaxItems = 1
             };
+
+            // Discord RPC
+            client = new DiscordRpcClient("1251663992162619472");
+
+            client.OnReady += (sender, e) =>
+            {
+                Console.WriteLine("Received Ready from user {0}", e.User.Username);
+            };
+
+            client.OnPresenceUpdate += (sender, e) =>
+            {
+                Console.WriteLine("Received Update! {0}", e.Presence);
+            };
+
+            client.Initialize();
+            UpdatePresence(DiscordRPCEnabled);
         }
+
+        private void OnWindowClosing(object sender, WindowClosingEventArgs e)
+        {
+            client?.ClearPresence();
+            client?.Dispose();
+        }
+
+        private void UpdatePresence(bool enabled)
+        {
+            if (enabled)
+            {
+                // Restart the client if it's disposed
+                if (client == null || client.IsDisposed)
+                {
+                    client = new DiscordRpcClient("1251663992162619472");
+
+                    client.OnReady += (sender, e) =>
+                    {
+                        Console.WriteLine("Received Ready from user {0}", e.User.Username);
+                    };
+
+                    client.OnPresenceUpdate += (sender, e) =>
+                    {
+                        Console.WriteLine("Received Update! {0}", e.Presence);
+                    };
+
+                    client.Initialize();
+                }
+
+                var presence = new RichPresence();
+
+                if (_currentLocresFilePath == null)
+                {
+                    presence.Details = "Idling";
+                    presence.Timestamps = idleStartTime.HasValue ? new Timestamps(idleStartTime.Value) : null;
+                }
+                else
+                {
+                    presence.Details = $"Editing file: {Path.GetFileName(_currentLocresFilePath)}";
+                    presence.Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null;
+                }
+
+                client.SetPresence(presence);
+            }
+            else
+            {
+                if (client != null && !client.IsDisposed)
+                {
+                    client.ClearPresence();
+                    client.Dispose();
+                    client = null;
+                }
+            }
+        }
+
         private static string winePrefixDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wineprefix");
 
         private static bool IsLinux()
@@ -134,6 +215,12 @@ namespace UnrealLocresEditor.Views
             if (result != null && result.Count > 0)
             {
                 _currentLocresFilePath = result[0].Path.LocalPath;
+
+                // Update timers for RPC
+                editStartTime = DateTime.UtcNow;
+                idleStartTime = null;
+
+                UpdatePresence(DiscordRPCEnabled); // Display opened file in Discord RPC
                 var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + ".csv";
                 var csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
 
@@ -343,7 +430,38 @@ namespace UnrealLocresEditor.Views
             var winePrefixMenuItem = this.FindControl<MenuItem>("uiWinePrefix");
             winePrefixMenuItem.Click += WinePrefix_Click;
             winePrefixMenuItem.IsVisible = IsLinux();
+
+            var uiDiscordRPCMenuItem = this.FindControl<MenuItem>("uiDiscordRPCItem");
+            var uiDiscordActivityCheckBox = this.FindControl<CheckBox>("uiDiscordActivityCheckBox");
+            uiDiscordActivityCheckBox.IsChecked = true;
+            uiDiscordActivityCheckBox.Click += DiscordRPC_Click;
+            DiscordRPCEnabled = uiDiscordActivityCheckBox.IsChecked ?? false;
         }
+
+        private void DiscordRPC_Click(object sender, RoutedEventArgs e)
+        {
+            var checkBox = sender as CheckBox;
+            if (checkBox != null)
+            {
+                DiscordRPCEnabled = checkBox.IsChecked ?? false;
+                if (DiscordRPCEnabled)
+                {
+                    // Update timers
+                    if (_currentLocresFilePath != null)
+                    {
+                        editStartTime = DateTime.UtcNow;
+                        idleStartTime = null;
+                    }
+                    else
+                    {
+                        editStartTime = null;
+                        idleStartTime = DateTime.UtcNow;
+                    }
+                }
+                UpdatePresence(DiscordRPCEnabled);
+            }
+        }
+
 
         private void WinePrefix_Click(object sender, RoutedEventArgs e)
         {

@@ -71,7 +71,7 @@ namespace UnrealLocresEditor.Views
 
             bool isMatchCaseChecked = uiMatchCaseCheckBox.IsChecked ?? false;
             bool isMatchWholeWordChecked = uiMatchWholeWordCheckBox.IsChecked ?? false;
-            bool isMatchCellChecked = uiMatchCellCheckBox.IsChecked ?? false; // New
+            bool isMatchCellChecked = uiMatchCellCheckBox.IsChecked ?? false;
 
             int increment = forward ? 1 : -1;
             int startRowIndex = (_currentRowIndex + increment + items.Count) % items.Count;
