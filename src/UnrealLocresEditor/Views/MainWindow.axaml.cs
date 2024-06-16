@@ -8,6 +8,7 @@ using Avalonia.Platform.Storage;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DiscordRPC;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,6 +23,52 @@ using System.Text;
 
 namespace UnrealLocresEditor.Views
 {
+
+    public class AppConfig
+    {
+        public bool DiscordRPCEnabled { get; set; }
+
+        public static string GetAppConfigFilePath()
+        {
+            string configDirectory;
+
+            if (OperatingSystem.IsWindows())
+            {
+                configDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UnrealLocresEditor");
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                configDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "UnrealLocresEditor");
+            }
+            else
+            {
+                throw new PlatformNotSupportedException("Unsupported OS.");
+            }
+
+            Directory.CreateDirectory(configDirectory);
+
+            return Path.Combine(configDirectory, "config.json");
+        }
+
+        public static AppConfig Load()
+        {
+            string filePath = GetAppConfigFilePath();
+
+            if (File.Exists(filePath))
+            {
+                string json = File.ReadAllText(filePath);
+                return JsonConvert.DeserializeObject<AppConfig>(json);
+            }
+            return new AppConfig { DiscordRPCEnabled = true };
+        }
+
+        public void Save()
+        {
+            string filePath = GetAppConfigFilePath();
+            string json = JsonConvert.SerializeObject(this);
+            File.WriteAllText(filePath, json);
+        }
+    }
     public partial class MainWindow : Window
     {
         public DataGrid _dataGrid;
@@ -35,6 +82,7 @@ namespace UnrealLocresEditor.Views
         public MainWindow()
         {
             InitializeComponent();
+            InitializeConfig();
             this.Loaded += OnWindowLoaded;
             this.Closing += OnWindowClosing;
 #if DEBUG
@@ -44,6 +92,19 @@ namespace UnrealLocresEditor.Views
             DataContext = this;
 
             idleStartTime = DateTime.UtcNow;
+        }
+
+        private AppConfig _appConfig;
+        private void InitializeConfig()
+        {
+            _appConfig = AppConfig.Load();
+            DiscordRPCEnabled = _appConfig.DiscordRPCEnabled;
+        }
+
+        private void SaveConfig()
+        {
+            _appConfig.DiscordRPCEnabled = DiscordRPCEnabled;
+            _appConfig.Save();
         }
 
         public DiscordRpcClient client;
@@ -79,6 +140,7 @@ namespace UnrealLocresEditor.Views
         {
             client?.ClearPresence();
             client?.Dispose();
+            SaveConfig();
         }
 
         private void UpdatePresence(bool enabled)
@@ -433,7 +495,14 @@ namespace UnrealLocresEditor.Views
 
             var uiDiscordRPCMenuItem = this.FindControl<MenuItem>("uiDiscordRPCItem");
             var uiDiscordActivityCheckBox = this.FindControl<CheckBox>("uiDiscordActivityCheckBox");
-            uiDiscordActivityCheckBox.IsChecked = true;
+            if (_appConfig != null)
+            {
+                uiDiscordActivityCheckBox.IsChecked = _appConfig.DiscordRPCEnabled;
+            }
+            else if (_appConfig == null) 
+            {
+                uiDiscordActivityCheckBox.IsChecked = true;
+            }
             uiDiscordActivityCheckBox.Click += DiscordRPC_Click;
             DiscordRPCEnabled = uiDiscordActivityCheckBox.IsChecked ?? false;
         }
@@ -459,6 +528,7 @@ namespace UnrealLocresEditor.Views
                     }
                 }
                 UpdatePresence(DiscordRPCEnabled);
+                SaveConfig();
             }
         }
 
