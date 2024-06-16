@@ -19,7 +19,14 @@
 			</MenuItem>
 			<MenuItem Header="_Edit">
 				<MenuItem Header="Find" Name="uiFindMenuItem"/>
-				<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>
+			</MenuItem>
+			<MenuItem Header="_Linux" Name="uiLinuxHeader">
+			<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>
+			<MenuItem Header="Use Wine (UnrealLocres)" Name="uiUseWineMenuItem">
+				<MenuItem.Icon>
+					<CheckBox Name="uiUseWineCheckBox"/>
+				</MenuItem.Icon>
+				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="_Preferences">
 				<MenuItem Header="Discord Activity" Name="uiDiscordRPCMenuItem">

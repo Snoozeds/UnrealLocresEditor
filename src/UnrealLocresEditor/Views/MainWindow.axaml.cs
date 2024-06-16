@@ -27,6 +27,7 @@ namespace UnrealLocresEditor.Views
     public class AppConfig
     {
         public bool DiscordRPCEnabled { get; set; }
+        public bool UseWine { get; set; }
 
         public static string GetAppConfigFilePath()
         {
@@ -78,6 +79,7 @@ namespace UnrealLocresEditor.Views
         private WindowNotificationManager _notificationManager;
 
         public bool DiscordRPCEnabled { get; set; }
+        public bool UseWine { get; set; }
 
         public MainWindow()
         {
@@ -99,11 +101,13 @@ namespace UnrealLocresEditor.Views
         {
             _appConfig = AppConfig.Load();
             DiscordRPCEnabled = _appConfig.DiscordRPCEnabled;
+            UseWine = _appConfig.UseWine;
         }
 
         private void SaveConfig()
         {
             _appConfig.DiscordRPCEnabled = DiscordRPCEnabled;
+            _appConfig.UseWine = true;
             _appConfig.Save();
         }
 
@@ -198,18 +202,34 @@ namespace UnrealLocresEditor.Views
             return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         }
 
-        private static string GetExecutablePath()
-        {
-            return IsLinux() ? "wine" : "UnrealLocres.exe";
-        }
-
-        private static string GetArguments(string command, string locresFilePath, string csvFileName = null)
+        private static string GetExecutablePath(bool useWine)
         {
             if (IsLinux())
             {
-                return csvFileName == null
-                    ? $"UnrealLocres.exe {command} \"{locresFilePath}\""
-                    : $"UnrealLocres.exe {command} \"{locresFilePath}\" \"{csvFileName}\"";
+                return useWine ? "wine UnrealLocres.exe" : "./UnrealLocres";
+            }
+            else // Windows
+            {
+                return "UnrealLocres.exe";
+            }
+        }
+
+        private static string GetArguments(string command, string locresFilePath, bool useWine, string csvFileName = null)
+        {
+            if (IsLinux())
+            {
+                if (useWine)
+                {
+                    return csvFileName == null
+                        ? $"UnrealLocres.exe {command} \"{locresFilePath}\""
+                        : $"UnrealLocres.exe {command} \"{locresFilePath}\" \"{csvFileName}\"";
+                }
+                else
+                {
+                    return csvFileName == null
+                        ? $"./UnrealLocres {command} \"{locresFilePath}\""
+                        : $"./UnrealLocres {command} \"{locresFilePath}\" \"{csvFileName}\"";
+                }
             }
             else
             {
@@ -219,17 +239,17 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        private static ProcessStartInfo GetProcessStartInfo(string command, string locresFilePath, string csvFileName = null)
+        private ProcessStartInfo GetProcessStartInfo(string command, string locresFilePath, string csvFileName = null)
         {
             var startInfo = new ProcessStartInfo
             {
-                FileName = GetExecutablePath(),
-                Arguments = GetArguments(command, locresFilePath, csvFileName),
+                FileName = GetExecutablePath(UseWine),
+                Arguments = GetArguments(command, locresFilePath, UseWine, csvFileName),
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
             };
 
-            if (IsLinux())
+            if (IsLinux() && UseWine)
             {
                 startInfo.Environment["WINEPREFIX"] = winePrefixDirectory;
             }
@@ -489,9 +509,25 @@ namespace UnrealLocresEditor.Views
             var openMenuItem = this.FindControl<MenuItem>("uiOpenMenuItem");
             openMenuItem.Click += OpenMenuItem_Click;
 
+            var linuxMenuItem = this.FindControl<MenuItem>("uiLinuxHeader");
+            linuxMenuItem.IsVisible = IsLinux();
+
             var winePrefixMenuItem = this.FindControl<MenuItem>("uiWinePrefix");
             winePrefixMenuItem.Click += WinePrefix_Click;
             winePrefixMenuItem.IsVisible = IsLinux();
+
+            var useWineMenuItem = this.FindControl<MenuItem>("uiUseWineMenuItem");
+            var useWineCheckBox = this.FindControl<CheckBox>("uiDiscordActivityCheckBox");
+            useWineMenuItem.IsVisible = IsLinux();
+            if (_appConfig != null)
+            {
+                useWineCheckBox.IsChecked = _appConfig.UseWine;
+            }
+            else if (_appConfig == null)
+            {
+                useWineCheckBox.IsChecked = true;
+            }
+            UseWine = useWineCheckBox.IsChecked ?? false;
 
             var uiDiscordRPCMenuItem = this.FindControl<MenuItem>("uiDiscordRPCItem");
             var uiDiscordActivityCheckBox = this.FindControl<CheckBox>("uiDiscordActivityCheckBox");
