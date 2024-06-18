@@ -15,11 +15,11 @@
 			<Button x:Name="uiFindPreviousButton" Content="Previous" Width="100" />
 		</StackPanel>
 		<StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
-			<CheckBox x:Name="uiMatchCaseCheckBox" Content="Match Case" Margin="10" />
-			<CheckBox x:Name="uiMatchWholeWordCheckBox" Content="Match Whole Word"/>
+			<CheckBox x:Name="uiMatchCaseCheckBox" Content="Match case" Margin="10" />
+			<CheckBox x:Name="uiMatchWholeWordCheckBox" Content="Match whole word"/>
 		</StackPanel>
 		<StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
-			<CheckBox x:Name="uiMatchCellCheckBox" Content="Match Entire Cell Contents" />
+			<CheckBox x:Name="uiMatchCellCheckBox" Content="Match Entire cell contents" />
 		</StackPanel>
 	</Grid>
 
