@@ -46,6 +46,7 @@
                   GridLinesVisibility="All"
                   BorderThickness="2"
                   BorderBrush="Gray"
-                  MinColumnWidth="50"/>
+                  MinColumnWidth="50"
+				  ClipboardCopyMode="IncludeHeader"/>
 	</Grid>
 </Window>
