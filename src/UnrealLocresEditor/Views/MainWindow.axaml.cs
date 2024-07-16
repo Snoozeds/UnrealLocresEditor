@@ -402,6 +402,7 @@ namespace UnrealLocresEditor.Views
         public class DataRow : INotifyPropertyChanged
         {
             private string[] _values;
+
             public string[] Values
             {
                 get => _values;
@@ -417,7 +418,7 @@ namespace UnrealLocresEditor.Views
 
             public event PropertyChangedEventHandler PropertyChanged;
 
-            protected void OnPropertyChanged(string propertyName)
+            public virtual void OnPropertyChanged(string propertyName)
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
@@ -512,6 +513,12 @@ namespace UnrealLocresEditor.Views
             var linuxMenuItem = this.FindControl<MenuItem>("uiLinuxHeader");
             linuxMenuItem.IsVisible = IsLinux();
 
+            var findMenuItem = this.FindControl<MenuItem>("uiFindMenuItem");
+            findMenuItem.Click += FindMenuItem_Click;
+
+            var findReplaceMenuItem = this.FindControl<MenuItem>("uiFindReplaceMenuItem");
+            findReplaceMenuItem.Click += FindReplaceMenuItem_Click;
+
             var winePrefixMenuItem = this.FindControl<MenuItem>("uiWinePrefix");
             winePrefixMenuItem.Click += WinePrefix_Click;
             winePrefixMenuItem.IsVisible = IsLinux();
@@ -535,13 +542,52 @@ namespace UnrealLocresEditor.Views
             {
                 uiDiscordActivityCheckBox.IsChecked = _appConfig.DiscordRPCEnabled;
             }
-            else if (_appConfig == null) 
+            else if (_appConfig == null)
             {
                 uiDiscordActivityCheckBox.IsChecked = true;
             }
             uiDiscordActivityCheckBox.Click += DiscordRPC_Click;
             DiscordRPCEnabled = uiDiscordActivityCheckBox.IsChecked ?? false;
         }
+
+        private FindDialog findDialog;
+        private void FindMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (findDialog == null)
+            {
+                findDialog = new FindDialog();
+                findDialog.Closed += FindDialog_Closed;
+                findDialog.MainWindow = this;
+            }
+
+            findDialog.Show();
+            findDialog.Activate();
+        }
+
+        private void FindDialog_Closed(object sender, EventArgs e)
+        {
+            findDialog = null;
+        }
+
+        private FindReplaceDialog findReplaceDialog;
+        private void FindReplaceMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (findReplaceDialog == null)
+            {
+                findReplaceDialog = new FindReplaceDialog();
+                findReplaceDialog.Closed += FindReplaceDialog_Closed;
+                findReplaceDialog.MainWindow = this;
+            }
+
+            findReplaceDialog.Show();
+            findReplaceDialog.Activate();
+        }
+
+        private void FindReplaceDialog_Closed(object sender, EventArgs e)
+        {
+            findReplaceDialog = null;
+        }
+
 
         private void DiscordRPC_Click(object sender, RoutedEventArgs e)
         {

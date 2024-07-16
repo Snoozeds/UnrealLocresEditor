@@ -36,11 +36,9 @@ namespace UnrealLocresEditor.Views
 
         private async void ScrollToSelectedRow(DataGrid dataGrid, int selectedRowIndex)
         {
-
             var row = MainWindow._rows[selectedRowIndex];
             var column = dataGrid.Columns[_currentMatchIndex];
             var columnplus = dataGrid.Columns[_currentMatchIndex + 1];
-
 
             // Fix bug where ScrollIntoView does not scroll the cell into view if the cell has a different height to other cells.
             // This is fucking stupid and it is 1AM.

@@ -18,7 +18,8 @@
 				<MenuItem Header="Export locres" Name="uiSaveMenuItem"/>
 			</MenuItem>
 			<MenuItem Header="_Edit">
-				<MenuItem Header="Find" Name="uiFindMenuItem"/>
+				<MenuItem Header="Find" Name="uiFindMenuItem" InputGesture="Ctrl+F"/>
+				<MenuItem Header="Find and replace" Name="uiFindReplaceMenuItem" InputGesture="Ctrl+H"/>
 			</MenuItem>
 			<MenuItem Header="_Linux" Name="uiLinuxHeader">
 			<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>

@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="UnrealLocresEditor.Views.FindReplaceDialog"
+        Title="Find and replace"
+        Width="350"
+        Height="225">
+
+	<Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" Margin="10">
+		<TextBox x:Name="uiSearchTextBox" Watermark="Find" Grid.Row="0" Grid.Column="0" Margin="0,0,5,0" />
+		<TextBox x:Name="uiReplaceTextBox" Watermark="Replace" Grid.Row="1" Grid.Column="0" Margin="0,10,5,0" />
+		<Button Name="uiFindButton" Content="Find" Grid.Row="0" Grid.Column="1" />
+		<TextBlock x:Name="uiMatchCountTextBlock" Grid.Row="2" Grid.ColumnSpan="2"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" Text="" />
+		<StackPanel Orientation="Horizontal" Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Center" Spacing="10" Margin="0,0,0,10">
+			<CheckBox x:Name="uiLocresModeCheckBox" Content="Locres mode" IsChecked="True" />
+			<Button Content="(?)" VerticalAlignment="Center" Margin="-10,0,0,0" Background="Transparent" BorderBrush="Transparent">
+				<ToolTip.Tip>
+					<ToolTip Content="Searches the 2nd column, then copies to the 3rd column and replaces the copied text." />
+				</ToolTip.Tip>
+			</Button>
+		</StackPanel>
+		<StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2" HorizontalAlignment="Center" Spacing="10" Margin="0,0,0,10">
+			<Button x:Name="uiReplaceButton" Content="Replace" Width="100" />
+			<Button x:Name="uiReplaceAllButton" Content="Replace All" Width="100" />
+		</StackPanel>
+		<UniformGrid Grid.Row="6" Grid.ColumnSpan="2" Rows="1" Columns="3" Height="40">
+			<CheckBox x:Name="uiMatchCaseCheckBox" Content="Match case" />
+			<CheckBox x:Name="uiMatchWholeWordCheckBox" Content="Match whole word" />
+			<CheckBox x:Name="uiMatchCellCheckBox" Content="Match entire cell" />
+		</UniformGrid>
+	</Grid>
+</Window>
