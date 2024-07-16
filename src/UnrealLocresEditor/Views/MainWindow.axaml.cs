@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Data;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
@@ -87,6 +88,7 @@ namespace UnrealLocresEditor.Views
             InitializeConfig();
             this.Loaded += OnWindowLoaded;
             this.Closing += OnWindowClosing;
+            this.KeyDown += MainWindow_KeyDown; // Keybinds
 #if DEBUG
             this.AttachDevTools();
 #endif
@@ -145,6 +147,49 @@ namespace UnrealLocresEditor.Views
             client?.ClearPresence();
             client?.Dispose();
             SaveConfig();
+        }
+
+        // Keybinds
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyModifiers == KeyModifiers.Control)
+            {
+                switch (e.Key)
+                {
+                    case Key.F:
+                        ShowFindDialog();
+                        break;
+                    case Key.H:
+                        ShowFindReplaceDialog();
+                        break;
+                }
+            }
+        }
+
+        private void ShowFindDialog()
+        {
+            if (findDialog == null)
+            {
+                findDialog = new FindDialog();
+                findDialog.Closed += FindDialog_Closed;
+                findDialog.MainWindow = this;
+            }
+
+            findDialog.Show();
+            findDialog.Activate();
+        }
+
+        private void ShowFindReplaceDialog()
+        {
+            if (findReplaceDialog == null)
+            {
+                findReplaceDialog = new FindReplaceDialog();
+                findReplaceDialog.Closed += FindReplaceDialog_Closed;
+                findReplaceDialog.MainWindow = this;
+            }
+
+            findReplaceDialog.Show();
+            findReplaceDialog.Activate();
         }
 
         private void UpdatePresence(bool enabled)
