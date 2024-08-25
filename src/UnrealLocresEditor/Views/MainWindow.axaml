@@ -16,6 +16,9 @@
 			<MenuItem Header="_File">
 				<MenuItem Header="Open locres" Name="uiOpenMenuItem"/>
 				<MenuItem Header="Export locres" Name="uiSaveMenuItem"/>
+				<MenuItem Header="-"/>
+				<MenuItem Header="Open Spreadsheet" Name="uiOpenSpreadsheetMenuItem"/>
+				<MenuItem Header="Save As..." Name="uiSaveAsMenuItem"/>
 			</MenuItem>
 			<MenuItem Header="_Edit">
 				<MenuItem Header="Find" Name="uiFindMenuItem" InputGesture="Ctrl+F"/>

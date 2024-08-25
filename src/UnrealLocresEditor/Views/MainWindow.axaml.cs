@@ -82,6 +82,8 @@ namespace UnrealLocresEditor.Views
         public bool DiscordRPCEnabled { get; set; }
         public bool UseWine { get; set; }
 
+        public string csvFile = "";
+
         public MainWindow()
         {
             InitializeComponent();
@@ -349,7 +351,7 @@ namespace UnrealLocresEditor.Views
 
                 UpdatePresence(DiscordRPCEnabled); // Display opened file in Discord RPC
                 var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + ".csv";
-                var csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
+                csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
 
                 // Check if UnrealLocres.exe exists
                 var unrealLocresExePath = Path.Combine(Directory.GetCurrentDirectory(), "UnrealLocres.exe");
@@ -362,7 +364,7 @@ namespace UnrealLocresEditor.Views
                 // Run UnrealLocres.exe
                 var process = new Process
                 {
-                    StartInfo = GetProcessStartInfo("export", _currentLocresFilePath)
+                    StartInfo = GetProcessStartInfo("export", _currentLocresFilePath, csvFileName)
                 };
 
                 process.Start();
@@ -373,7 +375,6 @@ namespace UnrealLocresEditor.Views
                     try
                     {
                         var importedLocresDir = Path.Combine(Directory.GetCurrentDirectory(), "LocresFiles");
-
                         if (!Directory.Exists(importedLocresDir))
                         {
                             Directory.CreateDirectory(importedLocresDir);
@@ -542,6 +543,86 @@ namespace UnrealLocresEditor.Views
             File.Delete(csvFile);
         }
 
+        private async void OpenSpreadsheetMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var storageProvider = StorageProvider;
+            var result = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                FileTypeFilter = new[]
+                {
+            new FilePickerFileType("Spreadsheet Files") { Patterns = new[] { "*.csv" } }
+        },
+                AllowMultiple = false
+            });
+
+            if (result != null && result.Count > 0)
+            {
+                string filePath = result[0].Path.LocalPath;
+
+                // Load the CSV file
+                LoadCsv(filePath);
+
+                csvFile= filePath; // Update to the newly opened CSV file
+                editStartTime = DateTime.UtcNow;
+                idleStartTime = null;
+
+                UpdatePresence(DiscordRPCEnabled); // Update Discord presence
+            }
+        }
+
+        private async void SaveAsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (_rows != null && _rows.Count > 0)
+            {
+                var saveOptions = new FilePickerSaveOptions
+                {
+                    SuggestedFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath),
+                    FileTypeChoices = new[]
+                    {
+                new FilePickerFileType("CSV file") { Patterns = new[] { "*.csv" } },
+            }
+                };
+
+                var storageFile = await StorageProvider.SaveFilePickerAsync(saveOptions);
+
+                if (storageFile != null)
+                {
+                    var filePath = storageFile.Path.LocalPath;
+                    SaveAsCsv(filePath);
+
+                    _notificationManager.Show(new Notification("Success", $"File saved as {Path.GetFileName(filePath)}", NotificationType.Success));
+                }
+            }
+            else
+            {
+                _notificationManager.Show(new Notification("No Data", "There's no data to export.", NotificationType.Information));
+            }
+        }
+
+        private void SaveAsCsv(string filePath)
+        {
+            using (var writer = new StreamWriter(filePath, false, Encoding.UTF8))
+            using (var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            {
+                // Headers
+                for (int i = 0; i < _dataGrid.Columns.Count; i++)
+                {
+                    csv.WriteField(((DataGridTextColumn)_dataGrid.Columns[i]).Header);
+                }
+                csv.NextRecord();
+
+                // Rows
+                foreach (DataRow row in _rows)
+                {
+                    for (int i = 0; i < row.Values.Length; i++)
+                    {
+                        csv.WriteField(row.Values[i]);
+                    }
+                    csv.NextRecord();
+                }
+            }
+        }
+
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
@@ -551,6 +632,12 @@ namespace UnrealLocresEditor.Views
 
             var saveMenuItem = this.FindControl<MenuItem>("uiSaveMenuItem");
             saveMenuItem.Click += SaveMenuItem_Click;
+
+            var uiOpenSpreadsheetMenuItem = this.FindControl<MenuItem>("uiOpenSpreadsheetMenuItem");
+            uiOpenSpreadsheetMenuItem.Click += OpenSpreadsheetMenuItem_Click;
+
+            var saveAsMenuItem = this.FindControl<MenuItem>("uiSaveAsMenuItem");
+            saveAsMenuItem.Click += SaveAsMenuItem_Click;
 
             var openMenuItem = this.FindControl<MenuItem>("uiOpenMenuItem");
             openMenuItem.Click += OpenMenuItem_Click;
