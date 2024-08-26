@@ -64,7 +64,7 @@ public partial class App : Application
 
             File.AppendAllText(logFilePath, logMessage);
         }
-        catch (Exception loggingEx)
+        catch
         {
             return;
         }

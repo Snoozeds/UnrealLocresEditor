@@ -5,6 +5,8 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
+using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -84,6 +86,8 @@ namespace UnrealLocresEditor.Views
 
         public string csvFile = "";
 
+        public bool shownSourceWarningDialog = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -98,6 +102,9 @@ namespace UnrealLocresEditor.Views
             DataContext = this;
 
             idleStartTime = DateTime.UtcNow;
+
+            // For displaying warning upon clicking cell in second (source) column
+            _dataGrid.CellPointerPressed += DataGrid_CellPointerPressed;
         }
 
         private AppConfig _appConfig;
@@ -479,6 +486,53 @@ namespace UnrealLocresEditor.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
         }
+
+        private void DataGrid_CellPointerPressed(object sender, DataGridCellPointerPressedEventArgs e)
+        {
+            if (e.Column.Header.ToString() == "source")
+            {
+                if (shownSourceWarningDialog == false) {
+                    ShowWarningDialog();
+                    shownSourceWarningDialog = true;
+                }
+            }
+        }
+
+        private void ShowWarningDialog()
+        {
+            var messageBox = new Window
+            {
+                Title = "Warning",
+                Width = 400,
+                Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                Content = new StackPanel
+                {
+                    Children =
+            {
+                new TextBlock
+                {
+                    Text = "This is the source column, this is the original text, but you should not edit it to replace the text - instead write the text you want to replace this with in the target column next to it.",
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(10)
+                },
+                new Avalonia.Controls.Button
+                {
+                    Content = "OK",
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(10)
+                }
+            }
+                }
+            };
+
+            var button = (Avalonia.Controls.Button)((StackPanel)messageBox.Content).Children[1];
+            button.Click += (s, e) => messageBox.Close();
+
+            messageBox.ShowDialog(this);
+        }
+
 
         private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
         {
