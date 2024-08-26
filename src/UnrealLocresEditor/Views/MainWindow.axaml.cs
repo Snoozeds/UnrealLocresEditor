@@ -381,9 +381,19 @@ namespace UnrealLocresEditor.Views
                         }
 
                         var importedLocresPath = Path.Combine(importedLocresDir, Path.GetFileName(_currentLocresFilePath));
-                        File.Copy(_currentLocresFilePath, importedLocresPath, true);
 
-                        _currentLocresFilePath = importedLocresPath;
+                        if (File.Exists(importedLocresPath))
+                        {
+                            // If file exists, just use it
+                            _currentLocresFilePath = importedLocresPath;
+                        }
+                        else
+                        {
+                            // Otherwise copy
+                            File.Copy(_currentLocresFilePath, importedLocresPath, true);
+                            _currentLocresFilePath = importedLocresPath;
+                        }
+
                         LoadCsv(csvFile);
                     }
                     finally
