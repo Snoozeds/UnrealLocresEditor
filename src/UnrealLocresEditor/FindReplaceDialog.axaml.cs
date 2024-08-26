@@ -95,132 +95,74 @@ namespace UnrealLocresEditor.Views
 
             StringComparison comparison = isMatchCaseChecked ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
+            bool foundMatch = false;
+
             for (int rowIndex = startRowIndex; ; rowIndex = (rowIndex + increment + items.Count) % items.Count)
             {
                 var row = items[rowIndex];
 
-                for (int colIndex = (rowIndex == _currentRowIndex ? _currentMatchIndex + increment : (forward ? 0 : dataGrid.Columns.Count - 1));
-                     colIndex >= 0 && colIndex < dataGrid.Columns.Count;
-                     colIndex += increment)
+                int startColIndex = (rowIndex == _currentRowIndex ? _currentMatchIndex + increment : (forward ? 0 : dataGrid.Columns.Count - 1));
+
+                for (int colIndex = startColIndex; colIndex >= 0 && colIndex < dataGrid.Columns.Count; colIndex += increment)
                 {
                     var column = dataGrid.Columns[colIndex];
                     var cellContent = row.Values[colIndex];
 
                     if (cellContent is string cellText)
                     {
+                        bool matchFound = false;
+
                         if (isMatchCellChecked)
                         {
-                            if (string.Equals(cellText, searchTerm, comparison))
-                            {
-                                _currentMatchIndex = colIndex;
-                                _currentRowIndex = rowIndex;
-                                var currentRow = items[_currentRowIndex];
-
-                                if (searchTerm != _lastSearchTerm)
-                                {
-                                    _currentMatchIndex = -1;
-                                    _currentRowIndex = -1;
-                                    _totalMatches = 0;
-                                    _lastSearchTerm = searchTerm;
-                                }
-
-                                else
-                                {
-                                    _totalMatches++;
-                                }
-
-                                await Dispatcher.UIThread.InvokeAsync(() =>
-                                {
-                                    dataGrid.InvalidateMeasure();
-                                    dataGrid.InvalidateArrange();
-
-                                    dataGrid.UpdateLayout();
-                                    dataGrid.SelectedItem = row;
-                                    dataGrid.Focus();
-
-                                    ScrollToSelectedRow(dataGrid, currentRow);
-                                }, DispatcherPriority.Background);
-
-                                return;
-                            }
+                            matchFound = string.Equals(cellText, searchTerm, comparison);
+                        }
+                        else if (isMatchWholeWordChecked)
+                        {
+                            matchFound = IsWholeWordMatch(cellText, searchTerm, comparison);
                         }
                         else
                         {
-                            if (isMatchWholeWordChecked)
+                            matchFound = cellText.IndexOf(searchTerm, comparison) >= 0;
+                        }
+
+                        if (matchFound)
+                        {
+                            _currentMatchIndex = colIndex;
+                            _currentRowIndex = rowIndex;
+
+                            if (searchTerm != _lastSearchTerm)
                             {
-                                if (IsWholeWordMatch(cellText, searchTerm, comparison))
-                                {
-                                    _currentMatchIndex = colIndex;
-                                    _currentRowIndex = rowIndex;
-                                    var currentRow = items[_currentRowIndex];
-
-                                    if (searchTerm != _lastSearchTerm)
-                                    {
-                                        _totalMatches = 1;
-                                        _lastSearchTerm = searchTerm;
-                                    }
-                                    else
-                                    {
-                                        _totalMatches++;
-                                    }
-
-                                    await Dispatcher.UIThread.InvokeAsync(() =>
-                                    {
-                                        dataGrid.InvalidateMeasure();
-                                        dataGrid.InvalidateArrange();
-
-                                        dataGrid.UpdateLayout();
-                                        dataGrid.SelectedItem = row;
-                                        dataGrid.Focus();
-
-                                        ScrollToSelectedRow(dataGrid, currentRow);
-                                    }, DispatcherPriority.Background);
-
-                                    return;
-                                }
+                                _totalMatches = 1;
+                                _lastSearchTerm = searchTerm;
                             }
                             else
                             {
-                                if (cellText.IndexOf(searchTerm, comparison) >= 0)
-                                {
-                                    _currentMatchIndex = colIndex;
-                                    _currentRowIndex = rowIndex;
-                                    var currentRow = items[_currentRowIndex];
-
-                                    if (searchTerm != _lastSearchTerm)
-                                    {
-                                        _totalMatches = 1;
-                                        _lastSearchTerm = searchTerm;
-                                    }
-                                    else
-                                    {
-                                        _totalMatches++;
-                                    }
-
-                                    await Dispatcher.UIThread.InvokeAsync(() =>
-                                    {
-                                        dataGrid.InvalidateMeasure();
-                                        dataGrid.InvalidateArrange();
-
-                                        dataGrid.UpdateLayout();
-                                        dataGrid.SelectedItem = row;
-                                        dataGrid.Focus();
-
-                                        ScrollToSelectedRow(dataGrid, currentRow);
-                                    }, DispatcherPriority.Background);
-
-                                    return;
-                                }
+                                _totalMatches++;
                             }
+
+                            foundMatch = true;
+
+                            await Dispatcher.UIThread.InvokeAsync(() =>
+                            {
+                                dataGrid.InvalidateMeasure();
+                                dataGrid.InvalidateArrange();
+                                dataGrid.UpdateLayout();
+                                dataGrid.SelectedItem = row;
+                                dataGrid.Focus();
+                                ScrollToSelectedRow(dataGrid, row);
+                            }, DispatcherPriority.Background);
+
+                            break;
                         }
                     }
                 }
 
-                if (rowIndex == _currentRowIndex)
+                // Break the loop if a match is found or if we have completed a full circle
+                if (foundMatch || rowIndex == startRowIndex)
                     break;
             }
 
-            if (searchTerm != _lastSearchTerm)
+            if (!foundMatch)
             {
                 _currentMatchIndex = -1;
                 _currentRowIndex = -1;
