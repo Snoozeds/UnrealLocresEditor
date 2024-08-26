@@ -3,12 +3,12 @@ GUI Application for editing Unreal Engine locres files using Avalonia, CsvHelper
 **Make sure to place [UnrealLocres.exe](https://github.com/akintos/UnrealLocres/releases/latest) alongside UnrealLocresEditor.Desktop.exe**
 
 ### Installation Instructions (Windows x86/x64):
-Download the zip file corresponding to what version you need (x86 for 32-bit systems and x64 for 64-bit systems, if you had a 32-bit system you would probably know that) 
-Extract all of it to a folder, "UnrealLocresEditor"
+Download the zip file corresponding to what version you need (x86 for 32-bit systems and x64 for 64-bit systems, if you had a 32-bit system you would probably know that) \
+Extract all of it to a folder, "UnrealLocresEditor" \
 Download [UnrealLocres](https://github.com/akintos/UnrealLocres/releases/latest). Place the UnrealLocres.exe in the same folder as UnrealLocresEditor.Desktop.exe.
 
-Run UnrealLocresEditor.Desktop.exe.
-Exported locres file will appear as UnrealLocresEditor/LocresFiles/<name>.locres.new (remove .new suffix as needed)
+Run UnrealLocresEditor.Desktop.exe. \
+Exported locres file will appear as `UnrealLocresEditor/LocresFiles/<name>.locres.new` (remove .new suffix as needed)
 
 ### Installation Instructions (Linux x64 + Wine for UnrealLocres because it has no license):
 - Make sure wine is installed.
