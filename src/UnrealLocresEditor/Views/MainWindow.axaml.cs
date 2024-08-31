@@ -489,7 +489,7 @@ namespace UnrealLocresEditor.Views
 
         private void DataGrid_CellPointerPressed(object sender, DataGridCellPointerPressedEventArgs e)
         {
-            if (e.Column.Header.ToString() == "source")
+            if (e.Column?.Header?.ToString() == "source")
             {
                 if (shownSourceWarningDialog == false) {
                     ShowWarningDialog();
