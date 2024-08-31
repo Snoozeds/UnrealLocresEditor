@@ -92,6 +92,10 @@ namespace UnrealLocresEditor.Views
         {
             InitializeComponent();
             InitializeConfig();
+
+            // Clear temp directory at startup
+            GetOrCreateTempDirectory();
+
             this.Loaded += OnWindowLoaded;
             this.Closing += OnWindowClosing;
             this.KeyDown += MainWindow_KeyDown; // Keybinds
@@ -339,6 +343,39 @@ namespace UnrealLocresEditor.Views
             }
         }
 
+        private static string GetOrCreateTempDirectory()
+        {
+            var exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var tempDirectoryName = ".temp-UnrealLocresEditor";
+            var tempDirectoryPath = Path.Combine(exeDirectory, tempDirectoryName);
+
+            if (Directory.Exists(tempDirectoryPath))
+            {
+                // Temp file cleanup
+                DirectoryInfo dirInfo = new DirectoryInfo(tempDirectoryPath);
+                foreach (FileInfo file in dirInfo.GetFiles())
+                {
+                    file.Delete();
+                }
+                foreach (DirectoryInfo dir in dirInfo.GetDirectories())
+                {
+                    dir.Delete(true);
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory(tempDirectoryPath);
+
+                // Set folder to hidden on Windows
+                if (OperatingSystem.IsWindows())
+                {
+                    File.SetAttributes(tempDirectoryPath, FileAttributes.Directory | FileAttributes.Hidden);
+                }
+            }
+
+            return tempDirectoryPath;
+        }
+
         private async void OpenMenuItem_Click(object sender, RoutedEventArgs e)
         {
             var storageProvider = StorageProvider;
@@ -381,12 +418,7 @@ namespace UnrealLocresEditor.Views
                 {
                     try
                     {
-                        var importedLocresDir = Path.Combine(Directory.GetCurrentDirectory(), "LocresFiles");
-                        if (!Directory.Exists(importedLocresDir))
-                        {
-                            Directory.CreateDirectory(importedLocresDir);
-                        }
-
+                        var importedLocresDir = GetOrCreateTempDirectory();
                         var importedLocresPath = Path.Combine(importedLocresDir, Path.GetFileName(_currentLocresFilePath));
 
                         if (File.Exists(importedLocresPath))
@@ -589,9 +621,26 @@ namespace UnrealLocresEditor.Views
             if (process.ExitCode == 0)
             {
                 var modifiedLocres = _currentLocresFilePath + ".new";
+
+                // Create export directory with current date and time
+                var exportDirectory = Path.Combine(exeDirectory, "export");
+                var dateTimeFolder = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                var destinationDirectory = Path.Combine(exportDirectory, dateTimeFolder);
+
+                if (!Directory.Exists(destinationDirectory))
+                {
+                    Directory.CreateDirectory(destinationDirectory);
+                }
+
+                var newFileName = Path.GetFileNameWithoutExtension(modifiedLocres);
+                var destinationFile = Path.Combine(destinationDirectory, newFileName);
+
                 try
                 {
-                    _notificationManager.Show(new Notification("Success!", $"File saved as {Path.GetFileName(_currentLocresFilePath)}.new in {Path.Combine(Directory.GetCurrentDirectory(), "LocresFiles")}", NotificationType.Success));
+                    // Move and rename
+                    File.Move(modifiedLocres, destinationFile);
+
+                    _notificationManager.Show(new Notification("Success!", $"File saved as {Path.GetFileName(destinationFile)} in {destinationDirectory}", NotificationType.Success));
                 }
                 catch (Exception ex)
                 {
@@ -604,6 +653,8 @@ namespace UnrealLocresEditor.Views
                 Console.WriteLine($"Error importing: {process.StandardOutput.ReadToEnd()}");
                 _notificationManager.Show(new Notification("Error importing:", $"{process.StandardOutput.ReadToEnd()}", NotificationType.Error));
             }
+
+            // Clean up CSV file
             File.Delete(csvFile);
         }
 
