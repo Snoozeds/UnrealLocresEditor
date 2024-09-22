@@ -8,7 +8,7 @@ Extract all of it to a folder, "UnrealLocresEditor" \
 Download [UnrealLocres](https://github.com/akintos/UnrealLocres/releases/latest). Place the UnrealLocres.exe in the same folder as UnrealLocresEditor.Desktop.exe.
 
 Run UnrealLocresEditor.Desktop.exe. \
-Exported locres file will appear as `UnrealLocresEditor/LocresFiles/<name>.locres.new` (remove .new suffix as needed)
+Exported locres file will appear in `UnrealLocresEditor/export/<date+time you exported it at>/<name>.locres`
 
 ### Installation Instructions (Linux x64 + Wine for UnrealLocres because it has no license):
 - Make sure wine is installed.
