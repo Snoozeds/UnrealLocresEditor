@@ -45,7 +45,7 @@ namespace UnrealLocresEditor.Views
         {
             _currentMatchIndex = -1;
             _currentRowIndex = -1;
-            _totalMatches = 0;
+            _lastSearchTerm = string.Empty;
             uiMatchCountTextBlock.Text = "";
 
             await FindTextAsync(uiSearchTextBox.Text, forward: true);
@@ -78,7 +78,11 @@ namespace UnrealLocresEditor.Views
 
         public async Task FindTextAsync(string searchTerm, bool forward = true)
         {
-            if (string.IsNullOrEmpty(searchTerm)) return;
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                uiMatchCountTextBlock.Text = "Please enter a search term.";
+                return;
+            }
 
             var dataGrid = MainWindow._dataGrid;
             var items = MainWindow._rows;
