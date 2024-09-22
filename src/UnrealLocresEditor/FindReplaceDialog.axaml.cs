@@ -79,6 +79,16 @@ namespace UnrealLocresEditor.Views
             bool isMatchCellChecked = uiMatchCellCheckBox.IsChecked ?? false;
 
             int increment = forward ? 1 : -1;
+
+            // Reset match index for a new search term
+            if (searchTerm != _lastSearchTerm)
+            {
+                _currentRowIndex = -1;
+                _currentMatchIndex = -1;
+                _lastSearchTerm = searchTerm;
+                _totalMatches = 0;
+            }
+
             int startRowIndex = (_currentRowIndex + increment + items.Count) % items.Count;
             StringComparison comparison = isMatchCaseChecked ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
@@ -94,25 +104,18 @@ namespace UnrealLocresEditor.Views
                     var cellContent = row.Values[colIndex] as string;
                     if (cellContent == null) continue;
 
-                    bool matchFound = isMatchCellChecked ? string.Equals(cellContent, searchTerm, comparison)
-                                                        : (isMatchWholeWordChecked ? IsWholeWordMatch(cellContent, searchTerm, comparison)
-                                                                                    : cellContent.IndexOf(searchTerm, comparison) >= 0);
+                    bool matchFound = isMatchCellChecked
+                        ? string.Equals(cellContent, searchTerm, comparison)
+                        : (isMatchWholeWordChecked
+                            ? IsWholeWordMatch(cellContent, searchTerm, comparison)
+                            : cellContent.IndexOf(searchTerm, comparison) >= 0);
 
                     if (matchFound)
                     {
                         _currentMatchIndex = colIndex;
                         _currentRowIndex = rowIndex;
 
-                        if (searchTerm != _lastSearchTerm)
-                        {
-                            _totalMatches = 1;
-                            _lastSearchTerm = searchTerm;
-                        }
-                        else
-                        {
-                            _totalMatches++;
-                        }
-
+                        _totalMatches++;
                         foundMatch = true;
 
                         await Dispatcher.UIThread.InvokeAsync(() =>
@@ -134,7 +137,6 @@ namespace UnrealLocresEditor.Views
                 _currentMatchIndex = -1;
                 _currentRowIndex = -1;
                 _totalMatches = 0;
-                _lastSearchTerm = searchTerm;
             }
         }
 
