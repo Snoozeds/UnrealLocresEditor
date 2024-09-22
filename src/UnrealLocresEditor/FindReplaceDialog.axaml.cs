@@ -39,7 +39,6 @@ namespace UnrealLocresEditor.Views
         }
 
         public MainWindow? MainWindow { get; set; }
-        private int currentFindIndex = -1;
         private int _currentRowIndex = -1;
         private int _currentMatchIndex = -1;
         private int _totalMatches = 0;
@@ -50,30 +49,19 @@ namespace UnrealLocresEditor.Views
             FindText(uiSearchTextBox.Text);
         }
 
-        private async void ScrollToSelectedRow(DataGrid dataGrid, MainWindow.DataRow row)
+        private async void ScrollToSelectedRow(DataGrid dataGrid, int rowIndex, int colIndex)
         {
-            if (_currentMatchIndex < 0 || _currentMatchIndex >= dataGrid.Columns.Count)
+            if (rowIndex < 0 || rowIndex >= MainWindow._rows.Count || colIndex < 0 || colIndex >= dataGrid.Columns.Count)
             {
-                if (dataGrid.Columns.Count > 0)
-                {
-                    var fixedcolumn = dataGrid.Columns[0];
-                    dataGrid.ScrollIntoView(row, fixedcolumn);
-                }
                 return;
             }
 
-            var column = dataGrid.Columns[_currentMatchIndex];
-            var columnplus = dataGrid.Columns[_currentMatchIndex + 1];
+            var row = MainWindow._rows[rowIndex];
+            var column = dataGrid.Columns[colIndex];
 
-            int jumpRowIndex = Math.Min(_currentRowIndex + 5, MainWindow._rows.Count - 1);
-            var jumpRow = MainWindow._rows[jumpRowIndex];
-
-            dataGrid.ScrollIntoView(jumpRow, columnplus);
-            dataGrid.ScrollIntoView(jumpRow, column);
-
+            // Scroll to row and column
+            dataGrid.ScrollIntoView(row, column);
             await Task.Delay(1);
-
-            dataGrid.ScrollIntoView(row, columnplus);
             dataGrid.ScrollIntoView(row, column);
         }
 
@@ -92,7 +80,6 @@ namespace UnrealLocresEditor.Views
 
             int increment = forward ? 1 : -1;
             int startRowIndex = (_currentRowIndex + increment + items.Count) % items.Count;
-
             StringComparison comparison = isMatchCaseChecked ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
             bool foundMatch = false;
@@ -100,66 +87,46 @@ namespace UnrealLocresEditor.Views
             for (int rowIndex = startRowIndex; ; rowIndex = (rowIndex + increment + items.Count) % items.Count)
             {
                 var row = items[rowIndex];
-
-                int startColIndex = (rowIndex == _currentRowIndex ? _currentMatchIndex + increment : (forward ? 0 : dataGrid.Columns.Count - 1));
+                int startColIndex = (rowIndex == _currentRowIndex) ? _currentMatchIndex + increment : (forward ? 0 : dataGrid.Columns.Count - 1);
 
                 for (int colIndex = startColIndex; colIndex >= 0 && colIndex < dataGrid.Columns.Count; colIndex += increment)
                 {
-                    var column = dataGrid.Columns[colIndex];
-                    var cellContent = row.Values[colIndex];
+                    var cellContent = row.Values[colIndex] as string;
+                    if (cellContent == null) continue;
 
-                    if (cellContent is string cellText)
+                    bool matchFound = isMatchCellChecked ? string.Equals(cellContent, searchTerm, comparison)
+                                                        : (isMatchWholeWordChecked ? IsWholeWordMatch(cellContent, searchTerm, comparison)
+                                                                                    : cellContent.IndexOf(searchTerm, comparison) >= 0);
+
+                    if (matchFound)
                     {
-                        bool matchFound = false;
+                        _currentMatchIndex = colIndex;
+                        _currentRowIndex = rowIndex;
 
-                        if (isMatchCellChecked)
+                        if (searchTerm != _lastSearchTerm)
                         {
-                            matchFound = string.Equals(cellText, searchTerm, comparison);
-                        }
-                        else if (isMatchWholeWordChecked)
-                        {
-                            matchFound = IsWholeWordMatch(cellText, searchTerm, comparison);
+                            _totalMatches = 1;
+                            _lastSearchTerm = searchTerm;
                         }
                         else
                         {
-                            matchFound = cellText.IndexOf(searchTerm, comparison) >= 0;
+                            _totalMatches++;
                         }
 
-                        if (matchFound)
+                        foundMatch = true;
+
+                        await Dispatcher.UIThread.InvokeAsync(() =>
                         {
-                            _currentMatchIndex = colIndex;
-                            _currentRowIndex = rowIndex;
+                            dataGrid.SelectedItem = row;
+                            dataGrid.Focus();
+                            ScrollToSelectedRow(dataGrid, rowIndex, colIndex);
+                        });
 
-                            if (searchTerm != _lastSearchTerm)
-                            {
-                                _totalMatches = 1;
-                                _lastSearchTerm = searchTerm;
-                            }
-                            else
-                            {
-                                _totalMatches++;
-                            }
-
-                            foundMatch = true;
-
-                            await Dispatcher.UIThread.InvokeAsync(() =>
-                            {
-                                dataGrid.InvalidateMeasure();
-                                dataGrid.InvalidateArrange();
-                                dataGrid.UpdateLayout();
-                                dataGrid.SelectedItem = row;
-                                dataGrid.Focus();
-                                ScrollToSelectedRow(dataGrid, row);
-                            }, DispatcherPriority.Background);
-
-                            break;
-                        }
+                        break;
                     }
                 }
 
-                // Break the loop if a match is found or if we have completed a full circle
-                if (foundMatch || rowIndex == startRowIndex)
-                    break;
+                if (foundMatch || rowIndex == startRowIndex) break;
             }
 
             if (!foundMatch)
@@ -184,7 +151,7 @@ namespace UnrealLocresEditor.Views
             return string.Equals(cellValue, searchText, comparison);
         }
 
-        private void ReplaceButton_Click(object? sender, RoutedEventArgs e)
+        private async void ReplaceButton_Click(object? sender, RoutedEventArgs e)
         {
             if (MainWindow?._dataGrid?.SelectedItem != null)
             {
@@ -206,6 +173,7 @@ namespace UnrealLocresEditor.Views
                     {
                         ReplaceTextInRow(row, searchText, replaceText, matchCase, matchWholeWord, matchCell);
                     }
+
                     MainWindow._dataGrid.ItemsSource = new ObservableCollection<MainWindow.DataRow>(MainWindow._dataGrid.ItemsSource.Cast<MainWindow.DataRow>().ToList());
                     FindText(searchText, true);
                 }
@@ -221,8 +189,6 @@ namespace UnrealLocresEditor.Views
             if (string.IsNullOrEmpty(searchText) || string.IsNullOrEmpty(replaceText)) return;
 
             var items = MainWindow._dataGrid.ItemsSource.Cast<MainWindow.DataRow>().ToList();
-
-
             bool matchCase = await Dispatcher.UIThread.InvokeAsync(() => uiMatchCaseCheckBox.IsChecked == true);
             bool matchWholeWord = await Dispatcher.UIThread.InvokeAsync(() => uiMatchWholeWordCheckBox.IsChecked == true);
             bool matchCell = await Dispatcher.UIThread.InvokeAsync(() => uiMatchCellCheckBox.IsChecked == true);
