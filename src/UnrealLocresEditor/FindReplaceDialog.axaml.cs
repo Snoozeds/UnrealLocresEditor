@@ -221,7 +221,7 @@ namespace UnrealLocresEditor.Views
             {
                 if (ShouldReplaceInCell(row.Values[i], searchText, matchCase, matchWholeWord, matchCell))
                 {
-                    row.Values[i] = row.Values[i].Replace(searchText, replaceText, StringComparison.OrdinalIgnoreCase);
+                    row.Values[i] = row.Values[i].Replace(searchText, replaceText, matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
                 }
             }
             row.OnPropertyChanged(nameof(row.Values));
@@ -281,7 +281,7 @@ namespace UnrealLocresEditor.Views
             {
                 if (ShouldReplaceInCell(row.Values[i], searchText, matchCase, matchWholeWord, matchCell))
                 {
-                    row.Values[i] = row.Values[i].Replace(searchText, replaceText, StringComparison.OrdinalIgnoreCase);
+                    row.Values[i] = row.Values[i].Replace(searchText, replaceText, matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
                 }
             }
 
