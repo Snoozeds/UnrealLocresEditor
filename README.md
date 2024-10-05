@@ -12,7 +12,7 @@ Exported locres file will appear in `UnrealLocresEditor/export/<date+time you ex
 
 ### Installation Instructions (Linux x64 + Wine for UnrealLocres because it has no license):
 - Make sure wine is installed.
-  - Ubuntu example: sudo apt-get update && sudo apt-get install wine wine32
+  - Ubuntu example: `sudo apt-get update && sudo apt-get install wine wine32`
 - Download the .tar file from Github Releases. This only supports Linux x64.
 - Right click it in your file manager, click "Extract".
 - Download [UnrealLocres](https://github.com/akintos/UnrealLocres/releases/latest), you will notice there is only an .exe file, but we will be using Wine.
