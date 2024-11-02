@@ -4,13 +4,11 @@
         Title="Unreal Locres Editor"
         Width="800"
         Height="450">
-
 	<Window.Styles>
 		<Style Selector="DataGridCell">
 			<Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
 		</Style>
 	</Window.Styles>
-
 	<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*,Auto">
 		<Menu Grid.Row="0" Grid.ColumnSpan="2">
 			<MenuItem Header="_File">
@@ -25,11 +23,11 @@
 				<MenuItem Header="Find and replace" Name="uiFindReplaceMenuItem" InputGesture="Ctrl+H"/>
 			</MenuItem>
 			<MenuItem Header="_Linux" Name="uiLinuxHeader">
-			<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>
-			<MenuItem Header="Use Wine (UnrealLocres)" Name="uiUseWineMenuItem">
-				<MenuItem.Icon>
-					<CheckBox Name="uiUseWineCheckBox"/>
-				</MenuItem.Icon>
+				<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>
+				<MenuItem Header="Use Wine (UnrealLocres)" Name="uiUseWineMenuItem">
+					<MenuItem.Icon>
+						<CheckBox Name="uiUseWineCheckBox"/>
+					</MenuItem.Icon>
 				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="_Preferences">
@@ -40,7 +38,6 @@
 				</MenuItem>
 			</MenuItem>
 		</Menu>
-
 		<DataGrid x:Name="uiDataGrid"
                   Grid.Row="1"
                   Grid.ColumnSpan="2"
@@ -51,6 +48,12 @@
                   BorderThickness="2"
                   BorderBrush="Gray"
                   MinColumnWidth="50"
-				  ClipboardCopyMode="IncludeHeader"/>
+                  ClipboardCopyMode="IncludeHeader">
+			<DataGrid.Styles>
+				<Style Selector="DataGridCell">
+					<Setter Property="MaxWidth" Value="{Binding Width, RelativeSource={RelativeSource AncestorType=DataGridColumn}}"/>
+				</Style>
+			</DataGrid.Styles>
+		</DataGrid>
 	</Grid>
 </Window>

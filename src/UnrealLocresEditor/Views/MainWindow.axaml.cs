@@ -4,9 +4,9 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
-using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -476,7 +476,14 @@ namespace UnrealLocresEditor.Views
                     {
                         for (int i = 0; i < stringValues.Length; i++)
                         {
-                            columns.Add(new DataGridTextColumn { Header = stringValues[i], Binding = new Binding($"Values[{i}]"), IsReadOnly = false });
+                            var column = new DataGridTextColumn
+                            {
+                                Header = stringValues[i],
+                                Binding = new Binding($"Values[{i}]"),
+                                IsReadOnly = false,
+                                Width = new DataGridLength(300)
+                            };
+                            columns.Add(column);
                         }
                         _dataGrid.Columns.Clear();
                         foreach (var column in columns)
@@ -523,7 +530,8 @@ namespace UnrealLocresEditor.Views
         {
             if (e.Column?.Header?.ToString() == "source")
             {
-                if (shownSourceWarningDialog == false) {
+                if (shownSourceWarningDialog == false)
+                {
                     ShowWarningDialog();
                     shownSourceWarningDialog = true;
                 }
@@ -677,7 +685,7 @@ namespace UnrealLocresEditor.Views
                 // Load the CSV file
                 LoadCsv(filePath);
 
-                csvFile= filePath; // Update to the newly opened CSV file
+                csvFile = filePath; // Update to the newly opened CSV file
                 editStartTime = DateTime.UtcNow;
                 idleStartTime = null;
 
