@@ -1,26 +1,34 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace UnrealLocresEditor.Config
 {
     public static class DefaultConfig
     {
+        public static readonly bool IsDarkTheme = true;
+        public static readonly string AccentColor = "#4e3cb2";
         public static readonly bool DiscordRPCEnabled = true;
-        public static readonly bool UseWine = true;
+        public static readonly bool DiscordRPCPrivacy = false;
+        public static readonly string DiscordRPCPrivacyString = "Editing a file";
+        public static readonly bool UseWine = false;
         public static readonly TimeSpan AutoSaveInterval = TimeSpan.FromMinutes(5);
     }
 
     public class AppConfig
     {
-        private static AppConfig ?_instance;
+        private static AppConfig? _instance;
         private static readonly object _lock = new object();
 
+        public bool IsDarkTheme { get; set; } = DefaultConfig.IsDarkTheme;
+        public string AccentColor { get; set; } = DefaultConfig.AccentColor;
         public bool DiscordRPCEnabled { get; set; } = DefaultConfig.DiscordRPCEnabled;
+        public bool DiscordRPCPrivacy { get; set; } = DefaultConfig.DiscordRPCPrivacy;
+        public string DiscordRPCPrivacyString { get; set; } = DefaultConfig.DiscordRPCPrivacyString;
         public bool UseWine { get; set; } = DefaultConfig.UseWine;
         public TimeSpan AutoSaveInterval { get; set; } = DefaultConfig.AutoSaveInterval;
-
-        public AppConfig() { }
 
         public static AppConfig Instance
         {
@@ -58,9 +66,24 @@ namespace UnrealLocresEditor.Config
             return Path.Combine(configDirectory, "config.json");
         }
 
-        private static bool IsValidBoolean(bool? value)
+        private static Dictionary<string, Func<AppConfig, bool>> GetValidationRules()
         {
-            return value != null;
+            return new Dictionary<string, Func<AppConfig, bool>>()
+            {
+                { "IsDarkTheme", config => config.IsDarkTheme == true || config.IsDarkTheme == false },
+                { "AccentColor", config => IsValidHexColor(config.AccentColor) },
+                { "DiscordRPCEnabled", config => config.DiscordRPCEnabled == true || config.DiscordRPCEnabled == false },
+                { "DiscordRPCPrivacy", config => config.DiscordRPCPrivacy == true || config.DiscordRPCPrivacy == false },
+                { "DiscordRPCPrivacyString", config => !string.IsNullOrEmpty(config.DiscordRPCPrivacyString) },
+                { "UseWine", config => config.UseWine == true || config.UseWine == false },
+                { "AutoSaveInterval", config => config.AutoSaveInterval > TimeSpan.Zero && config.AutoSaveInterval.TotalMilliseconds <= int.MaxValue }
+            };
+        }
+
+        private static bool IsValidHexColor(string color)
+        {
+            string hexColorPattern = @"^#[0-9A-Fa-f]{6}$";
+            return Regex.IsMatch(color, hexColorPattern);
         }
 
         public static AppConfig Load()
@@ -76,19 +99,22 @@ namespace UnrealLocresEditor.Config
 
                     if (config != null)
                     {
-                        // Validate config
-                        if (!IsValidBoolean(config.DiscordRPCEnabled))
+                        var validationRules = GetValidationRules();
+
+                        foreach (var rule in validationRules)
                         {
-                            config.DiscordRPCEnabled = DefaultConfig.DiscordRPCEnabled;
+                            var property = typeof(AppConfig).GetProperty(rule.Key);
+                            if (property != null)
+                            {
+                                var value = property.GetValue(config);
+                                if (!rule.Value(config))
+                                {
+                                    // If validation fails, revert to the default config value
+                                    property.SetValue(config, typeof(DefaultConfig).GetProperty(rule.Key)?.GetValue(null));
+                                }
+                            }
                         }
-                        if (!IsValidBoolean(config.UseWine))
-                        {
-                            config.UseWine = DefaultConfig.UseWine;
-                        }
-                        if (config.AutoSaveInterval <= TimeSpan.Zero || config.AutoSaveInterval.TotalMilliseconds > int.MaxValue)
-                        {
-                            config.AutoSaveInterval = DefaultConfig.AutoSaveInterval;
-                        }
+
                         return config;
                     }
                 }

@@ -78,6 +78,10 @@ namespace UnrealLocresEditor.Views
             InitializeComponent();
             InitializeAutoSave();
 
+            // Set theme and accent
+            ApplyTheme(_appConfig.IsDarkTheme);
+            ApplyAccent(Color.Parse(_appConfig.AccentColor));
+
             // Clear temp directory at startup
             GetOrCreateTempDirectory();
 
@@ -140,6 +144,28 @@ namespace UnrealLocresEditor.Views
             }
         }
 
+        // Apply theme based off of config
+        private void ApplyTheme(bool isDarkTheme)
+        {
+            Application.Current.RequestedThemeVariant = isDarkTheme
+               ? Avalonia.Styling.ThemeVariant.Dark
+               : Avalonia.Styling.ThemeVariant.Light;
+        }
+
+
+        // Apply accent based off of config
+        // https://github.com/AvaloniaUI/Avalonia/issues/10746
+        private void ApplyAccent(Color accentColor)
+        {
+            Application.Current!.Resources["SystemAccentColor"] = accentColor;
+            Application.Current.Resources["SystemAccentColorDark1"] = ColorUtils.ChangeColorLuminosity(accentColor, -0.3);
+            Application.Current.Resources["SystemAccentColorDark2"] = ColorUtils.ChangeColorLuminosity(accentColor, -0.5);
+            Application.Current.Resources["SystemAccentColorDark3"] = ColorUtils.ChangeColorLuminosity(accentColor, -0.7);
+            Application.Current.Resources["SystemAccentColorLight1"] = ColorUtils.ChangeColorLuminosity(accentColor, 0.3);
+            Application.Current.Resources["SystemAccentColorLight2"] = ColorUtils.ChangeColorLuminosity(accentColor, 0.5);
+            Application.Current.Resources["SystemAccentColorLight3"] = ColorUtils.ChangeColorLuminosity(accentColor, 0.7);
+        }
+
 
         // Start Discord RPC
         public DiscordRpcClient client;
@@ -195,15 +221,23 @@ namespace UnrealLocresEditor.Views
 
                 var presence = new RichPresence();
 
-                if (_currentLocresFilePath == null)
+                if (_appConfig.DiscordRPCPrivacy)
                 {
-                    presence.Details = "Idling";
-                    presence.Timestamps = idleStartTime.HasValue ? new Timestamps(idleStartTime.Value) : null;
+                    presence.Details = _appConfig.DiscordRPCPrivacyString;
+                    presence.Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null;
                 }
                 else
                 {
-                    presence.Details = $"Editing file: {Path.GetFileName(_currentLocresFilePath)}";
-                    presence.Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null;
+                    if (_currentLocresFilePath == null)
+                    {
+                        presence.Details = "Idling";
+                        presence.Timestamps = idleStartTime.HasValue ? new Timestamps(idleStartTime.Value) : null;
+                    }
+                    else
+                    {
+                        presence.Details = $"Editing file: {Path.GetFileName(_currentLocresFilePath)}";
+                        presence.Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null;
+                    }
                 }
 
                 client.SetPresence(presence);
