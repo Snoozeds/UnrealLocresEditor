@@ -87,7 +87,7 @@ namespace UnrealLocresEditor.Views
         // Auto saving
         private System.Timers.Timer _autoSaveTimer;
         private bool _hasUnsavedChanges = false;
-        private const int AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute
+        private const int AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minute
 
         // Settings
         public bool DiscordRPCEnabled { get; set; }
