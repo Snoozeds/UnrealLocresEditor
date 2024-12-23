@@ -23,58 +23,12 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Timers;
+using UnrealLocresEditor.Config;
 
 #nullable disable
 
 namespace UnrealLocresEditor.Views
 {
-
-    public class AppConfig
-    {
-        public bool DiscordRPCEnabled { get; set; }
-        public bool UseWine { get; set; }
-
-        public static string GetAppConfigFilePath()
-        {
-            string configDirectory;
-
-            if (OperatingSystem.IsWindows())
-            {
-                configDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UnrealLocresEditor");
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                configDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "UnrealLocresEditor");
-            }
-            else
-            {
-                throw new PlatformNotSupportedException("Unsupported OS.");
-            }
-
-            Directory.CreateDirectory(configDirectory);
-
-            return Path.Combine(configDirectory, "config.json");
-        }
-
-        public static AppConfig Load()
-        {
-            string filePath = GetAppConfigFilePath();
-
-            if (File.Exists(filePath))
-            {
-                string json = File.ReadAllText(filePath);
-                return JsonConvert.DeserializeObject<AppConfig>(json);
-            }
-            return new AppConfig { DiscordRPCEnabled = true };
-        }
-
-        public void Save()
-        {
-            string filePath = GetAppConfigFilePath();
-            string json = JsonConvert.SerializeObject(this);
-            File.WriteAllText(filePath, json);
-        }
-    }
     public partial class MainWindow : Window
     {
         // Main
@@ -90,8 +44,31 @@ namespace UnrealLocresEditor.Views
         private const int AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minute
 
         // Settings
-        public bool DiscordRPCEnabled { get; set; }
-        public bool UseWine { get; set; }
+        private AppConfig _appConfig;
+        public bool DiscordRPCEnabled
+        {
+            get => _appConfig.DiscordRPCEnabled;
+            set
+            {
+                _appConfig.DiscordRPCEnabled = value;
+                _appConfig.Save();
+            }
+        }
+
+        public bool UseWine
+        {
+            get => _appConfig.UseWine;
+            set
+            {
+                _appConfig.UseWine = value;
+                _appConfig.Save();
+            }
+        }
+
+        private void SaveConfig()
+        {
+            _appConfig.Save();
+        }
 
         // Misc
         public string csvFile = "";
@@ -99,8 +76,8 @@ namespace UnrealLocresEditor.Views
 
         public MainWindow()
         {
+            _appConfig = AppConfig.Load();
             InitializeComponent();
-            InitializeConfig();
             InitializeAutoSave();
 
             // Clear temp directory at startup
@@ -119,22 +96,6 @@ namespace UnrealLocresEditor.Views
 
             // For displaying warning upon clicking cell in second (source) column
             _dataGrid.CellPointerPressed += DataGrid_CellPointerPressed;
-        }
-
-        // Initialize config
-        private AppConfig _appConfig;
-        private void InitializeConfig()
-        {
-            _appConfig = AppConfig.Load();
-            DiscordRPCEnabled = _appConfig.DiscordRPCEnabled;
-            UseWine = _appConfig.UseWine;
-        }
-
-        private void SaveConfig()
-        {
-            _appConfig.DiscordRPCEnabled = DiscordRPCEnabled;
-            _appConfig.UseWine = true;
-            _appConfig.Save();
         }
 
         // Initialize auto saving
@@ -859,17 +820,13 @@ namespace UnrealLocresEditor.Views
             winePrefixMenuItem.IsVisible = IsLinux();
 
             var useWineMenuItem = this.FindControl<MenuItem>("uiUseWineMenuItem");
-            var useWineCheckBox = this.FindControl<CheckBox>("uiDiscordActivityCheckBox");
+            var useWineCheckBox = this.FindControl<CheckBox>("uiUseWineCheckBox");
             useWineMenuItem.IsVisible = IsLinux();
             if (_appConfig != null)
             {
                 useWineCheckBox.IsChecked = _appConfig.UseWine;
             }
-            else if (_appConfig == null)
-            {
-                useWineCheckBox.IsChecked = true;
-            }
-            UseWine = useWineCheckBox.IsChecked ?? false;
+            UseWine = useWineCheckBox.IsChecked ?? true;
 
             var uiDiscordRPCMenuItem = this.FindControl<MenuItem>("uiDiscordRPCItem");
             var uiDiscordActivityCheckBox = this.FindControl<CheckBox>("uiDiscordActivityCheckBox");
@@ -877,12 +834,8 @@ namespace UnrealLocresEditor.Views
             {
                 uiDiscordActivityCheckBox.IsChecked = _appConfig.DiscordRPCEnabled;
             }
-            else if (_appConfig == null)
-            {
-                uiDiscordActivityCheckBox.IsChecked = true;
-            }
             uiDiscordActivityCheckBox.Click += DiscordRPC_Click;
-            DiscordRPCEnabled = uiDiscordActivityCheckBox.IsChecked ?? false;
+            DiscordRPCEnabled = uiDiscordActivityCheckBox.IsChecked ?? true;
         }
 
         private FindDialog findDialog;
@@ -943,9 +896,13 @@ namespace UnrealLocresEditor.Views
                         editStartTime = null;
                         idleStartTime = DateTime.UtcNow;
                     }
+                    _appConfig.DiscordRPCEnabled = true;
+                }
+                else if (!DiscordRPCEnabled)
+                {
+                    _appConfig.DiscordRPCEnabled = false;
                 }
                 UpdatePresence(DiscordRPCEnabled);
-                SaveConfig();
             }
         }
 
