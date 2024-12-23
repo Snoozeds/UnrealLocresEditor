@@ -12,7 +12,6 @@ using Avalonia.Threading;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DiscordRPC;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -41,7 +40,6 @@ namespace UnrealLocresEditor.Views
         // Auto saving
         private System.Timers.Timer _autoSaveTimer;
         private bool _hasUnsavedChanges = false;
-        private const int AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minute
 
         // Settings
         private AppConfig _appConfig;
@@ -101,7 +99,9 @@ namespace UnrealLocresEditor.Views
         // Initialize auto saving
         private void InitializeAutoSave()
         {
-            _autoSaveTimer = new System.Timers.Timer(AUTO_SAVE_INTERVAL);
+            int autoSaveIntervalMs = (int)_appConfig.AutoSaveInterval.TotalMilliseconds;
+            _autoSaveTimer = new System.Timers.Timer();
+            _autoSaveTimer.Interval = _appConfig.AutoSaveInterval.TotalMilliseconds;
             _autoSaveTimer.Elapsed += AutoSave_Elapsed;
             _autoSaveTimer.Start();
 
@@ -245,8 +245,8 @@ namespace UnrealLocresEditor.Views
             SaveConfig();
         }
 
-    // Keybinds
-    private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        // Keybinds
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyModifiers == KeyModifiers.Control)
             {
@@ -822,18 +822,12 @@ namespace UnrealLocresEditor.Views
             var useWineMenuItem = this.FindControl<MenuItem>("uiUseWineMenuItem");
             var useWineCheckBox = this.FindControl<CheckBox>("uiUseWineCheckBox");
             useWineMenuItem.IsVisible = IsLinux();
-            if (_appConfig != null)
-            {
-                useWineCheckBox.IsChecked = _appConfig.UseWine;
-            }
+            useWineCheckBox.IsChecked = _appConfig.UseWine;
             UseWine = useWineCheckBox.IsChecked ?? true;
 
             var uiDiscordRPCMenuItem = this.FindControl<MenuItem>("uiDiscordRPCItem");
             var uiDiscordActivityCheckBox = this.FindControl<CheckBox>("uiDiscordActivityCheckBox");
-            if (_appConfig != null)
-            {
-                uiDiscordActivityCheckBox.IsChecked = _appConfig.DiscordRPCEnabled;
-            }
+            uiDiscordActivityCheckBox.IsChecked = _appConfig.DiscordRPCEnabled;
             uiDiscordActivityCheckBox.Click += DiscordRPC_Click;
             DiscordRPCEnabled = uiDiscordActivityCheckBox.IsChecked ?? true;
         }

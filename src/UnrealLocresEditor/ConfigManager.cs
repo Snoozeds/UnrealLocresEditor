@@ -4,13 +4,21 @@ using System.IO;
 
 namespace UnrealLocresEditor.Config
 {
+    public static class DefaultConfig
+    {
+        public static readonly bool DiscordRPCEnabled = true;
+        public static readonly bool UseWine = true;
+        public static readonly TimeSpan AutoSaveInterval = TimeSpan.FromMinutes(5);
+    }
+
     public class AppConfig
     {
-        private static AppConfig _instance;
+        private static AppConfig ?_instance;
         private static readonly object _lock = new object();
 
-        public bool DiscordRPCEnabled { get; set; } = true;
-        public bool UseWine { get; set; } = true;
+        public bool DiscordRPCEnabled { get; set; } = DefaultConfig.DiscordRPCEnabled;
+        public bool UseWine { get; set; } = DefaultConfig.UseWine;
+        public TimeSpan AutoSaveInterval { get; set; } = DefaultConfig.AutoSaveInterval;
 
         public AppConfig() { }
 
@@ -50,6 +58,11 @@ namespace UnrealLocresEditor.Config
             return Path.Combine(configDirectory, "config.json");
         }
 
+        private static bool IsValidBoolean(bool? value)
+        {
+            return value != null;
+        }
+
         public static AppConfig Load()
         {
             try
@@ -60,7 +73,24 @@ namespace UnrealLocresEditor.Config
                 {
                     string json = File.ReadAllText(filePath);
                     var config = JsonConvert.DeserializeObject<AppConfig>(json);
-                    return config ?? new AppConfig();
+
+                    if (config != null)
+                    {
+                        // Validate config
+                        if (!IsValidBoolean(config.DiscordRPCEnabled))
+                        {
+                            config.DiscordRPCEnabled = DefaultConfig.DiscordRPCEnabled;
+                        }
+                        if (!IsValidBoolean(config.UseWine))
+                        {
+                            config.UseWine = DefaultConfig.UseWine;
+                        }
+                        if (config.AutoSaveInterval <= TimeSpan.Zero || config.AutoSaveInterval.TotalMilliseconds > int.MaxValue)
+                        {
+                            config.AutoSaveInterval = DefaultConfig.AutoSaveInterval;
+                        }
+                        return config;
+                    }
                 }
             }
             catch (Exception)
