@@ -8,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DiscordRPC;
@@ -21,6 +22,7 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Timers;
 
 #nullable disable
 
@@ -75,23 +77,31 @@ namespace UnrealLocresEditor.Views
     }
     public partial class MainWindow : Window
     {
+        // Main
         public DataGrid _dataGrid;
         private TextBox _searchTextBox;
         public ObservableCollection<DataRow> _rows;
         private string _currentLocresFilePath;
         private WindowNotificationManager _notificationManager;
 
+        // Auto saving
+        private System.Timers.Timer _autoSaveTimer;
+        private bool _hasUnsavedChanges = false;
+        private const int AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute
+
+        // Settings
         public bool DiscordRPCEnabled { get; set; }
         public bool UseWine { get; set; }
 
+        // Misc
         public string csvFile = "";
-
         public bool shownSourceWarningDialog = false;
 
         public MainWindow()
         {
             InitializeComponent();
             InitializeConfig();
+            InitializeAutoSave();
 
             // Clear temp directory at startup
             GetOrCreateTempDirectory();
@@ -111,6 +121,7 @@ namespace UnrealLocresEditor.Views
             _dataGrid.CellPointerPressed += DataGrid_CellPointerPressed;
         }
 
+        // Initialize config
         private AppConfig _appConfig;
         private void InitializeConfig()
         {
@@ -126,6 +137,50 @@ namespace UnrealLocresEditor.Views
             _appConfig.Save();
         }
 
+        // Initialize auto saving
+        private void InitializeAutoSave()
+        {
+            _autoSaveTimer = new System.Timers.Timer(AUTO_SAVE_INTERVAL);
+            _autoSaveTimer.Elapsed += AutoSave_Elapsed;
+            _autoSaveTimer.Start();
+
+            _dataGrid.CellEditEnded += DataGrid_CellEditEnded;
+        }
+
+        private void DataGrid_CellEditEnded(object sender, DataGridCellEditEndedEventArgs e)
+        {
+            _hasUnsavedChanges = true;
+        }
+
+        private void AutoSave_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (_hasUnsavedChanges && _currentLocresFilePath != null)
+            {
+                // Dispatch to UI thread since we're in a timer callback
+                Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    try
+                    {
+                        SaveEditedData();
+                        _hasUnsavedChanges = false;
+                        _notificationManager.Show(new Notification(
+                            "Auto-save",
+                            "Your changes have been automatically saved.",
+                            NotificationType.Information));
+                    }
+                    catch (Exception ex)
+                    {
+                        _notificationManager.Show(new Notification(
+                            "Auto-save Error",
+                            $"Failed to auto-save: {ex.Message}",
+                            NotificationType.Error));
+                    }
+                });
+            }
+        }
+
+
+        // Start Discord RPC
         public DiscordRpcClient client;
         private DateTime? editStartTime;
         private DateTime? idleStartTime;
@@ -153,56 +208,6 @@ namespace UnrealLocresEditor.Views
 
             client.Initialize();
             UpdatePresence(DiscordRPCEnabled);
-        }
-
-        private void OnWindowClosing(object sender, WindowClosingEventArgs e)
-        {
-            client?.ClearPresence();
-            client?.Dispose();
-            SaveConfig();
-        }
-
-        // Keybinds
-        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyModifiers == KeyModifiers.Control)
-            {
-                switch (e.Key)
-                {
-                    case Key.F:
-                        ShowFindDialog();
-                        break;
-                    case Key.H:
-                        ShowFindReplaceDialog();
-                        break;
-                }
-            }
-        }
-
-        private void ShowFindDialog()
-        {
-            if (findDialog == null)
-            {
-                findDialog = new FindDialog();
-                findDialog.Closed += FindDialog_Closed;
-                findDialog.MainWindow = this;
-            }
-
-            findDialog.Show();
-            findDialog.Activate();
-        }
-
-        private void ShowFindReplaceDialog()
-        {
-            if (findReplaceDialog == null)
-            {
-                findReplaceDialog = new FindReplaceDialog();
-                findReplaceDialog.Closed += FindReplaceDialog_Closed;
-                findReplaceDialog.MainWindow = this;
-            }
-
-            findReplaceDialog.Show();
-            findReplaceDialog.Activate();
         }
 
         private void UpdatePresence(bool enabled)
@@ -251,6 +256,75 @@ namespace UnrealLocresEditor.Views
                     client = null;
                 }
             }
+        }
+
+        // Save things when window closes
+        private void OnWindowClosing(object sender, WindowClosingEventArgs e)
+        {
+            if (_hasUnsavedChanges)
+            {
+                try
+                {
+                    SaveEditedData();
+                }
+                catch (Exception ex)
+                {
+                    _notificationManager.Show(new Notification(
+                        "Save Error",
+                        $"Failed to save changes before closing: {ex.Message}",
+                        NotificationType.Error));
+                }
+            }
+
+            _autoSaveTimer?.Stop();
+            _autoSaveTimer?.Dispose();
+
+            client?.ClearPresence();
+            client?.Dispose();
+            SaveConfig();
+        }
+
+    // Keybinds
+    private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyModifiers == KeyModifiers.Control)
+            {
+                switch (e.Key)
+                {
+                    case Key.F:
+                        ShowFindDialog();
+                        break;
+                    case Key.H:
+                        ShowFindReplaceDialog();
+                        break;
+                }
+            }
+        }
+
+        private void ShowFindDialog()
+        {
+            if (findDialog == null)
+            {
+                findDialog = new FindDialog();
+                findDialog.Closed += FindDialog_Closed;
+                findDialog.MainWindow = this;
+            }
+
+            findDialog.Show();
+            findDialog.Activate();
+        }
+
+        private void ShowFindReplaceDialog()
+        {
+            if (findReplaceDialog == null)
+            {
+                findReplaceDialog = new FindReplaceDialog();
+                findReplaceDialog.Closed += FindReplaceDialog_Closed;
+                findReplaceDialog.MainWindow = this;
+            }
+
+            findReplaceDialog.Show();
+            findReplaceDialog.Activate();
         }
 
         private static string winePrefixDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wineprefix");
@@ -593,6 +667,12 @@ namespace UnrealLocresEditor.Views
 
         private void SaveEditedData()
         {
+
+            if (_currentLocresFilePath == null)
+            {
+                return;
+            }
+
             var exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + "_edited.csv";
             var csvFile = Path.Combine(exeDirectory, csvFileName);
