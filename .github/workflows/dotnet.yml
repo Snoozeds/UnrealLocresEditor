@@ -1,16 +1,13 @@
-name: Build and Release
+name: Release Build
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
   release:
     types:
       - published
 
 jobs:
   build:
+    name: Build and Attach Release Assets
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -18,12 +15,15 @@ jobs:
           - os: windows-latest
             architecture: x64
             runtime: win-x64
+            suffix: win-x64
           - os: windows-latest
             architecture: x86
             runtime: win-x86
+            suffix: win-x86
           - os: ubuntu-latest
             architecture: x64
             runtime: linux-x64
+            suffix: linux-x64
 
     steps:
       - name: Checkout repository
@@ -38,21 +38,34 @@ jobs:
         run: dotnet restore src/UnrealLocresEditor.Desktop
 
       - name: Build
-        run: dotnet build src/UnrealLocresEditor.Desktop --runtime ${{ matrix.runtime }} -c Release
+        run: dotnet publish src/UnrealLocresEditor.Desktop --runtime ${{ matrix.runtime }} -c Release --output ./output/${{ matrix.runtime }}
 
-  update-version:
-    if: github.event_name == 'release'
+      - name: Create ZIP Archive
+        run: |
+          mkdir -p artifacts
+          zip -r artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip ./output/${{ matrix.runtime }}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.suffix }}
+          path: artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip
+
+  attach-assets:
+    name: Attach Build Artifacts to Release
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts
 
-      - name: Update version.txt
-        id: update_version
-        run: |
-          echo "Version: ${{ github.event.release.tag_name }}" > version.txt
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add version.txt
-          git commit -m "Update version to ${{ github.event.release.tag_name }}"
-          git push origin HEAD:main
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          release_id: ${{ github.event.release.id }}
+          asset_path: ./artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip
+          asset_name: "UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip"
+          asset_content_type: application/zip
