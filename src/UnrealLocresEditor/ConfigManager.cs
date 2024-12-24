@@ -80,10 +80,15 @@ namespace UnrealLocresEditor.Config
             };
         }
 
-        private static bool IsValidHexColor(string color)
+        public static bool IsValidHexColor(string color)
         {
+            // Avalonia only seems to support 6 digit hex codes (not including #)
+            if (color.Length > 7)
+            {
+                color = color.Substring(0, 7);
+            }
             string hexColorPattern = @"^#[0-9A-Fa-f]{6}$";
-            return Regex.IsMatch(color, hexColorPattern);
+            return Regex.IsMatch(color.Trim(), hexColorPattern);
         }
 
         public static AppConfig Load()
@@ -130,12 +135,14 @@ namespace UnrealLocresEditor.Config
         {
             try
             {
+                Console.WriteLine($"Saving config: {JsonConvert.SerializeObject(this, Formatting.Indented)}");
                 string filePath = GetConfigFilePath();
                 string json = JsonConvert.SerializeObject(this, Formatting.Indented);
                 File.WriteAllText(filePath, json);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine($"Failed to save config: {e}");
             }
         }
     }
