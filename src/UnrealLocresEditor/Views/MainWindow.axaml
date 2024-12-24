@@ -3,7 +3,8 @@
         x:Class="UnrealLocresEditor.Views.MainWindow"
         Title="Unreal Locres Editor"
         Width="800"
-        Height="450">
+        Height="450"
+		Icon="/Assets/ULE-icon.ico">
 	<Window.Styles>
 		<Style Selector="DataGridCell">
 			<Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>

@@ -3,7 +3,8 @@
         x:Class="UnrealLocresEditor.Views.FindReplaceDialog"
         Title="Find and replace"
         Width="350"
-        Height="225">
+        Height="225"
+		Icon="/Assets/ULE-icon.ico">
 
 	<Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" Margin="10">
 		<TextBox x:Name="uiSearchTextBox" Watermark="Find" Grid.Row="0" Grid.Column="0" Margin="0,0,5,0" />

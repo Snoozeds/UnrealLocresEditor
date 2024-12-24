@@ -6,7 +6,8 @@
         Title="Preferences"
         Width="600"
         Height="400"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+		Icon="/Assets/ULE-icon.ico">
 
 	<Grid RowDefinitions="Auto,*,Auto" Margin="16">
 		<TabControl Grid.Row="1">

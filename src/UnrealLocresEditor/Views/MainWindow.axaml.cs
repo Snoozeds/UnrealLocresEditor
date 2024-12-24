@@ -219,7 +219,11 @@ namespace UnrealLocresEditor.Views
                 {
                     // Set the presence details based on the config privacy setting
                     Details = _appConfig.DiscordRPCPrivacy ? _appConfig.DiscordRPCPrivacyString : (_currentLocresFilePath == null ? "Idling" : $"Editing file: {Path.GetFileName(_currentLocresFilePath)}"),
-                    Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null
+                    Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null,
+                    Assets = new Assets()
+                    {
+                        LargeImageKey = "ule-logo",
+                    }
                 };
 
                 client.SetPresence(presence);
