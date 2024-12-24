@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Avalonia.Controls;
+using Avalonia.Media;
+using ReactiveUI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
-using Avalonia.Controls;
-using Avalonia.Media;
-using ReactiveUI;
+using System.Runtime.InteropServices;
 using UnrealLocresEditor.Config;
 using UnrealLocresEditor.Views;
 
@@ -89,6 +90,7 @@ namespace UnrealLocresEditor.ViewModels
             TimeSpan.FromMinutes(30)
         };
 
+        public bool IsLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
         public ReactiveCommand<Unit, Unit> CancelCommand { get; }
 

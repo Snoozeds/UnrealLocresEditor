@@ -14,16 +14,16 @@
 			<TabItem Header="Appearance">
 				<StackPanel Spacing="16" Margin="16">
 					<StackPanel>
-						<ToggleSwitch Content="Dark Theme"
+						<ToggleSwitch Content="Dark Theme (requires restart)"
                                     IsChecked="{Binding IsDarkTheme}"
-									FontSize="18"/>
+                                    FontSize="18"/>
 					</StackPanel>
 
 					<StackPanel>
-						<TextBlock Text="Accent Color" Margin="0,0,0,8" FontSize="18"/>
+						<TextBlock Text="Accent Color (requires restart)" Margin="0,0,0,8" FontSize="18"/>
 						<ColorPicker Color="{Binding AccentColor}"
-									 HorizontalAlignment="Left"
-									 VerticalAlignment="Center"/>
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Center"/>
 					</StackPanel>
 				</StackPanel>
 			</TabItem>
@@ -33,12 +33,12 @@
 				<StackPanel Spacing="16" Margin="16">
 					<ToggleSwitch Content="Enable Discord Rich Presence"
                                 IsChecked="{Binding DiscordRPCEnabled}"
-								FontSize="18"/>
+                                FontSize="18"/>
 
 					<StackPanel IsEnabled="{Binding DiscordRPCEnabled}">
 						<ToggleSwitch Content="Privacy Mode"
                                     IsChecked="{Binding DiscordRPCPrivacy}"
-									FontSize="18"/>
+                                    FontSize="18"/>
 
 						<TextBlock Text="Privacy Message" Margin="0,8,0,4"/>
 						<TextBox Text="{Binding DiscordRPCPrivacyString}"
@@ -61,10 +61,10 @@
 							</ComboBox.ItemTemplate>
 						</ComboBox>
 					</StackPanel>
-
 					<ToggleSwitch Content="Use Wine Compatibility (Linux)"
-                                IsChecked="{Binding UseWine}"
-								FontSize="18"/>
+                                  IsChecked="{Binding UseWine}"
+                                  FontSize="18"
+                                  IsVisible="{Binding IsLinux}"/>
 				</StackPanel>
 			</TabItem>
 		</TabControl>
@@ -76,9 +76,9 @@
                 Spacing="8"
                 Margin="0,16,0,0">
 			<Button Content="Save"
-					Command="{Binding SaveCommand}"/>
+                    Command="{Binding SaveCommand}"/>
 			<Button Content="Cancel"
-					Command="{Binding CancelCommand}"/>
+                    Command="{Binding CancelCommand}"/>
 		</StackPanel>
 	</Grid>
 </Window>
