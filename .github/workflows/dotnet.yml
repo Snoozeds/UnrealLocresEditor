@@ -1,0 +1,58 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            architecture: x64
+            runtime: win-x64
+          - os: windows-latest
+            architecture: x86
+            runtime: win-x86
+          - os: ubuntu-latest
+            architecture: x64
+            runtime: linux-x64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --runtime ${{ matrix.runtime }} -c Release
+
+  update-version:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Update version.txt
+        id: update_version
+        run: |
+          echo "Version: ${{ github.event.release.tag_name }}" > version.txt
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add version.txt
+          git commit -m "Update version to ${{ github.event.release.tag_name }}"
+          git push origin HEAD:main
