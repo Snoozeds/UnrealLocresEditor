@@ -17,12 +17,12 @@ namespace UnrealLocresEditor.Views
         {
             InitializeComponent();
             DataContext = this;
-            LoadVersion();
         }
 
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
+            LoadVersion();
         }
 
         private void LoadVersion()
