@@ -45,8 +45,11 @@ jobs:
 
       - name: Create ZIP Archive
         run: |
-          mkdir -p artifacts
-          zip -r artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip ./output/${{ matrix.runtime }}
+          if [ $RUNNER_OS = 'Windows' ]; then
+            Compress-Archive -Path ./output/${{ matrix.runtime }} -DestinationPath ./artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip
+          else
+            zip -r ./artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip ./output/${{ matrix.runtime }}
+          fi
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
