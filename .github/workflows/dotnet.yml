@@ -1,10 +1,8 @@
 name: Release Build
-
 on:
   release:
     types:
       - published
-
 jobs:
   build:
     name: Build and Attach Release Assets
@@ -24,33 +22,36 @@ jobs:
             architecture: x64
             runtime: linux-x64
             suffix: linux-x64
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.0.x
-
+      
       - name: Restore dependencies
         run: dotnet restore src/UnrealLocresEditor.Desktop
-
+      
       - name: Generate version.txt
         run: echo "${{ github.event.release.tag_name }}" > ./src/UnrealLocresEditor.Desktop/version.txt
-
+      
       - name: Build
         run: dotnet publish src/UnrealLocresEditor.Desktop --runtime ${{ matrix.runtime }} -c Release --output ./output/${{ matrix.runtime }}
-
+      
+      - name: Create artifacts directory
+        run: mkdir -p artifacts
+      
       - name: Create ZIP Archive
+        shell: bash
         run: |
-          if [ $RUNNER_OS = 'Windows' ]; then
-            Compress-Archive -Path ./output/${{ matrix.runtime }} -DestinationPath ./artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            powershell -Command "Compress-Archive -Path ./output/${{ matrix.runtime }}/* -DestinationPath ./artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip"
           else
-            zip -r ./artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip ./output/${{ matrix.runtime }}
+            cd output/${{ matrix.runtime }} && zip -r ../../artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip ./*
           fi
-
+      
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -66,12 +67,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: ./artifacts
-
+      
       - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          release_id: ${{ github.event.release.id }}
-          asset_path: ./artifacts/UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip
-          asset_name: "UnrealLocresEditor-${{ github.event.release.tag_name }}-${{ matrix.suffix }}.zip"
-          asset_content_type: application/zip
+          files: |
+            ./artifacts/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
