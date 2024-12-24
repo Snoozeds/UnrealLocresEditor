@@ -35,10 +35,10 @@ jobs:
           dotnet-version: 7.0.x
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src/UnrealLocresEditor.Desktop
 
       - name: Build
-        run: dotnet build --runtime ${{ matrix.runtime }} -c Release
+        run: dotnet build src/UnrealLocresEditor.Desktop --runtime ${{ matrix.runtime }} -c Release
 
   update-version:
     if: github.event_name == 'release'
