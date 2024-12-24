@@ -26,12 +26,7 @@
 			</MenuItem>
 			<MenuItem Header="_Linux" Name="uiLinuxHeader">
 				<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>
-				<MenuItem Header="Use Wine (UnrealLocres)" Name="uiUseWineMenuItem">
-					<MenuItem.Icon>
-						<CheckBox Name="uiUseWineCheckBox"/>
-					</MenuItem.Icon>
 				</MenuItem>
-			</MenuItem>
 		</Menu>
 		<DataGrid x:Name="uiDataGrid"
                   Grid.Row="1"

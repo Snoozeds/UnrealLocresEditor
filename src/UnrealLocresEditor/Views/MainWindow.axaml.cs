@@ -834,12 +834,6 @@ namespace UnrealLocresEditor.Views
             winePrefixMenuItem.Click += WinePrefix_Click;
             winePrefixMenuItem.IsVisible = IsLinux();
 
-            var useWineMenuItem = this.FindControl<MenuItem>("uiUseWineMenuItem");
-            var useWineCheckBox = this.FindControl<CheckBox>("uiUseWineCheckBox");
-            useWineMenuItem.IsVisible = IsLinux();
-            useWineCheckBox.IsChecked = _appConfig.UseWine;
-            UseWine = useWineCheckBox.IsChecked ?? true;
-
             var preferencesMenuItem = this.FindControl<MenuItem>("uiPreferencesMenuItem");
             preferencesMenuItem.Click += PreferencesMenuItem_Click;
         }
