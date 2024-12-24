@@ -3,6 +3,10 @@ on:
   release:
     types:
       - published
+
+permissions:
+  contents: write
+  
 jobs:
   build:
     name: Build and Attach Release Assets
@@ -62,6 +66,8 @@ jobs:
     name: Attach Build Artifacts to Release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v3
