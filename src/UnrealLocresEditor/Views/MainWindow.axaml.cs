@@ -99,11 +99,18 @@ namespace UnrealLocresEditor.Views
         // Initialize auto saving
         private void InitializeAutoSave()
         {
-            int autoSaveIntervalMs = (int)_appConfig.AutoSaveInterval.TotalMilliseconds;
-            _autoSaveTimer = new System.Timers.Timer();
-            _autoSaveTimer.Interval = _appConfig.AutoSaveInterval.TotalMilliseconds;
-            _autoSaveTimer.Elapsed += AutoSave_Elapsed;
-            _autoSaveTimer.Start();
+            if (_appConfig.AutoSaveEnabled)
+            {
+                int autoSaveIntervalMs = (int)_appConfig.AutoSaveInterval.TotalMilliseconds;
+                _autoSaveTimer = new System.Timers.Timer();
+                _autoSaveTimer.Interval = _appConfig.AutoSaveInterval.TotalMilliseconds;
+                _autoSaveTimer.Elapsed += AutoSave_Elapsed;
+                _autoSaveTimer.Start();
+            }
+            else
+            {
+                _autoSaveTimer = null;
+            }
 
             _dataGrid.CellEditEnded += DataGrid_CellEditEnded;
         }

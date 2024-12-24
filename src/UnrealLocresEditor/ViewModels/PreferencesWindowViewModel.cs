@@ -24,6 +24,7 @@ namespace UnrealLocresEditor.ViewModels
         private string _discordRPCPrivacyString;
         private bool _useWine;
         private TimeSpan _selectedAutoSaveInterval;
+        private bool _autoSaveEnabled;
 
         public bool IsDarkTheme
         {
@@ -89,6 +90,11 @@ namespace UnrealLocresEditor.ViewModels
             TimeSpan.FromMinutes(15),
             TimeSpan.FromMinutes(30)
         };
+        public bool AutoSaveEnabled
+        {
+            get => _autoSaveEnabled;
+            set => this.RaiseAndSetIfChanged(ref _autoSaveEnabled, value);
+        }
 
         public bool IsLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
@@ -108,6 +114,7 @@ namespace UnrealLocresEditor.ViewModels
             DiscordRPCPrivacyString = config.DiscordRPCPrivacyString;
             UseWine = config.UseWine;
             SelectedAutoSaveInterval = config.AutoSaveInterval;
+            AutoSaveEnabled = config.AutoSaveEnabled;
 
             if (!AutoSaveIntervals.Contains(SelectedAutoSaveInterval))
             {
@@ -129,6 +136,7 @@ namespace UnrealLocresEditor.ViewModels
             config.DiscordRPCPrivacyString = DiscordRPCPrivacyString;
             config.UseWine = UseWine;
             config.AutoSaveInterval = SelectedAutoSaveInterval;
+            config.AutoSaveEnabled = AutoSaveEnabled;
 
             _mainWindow.UpdatePresence(DiscordRPCEnabled);
 

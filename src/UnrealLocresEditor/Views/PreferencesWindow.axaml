@@ -51,10 +51,13 @@
 			<!-- Editor Settings -->
 			<TabItem Header="Editor">
 				<StackPanel Spacing="16" Margin="16">
-					<StackPanel>
+					<ToggleSwitch Content="Enable Auto-Save"
+                                  IsChecked="{Binding AutoSaveEnabled}"
+                                  FontSize="18"/>
+					<StackPanel IsEnabled="{Binding AutoSaveEnabled}">
 						<TextBlock Text="Auto-Save Interval" Margin="0,0,0,8" FontSize="18"/>
 						<ComboBox ItemsSource="{Binding AutoSaveIntervals}"
-                                SelectedItem="{Binding SelectedAutoSaveInterval}">
+                                  SelectedItem="{Binding SelectedAutoSaveInterval}">
 							<ComboBox.ItemTemplate>
 								<DataTemplate>
 									<TextBlock Text="{Binding Minutes, StringFormat='{}{0} minutes'}"/>

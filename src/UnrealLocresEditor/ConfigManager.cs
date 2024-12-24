@@ -15,6 +15,7 @@ namespace UnrealLocresEditor.Config
         public static readonly string DiscordRPCPrivacyString = "Editing a file";
         public static readonly bool UseWine = false;
         public static readonly TimeSpan AutoSaveInterval = TimeSpan.FromMinutes(5);
+        public static readonly bool AutoSaveEnabled = true;
     }
 
     public class AppConfig
@@ -29,6 +30,7 @@ namespace UnrealLocresEditor.Config
         public string DiscordRPCPrivacyString { get; set; } = DefaultConfig.DiscordRPCPrivacyString;
         public bool UseWine { get; set; } = DefaultConfig.UseWine;
         public TimeSpan AutoSaveInterval { get; set; } = DefaultConfig.AutoSaveInterval;
+        public bool AutoSaveEnabled { get; set; } = DefaultConfig.AutoSaveEnabled;
 
         public static AppConfig Instance
         {
@@ -76,7 +78,8 @@ namespace UnrealLocresEditor.Config
                 { "DiscordRPCPrivacy", config => config.DiscordRPCPrivacy == true || config.DiscordRPCPrivacy == false },
                 { "DiscordRPCPrivacyString", config => !string.IsNullOrEmpty(config.DiscordRPCPrivacyString) },
                 { "UseWine", config => config.UseWine == true || config.UseWine == false },
-                { "AutoSaveInterval", config => config.AutoSaveInterval > TimeSpan.Zero && config.AutoSaveInterval.TotalMilliseconds <= int.MaxValue }
+                { "AutoSaveInterval", config => config.AutoSaveInterval > TimeSpan.Zero && config.AutoSaveInterval.TotalMilliseconds <= int.MaxValue },
+                { "AutoSaveEnabled", config => config.AutoSaveEnabled == true || config.AutoSaveEnabled == false }
             };
         }
 
