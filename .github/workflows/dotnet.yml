@@ -37,6 +37,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore src/UnrealLocresEditor.Desktop
 
+      - name: Generate version.txt
+        run: echo "${{ github.event.release.tag_name }}" > ./src/UnrealLocresEditor.Desktop/version.txt
+
       - name: Build
         run: dotnet publish src/UnrealLocresEditor.Desktop --runtime ${{ matrix.runtime }} -c Release --output ./output/${{ matrix.runtime }}
 
