@@ -1,0 +1,84 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:UnrealLocresEditor.ViewModels"
+        x:Class="UnrealLocresEditor.Views.PreferencesWindow"
+        x:DataType="vm:PreferencesWindowViewModel"
+        Title="Preferences"
+        Width="600"
+        Height="400"
+        WindowStartupLocation="CenterOwner">
+
+	<Grid RowDefinitions="Auto,*,Auto" Margin="16">
+		<TabControl Grid.Row="1">
+			<!-- Appearance Settings -->
+			<TabItem Header="Appearance">
+				<StackPanel Spacing="16" Margin="16">
+					<StackPanel>
+						<ToggleSwitch Content="Dark Theme"
+                                    IsChecked="{Binding IsDarkTheme}"
+									FontSize="18"/>
+					</StackPanel>
+
+					<StackPanel>
+						<TextBlock Text="Accent Color" Margin="0,0,0,8" FontSize="18"/>
+						<ColorPicker Color="{Binding AccentColor}"
+									 HorizontalAlignment="Left"
+									 VerticalAlignment="Center"/>
+					</StackPanel>
+				</StackPanel>
+			</TabItem>
+
+			<!-- Discord Settings -->
+			<TabItem Header="Discord">
+				<StackPanel Spacing="16" Margin="16">
+					<ToggleSwitch Content="Enable Discord Rich Presence"
+                                IsChecked="{Binding DiscordRPCEnabled}"
+								FontSize="18"/>
+
+					<StackPanel IsEnabled="{Binding DiscordRPCEnabled}">
+						<ToggleSwitch Content="Privacy Mode"
+                                    IsChecked="{Binding DiscordRPCPrivacy}"
+									FontSize="18"/>
+
+						<TextBlock Text="Privacy Message" Margin="0,8,0,4"/>
+						<TextBox Text="{Binding DiscordRPCPrivacyString}"
+                                IsEnabled="{Binding DiscordRPCPrivacy}"/>
+					</StackPanel>
+				</StackPanel>
+			</TabItem>
+
+			<!-- Editor Settings -->
+			<TabItem Header="Editor">
+				<StackPanel Spacing="16" Margin="16">
+					<StackPanel>
+						<TextBlock Text="Auto-Save Interval" Margin="0,0,0,8" FontSize="18"/>
+						<ComboBox ItemsSource="{Binding AutoSaveIntervals}"
+                                SelectedItem="{Binding SelectedAutoSaveInterval}">
+							<ComboBox.ItemTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding Minutes, StringFormat='{}{0} minutes'}"/>
+								</DataTemplate>
+							</ComboBox.ItemTemplate>
+						</ComboBox>
+					</StackPanel>
+
+					<ToggleSwitch Content="Use Wine Compatibility (Linux)"
+                                IsChecked="{Binding UseWine}"
+								FontSize="18"/>
+				</StackPanel>
+			</TabItem>
+		</TabControl>
+
+		<!-- Bottom Buttons -->
+		<StackPanel Grid.Row="2"
+                Orientation="Horizontal"
+                HorizontalAlignment="Right"
+                Spacing="8"
+                Margin="0,16,0,0">
+			<Button Content="Save"
+					Command="{Binding SaveCommand}"/>
+			<Button Content="Cancel"
+					Command="{Binding CancelCommand}"/>
+		</StackPanel>
+	</Grid>
+</Window>

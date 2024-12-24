@@ -49,7 +49,6 @@ namespace UnrealLocresEditor.Views
             set
             {
                 _appConfig.DiscordRPCEnabled = value;
-                _appConfig.Save();
             }
         }
 
@@ -59,7 +58,6 @@ namespace UnrealLocresEditor.Views
             set
             {
                 _appConfig.UseWine = value;
-                _appConfig.Save();
             }
         }
 
@@ -88,9 +86,7 @@ namespace UnrealLocresEditor.Views
             this.Loaded += OnWindowLoaded;
             this.Closing += OnWindowClosing;
             this.KeyDown += MainWindow_KeyDown; // Keybinds
-#if DEBUG
-            this.AttachDevTools();
-#endif
+
             _rows = new ObservableCollection<DataRow>();
             DataContext = this;
 
@@ -197,7 +193,7 @@ namespace UnrealLocresEditor.Views
             UpdatePresence(DiscordRPCEnabled);
         }
 
-        private void UpdatePresence(bool enabled)
+        public void UpdatePresence(bool enabled)
         {
             if (enabled)
             {
@@ -219,26 +215,12 @@ namespace UnrealLocresEditor.Views
                     client.Initialize();
                 }
 
-                var presence = new RichPresence();
-
-                if (_appConfig.DiscordRPCPrivacy)
+                var presence = new RichPresence
                 {
-                    presence.Details = _appConfig.DiscordRPCPrivacyString;
-                    presence.Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null;
-                }
-                else
-                {
-                    if (_currentLocresFilePath == null)
-                    {
-                        presence.Details = "Idling";
-                        presence.Timestamps = idleStartTime.HasValue ? new Timestamps(idleStartTime.Value) : null;
-                    }
-                    else
-                    {
-                        presence.Details = $"Editing file: {Path.GetFileName(_currentLocresFilePath)}";
-                        presence.Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null;
-                    }
-                }
+                    // Set the presence details based on the config privacy setting
+                    Details = _appConfig.DiscordRPCPrivacy ? _appConfig.DiscordRPCPrivacyString : (_currentLocresFilePath == null ? "Idling" : $"Editing file: {Path.GetFileName(_currentLocresFilePath)}"),
+                    Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null
+                };
 
                 client.SetPresence(presence);
             }
@@ -276,7 +258,6 @@ namespace UnrealLocresEditor.Views
 
             client?.ClearPresence();
             client?.Dispose();
-            SaveConfig();
         }
 
         // Keybinds
@@ -859,11 +840,8 @@ namespace UnrealLocresEditor.Views
             useWineCheckBox.IsChecked = _appConfig.UseWine;
             UseWine = useWineCheckBox.IsChecked ?? true;
 
-            var uiDiscordRPCMenuItem = this.FindControl<MenuItem>("uiDiscordRPCItem");
-            var uiDiscordActivityCheckBox = this.FindControl<CheckBox>("uiDiscordActivityCheckBox");
-            uiDiscordActivityCheckBox.IsChecked = _appConfig.DiscordRPCEnabled;
-            uiDiscordActivityCheckBox.Click += DiscordRPC_Click;
-            DiscordRPCEnabled = uiDiscordActivityCheckBox.IsChecked ?? true;
+            var preferencesMenuItem = this.FindControl<MenuItem>("uiPreferencesMenuItem");
+            preferencesMenuItem.Click += PreferencesMenuItem_Click;
         }
 
         private FindDialog findDialog;
@@ -904,34 +882,23 @@ namespace UnrealLocresEditor.Views
             findReplaceDialog = null;
         }
 
-
-        private void DiscordRPC_Click(object sender, RoutedEventArgs e)
+        private PreferencesWindow preferencesWindow;
+        private void PreferencesMenuItem_Click(Object sender, RoutedEventArgs e)
         {
-            var checkBox = sender as CheckBox;
-            if (checkBox != null)
+            if (preferencesWindow == null)
             {
-                DiscordRPCEnabled = checkBox.IsChecked ?? false;
-                if (DiscordRPCEnabled)
-                {
-                    // Update timers
-                    if (_currentLocresFilePath != null)
-                    {
-                        editStartTime = DateTime.UtcNow;
-                        idleStartTime = null;
-                    }
-                    else
-                    {
-                        editStartTime = null;
-                        idleStartTime = DateTime.UtcNow;
-                    }
-                    _appConfig.DiscordRPCEnabled = true;
-                }
-                else if (!DiscordRPCEnabled)
-                {
-                    _appConfig.DiscordRPCEnabled = false;
-                }
-                UpdatePresence(DiscordRPCEnabled);
+                preferencesWindow = new PreferencesWindow(this);
+                preferencesWindow.Closed += PreferencesWindow_Closed;
             }
+
+            preferencesWindow.Show();
+            preferencesWindow.Activate();
+        }
+
+        private void PreferencesWindow_Closed(object sender, EventArgs e)
+        {
+
+            preferencesWindow = null;
         }
 
 

@@ -1,0 +1,143 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reactive;
+using Avalonia.Controls;
+using Avalonia.Media;
+using ReactiveUI;
+using UnrealLocresEditor.Config;
+using UnrealLocresEditor.Views;
+
+#nullable disable
+
+namespace UnrealLocresEditor.ViewModels
+{
+    public class PreferencesWindowViewModel : ReactiveObject
+    {
+        private readonly Window _window;
+        private readonly MainWindow _mainWindow;
+        private bool _isDarkTheme;
+        private Color _accentColor;
+        private bool _discordRPCEnabled;
+        private bool _discordRPCPrivacy;
+        private string _discordRPCPrivacyString;
+        private bool _useWine;
+        private TimeSpan _selectedAutoSaveInterval;
+
+        public bool IsDarkTheme
+        {
+            get => _isDarkTheme;
+            set => this.RaiseAndSetIfChanged(ref _isDarkTheme, value);
+        }
+
+        public Color AccentColor
+        {
+            get => _accentColor;
+            set
+            {
+                var hexColor = value.ToString();
+
+                // Ensure it's a valid hex color
+                if (AppConfig.IsValidHexColor(hexColor))
+                {
+                    this.RaiseAndSetIfChanged(ref _accentColor, value);
+                }
+                else
+                {
+                    Console.WriteLine($"Invalid AccentColor selected: {hexColor}. Reverting to default.");
+                    this.RaiseAndSetIfChanged(ref _accentColor, Color.Parse("#4e3cb2"));
+                }
+            }
+        }
+
+        public bool DiscordRPCEnabled
+        {
+            get => _discordRPCEnabled;
+            set => this.RaiseAndSetIfChanged(ref _discordRPCEnabled, value);
+        }
+
+        public bool DiscordRPCPrivacy
+        {
+            get => _discordRPCPrivacy;
+            set => this.RaiseAndSetIfChanged(ref _discordRPCPrivacy, value);
+        }
+
+        public string DiscordRPCPrivacyString
+        {
+            get => _discordRPCPrivacyString;
+            set => this.RaiseAndSetIfChanged(ref _discordRPCPrivacyString, value);
+        }
+
+        public bool UseWine
+        {
+            get => _useWine;
+            set => this.RaiseAndSetIfChanged(ref _useWine, value);
+        }
+
+        public TimeSpan SelectedAutoSaveInterval
+        {
+            get => _selectedAutoSaveInterval;
+            set => this.RaiseAndSetIfChanged(ref _selectedAutoSaveInterval, value);
+        }
+
+        public IEnumerable<TimeSpan> AutoSaveIntervals { get; } = new[]
+        {
+            TimeSpan.FromMinutes(1),
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromMinutes(10),
+            TimeSpan.FromMinutes(15),
+            TimeSpan.FromMinutes(30)
+        };
+
+        public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+        public ReactiveCommand<Unit, Unit> CancelCommand { get; }
+
+        public PreferencesWindowViewModel(Window window, MainWindow mainWindow)
+        {
+            _window = window;
+            _mainWindow = mainWindow;
+
+            // Load current settings
+            var config = AppConfig.Instance;
+            IsDarkTheme = config.IsDarkTheme;
+            AccentColor = Color.Parse(config.AccentColor);
+            DiscordRPCEnabled = config.DiscordRPCEnabled;
+            DiscordRPCPrivacy = config.DiscordRPCPrivacy;
+            DiscordRPCPrivacyString = config.DiscordRPCPrivacyString;
+            UseWine = config.UseWine;
+            SelectedAutoSaveInterval = config.AutoSaveInterval;
+
+            if (!AutoSaveIntervals.Contains(SelectedAutoSaveInterval))
+            {
+                SelectedAutoSaveInterval = TimeSpan.FromMinutes(5);
+            }
+
+            // Initialize commands
+            SaveCommand = ReactiveCommand.Create(Save);
+            CancelCommand = ReactiveCommand.Create(Cancel);
+        }
+
+        private void Save()
+        {
+            var config = AppConfig.Instance;
+            config.IsDarkTheme = IsDarkTheme;
+            config.AccentColor = AccentColor.ToString();
+            config.DiscordRPCEnabled = DiscordRPCEnabled;
+            config.DiscordRPCPrivacy = DiscordRPCPrivacy;
+            config.DiscordRPCPrivacyString = DiscordRPCPrivacyString;
+            config.UseWine = UseWine;
+            config.AutoSaveInterval = SelectedAutoSaveInterval;
+
+            _mainWindow.UpdatePresence(DiscordRPCEnabled);
+
+            config.Save();
+            Console.WriteLine("Config saved.");
+            _window.Close();
+        }
+
+        private void Cancel()
+        {
+            _window.Close();
+        }
+    }
+}
