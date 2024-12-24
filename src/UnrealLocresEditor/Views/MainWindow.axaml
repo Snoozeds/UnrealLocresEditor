@@ -28,6 +28,10 @@
 			<MenuItem Header="_Linux" Name="uiLinuxHeader">
 				<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>
 				</MenuItem>
+			<MenuItem Header="_Help">
+				<MenuItem Header="Report issue" Name="reportIssueMenuItem"/>
+				<MenuItem Header="About" Name="uiAboutMenuItem"/>
+			</MenuItem>
 		</Menu>
 		<DataGrid x:Name="uiDataGrid"
                   Grid.Row="1"

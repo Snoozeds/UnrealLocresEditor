@@ -1,0 +1,30 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:UnrealLocresEditor.Views"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+        x:Class="UnrealLocresEditor.Views.AboutWindow"
+        x:DataType="vm:AboutWindow"
+        Title="About"
+        Width="400"
+        Height="300"
+        WindowStartupLocation="CenterOwner">
+
+	<StackPanel Margin="20" Spacing="10">
+		<Image Source="/Assets/ULE-icon.ico"
+               Width="100"
+               Height="100"/>
+
+		<TextBlock Text="{Binding AppName}"
+                   FontSize="24"
+                   HorizontalAlignment="Center"/>
+
+		<TextBlock Text="{Binding Version}"
+                   HorizontalAlignment="Center"/>
+
+		<Button Content="Visit GitHub Repository"
+                HorizontalAlignment="Center"
+                Click="OnGitHubButtonClick"/>
+	</StackPanel>
+</Window>

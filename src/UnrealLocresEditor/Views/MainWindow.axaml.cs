@@ -834,14 +834,21 @@ namespace UnrealLocresEditor.Views
             var findReplaceMenuItem = this.FindControl<MenuItem>("uiFindReplaceMenuItem");
             findReplaceMenuItem.Click += FindReplaceMenuItem_Click;
 
+            var preferencesMenuItem = this.FindControl<MenuItem>("uiPreferencesMenuItem");
+            preferencesMenuItem.Click += PreferencesMenuItem_Click;
+
             var winePrefixMenuItem = this.FindControl<MenuItem>("uiWinePrefix");
             winePrefixMenuItem.Click += WinePrefix_Click;
             winePrefixMenuItem.IsVisible = IsLinux();
 
-            var preferencesMenuItem = this.FindControl<MenuItem>("uiPreferencesMenuItem");
-            preferencesMenuItem.Click += PreferencesMenuItem_Click;
+            var reportIssueMenuItem = this.FindControl<MenuItem>("reportIssueMenuItem");
+            reportIssueMenuItem.Click += ReportIssueMenuItem_Click;
+
+            var aboutMenuItem = this.FindControl<MenuItem>("uiAboutMenuItem");
+            aboutMenuItem.Click += AboutMenuItem_Click;
         }
 
+        // Find dialog
         private FindDialog findDialog;
         private void FindMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -861,6 +868,7 @@ namespace UnrealLocresEditor.Views
             findDialog = null;
         }
 
+        // Find and replace dialog
         private FindReplaceDialog findReplaceDialog;
         private void FindReplaceMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -880,6 +888,7 @@ namespace UnrealLocresEditor.Views
             findReplaceDialog = null;
         }
 
+        // Preferences
         private PreferencesWindow preferencesWindow;
         private void PreferencesMenuItem_Click(Object sender, RoutedEventArgs e)
         {
@@ -899,7 +908,7 @@ namespace UnrealLocresEditor.Views
             preferencesWindow = null;
         }
 
-
+        // Attempt wine prefix (Linux)
         private void WinePrefix_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -912,5 +921,43 @@ namespace UnrealLocresEditor.Views
                 _notificationManager.Show(new Notification("Error", $"Failed to initialize Wine prefix: {ex.Message}", NotificationType.Error));
             }
         }
+
+        // Report issue
+        private const string GitHubIssueUrl = "https://github.com/Snoozeds/UnrealLocresEditor/issues/new";
+        private void ReportIssueMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = GitHubIssueUrl,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        // About
+        private AboutWindow aboutWindow;
+        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (aboutWindow == null)
+            {
+                aboutWindow = new AboutWindow();
+                aboutWindow.Closed += AboutWindow_Closed;
+            }
+
+            aboutWindow.Show();
+            aboutWindow.Activate();
+        }
+
+        private void AboutWindow_Closed(Object sender, EventArgs e)
+        {
+            aboutWindow = null;
+        }
+
     }
 }
