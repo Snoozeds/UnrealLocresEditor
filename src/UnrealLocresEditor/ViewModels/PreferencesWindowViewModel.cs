@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Runtime.InteropServices;
-using UnrealLocresEditor.Config;
+using UnrealLocresEditor.Utils;
 using UnrealLocresEditor.Views;
 
 #nullable disable

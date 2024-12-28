@@ -24,7 +24,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
-using UnrealLocresEditor.Config;
+using UnrealLocresEditor.Utils;
 
 #nullable disable
 
@@ -590,10 +590,9 @@ namespace UnrealLocresEditor.Views
                 csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
 
                 // Check if UnrealLocres.exe exists
-                var unrealLocresExePath = Path.Combine(Directory.GetCurrentDirectory(), "UnrealLocres.exe");
-                if (!File.Exists(unrealLocresExePath))
+                var downloader = new UnrealLocresDownloader(this, _notificationManager);
+                if (!await downloader.CheckAndDownloadUnrealLocres())
                 {
-                    _notificationManager.Show(new Notification("Error", "UnrealLocres.exe not found. Please ensure it is in the application directory.", NotificationType.Error));
                     return;
                 }
 

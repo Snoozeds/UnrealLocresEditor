@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace UnrealLocresEditor.Config
+namespace UnrealLocresEditor.Utils
 {
     public static class DefaultConfig
     {
