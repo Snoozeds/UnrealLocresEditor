@@ -19,8 +19,10 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Timers;
 using UnrealLocresEditor.Config;
 
@@ -94,6 +96,12 @@ namespace UnrealLocresEditor.Views
 
             // For displaying warning upon clicking cell in second (source) column
             _dataGrid.CellPointerPressed += DataGrid_CellPointerPressed;
+
+            // For preventing shutdown if the work is unsaved
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                AppDomain.CurrentDomain.ProcessExit += OnSystemShutdown;
+            }
         }
 
         // Initialize auto saving
@@ -246,29 +254,136 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        // Save things when window closes
-        private void OnWindowClosing(object sender, WindowClosingEventArgs e)
+        // Ask if user wants to save when window closes + has unsaved changes
+        private bool _closingHandled = false;
+        private bool _isSystemShutdown = false;
+
+        private void OnSystemShutdown(object? sender, EventArgs e)
         {
+            _isSystemShutdown = true;
+        }
+        private async void OnWindowClosing(object sender, WindowClosingEventArgs e)
+        {
+            if (_closingHandled)
+                return;
+
             if (_hasUnsavedChanges)
             {
-                try
+                // Cancel close event
+                e.Cancel = true;
+
+                // Display prompt to save changes
+                var dialog = new Window
                 {
-                    SaveEditedData();
+                    Title = _isSystemShutdown ? "System Shutdown - Unsaved Changes" : "Unsaved Changes",
+                    Width = 300,
+                    Height = 150,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Content = new StackPanel
+                    {
+                        Margin = new Thickness(20),
+                        Spacing = 20,
+                        Children =
+                {
+                    new TextBlock
+                    {
+                        Text = _isSystemShutdown
+                            ? "The system is shutting down. Do you want to save changes before exiting?"
+                            : "You have unsaved changes. Do you want to save before closing?",
+                        TextWrapping = TextWrapping.Wrap
+                    },
+                    new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 10,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Children =
+                        {
+                            new Avalonia.Controls.Button { Content = "Save" },
+                            new Avalonia.Controls.Button { Content = "Don't Save" },
+                            new Avalonia.Controls.Button { Content = "Cancel" }
+                        }
+                    }
                 }
-                catch (Exception ex)
+                    }
+                };
+
+                var result = await ShowCustomDialog(dialog);
+
+                switch (result)
                 {
-                    _notificationManager.Show(new Notification(
-                        "Save Error",
-                        $"Failed to save changes before closing: {ex.Message}",
-                        NotificationType.Error));
+                    case "Save":
+                        try
+                        {
+                            SaveEditedData();
+                            CompleteClosing(e);
+                        }
+                        catch (Exception ex)
+                        {
+                            _notificationManager.Show(new Notification(
+                                "Save Error",
+                                $"Failed to save changes: {ex.Message}",
+                                NotificationType.Error));
+                        }
+                        break;
+
+                    case "Don't Save":
+                        CompleteClosing(e);
+                        break;
+
+                    case "Cancel":
+                        break;
                 }
             }
+            else
+            {
+                CompleteClosing(e);
+            }
+        }
 
+        private void CompleteClosing(WindowClosingEventArgs e)
+        {
+            _closingHandled = true;
+
+            if (!_isSystemShutdown)
+            {
+                Closing -= OnWindowClosing;
+            }
+
+            e.Cancel = false;
+            CloseApplication();
+        }
+
+        private void CloseApplication()
+        {
             _autoSaveTimer?.Stop();
             _autoSaveTimer?.Dispose();
-
             client?.ClearPresence();
             client?.Dispose();
+
+            var window = (Window)this;
+            window.Close();
+        }
+
+        private TaskCompletionSource<string> _dialogResult;
+
+        private async Task<string> ShowCustomDialog(Window dialog)
+        {
+            _dialogResult = new TaskCompletionSource<string>();
+
+            var buttons = ((StackPanel)((StackPanel)dialog.Content).Children[1]).Children.OfType<Avalonia.Controls.Button>();
+
+            foreach (var button in buttons)
+            {
+                button.Click += (s, e) =>
+                {
+                    _dialogResult.SetResult(((Avalonia.Controls.Button)s).Content.ToString());
+                    dialog.Close();
+                };
+            }
+
+            await dialog.ShowDialog(this);
+            return await _dialogResult.Task;
         }
 
         // Keybinds
