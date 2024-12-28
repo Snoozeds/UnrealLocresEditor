@@ -288,6 +288,22 @@ namespace UnrealLocresEditor.Views
             }
         }
 
+        // Allow pressing shift+enter for multiline text.
+        private void DataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && e.KeyModifiers == KeyModifiers.Shift)
+            {
+                if (sender is DataGrid grid && e.Source is TextBox textBox)
+                {
+                    int caretIndex = textBox.CaretIndex;
+                    string currentText = textBox.Text ?? string.Empty;
+                    textBox.Text = currentText.Insert(caretIndex, Environment.NewLine);
+                    textBox.CaretIndex = caretIndex + Environment.NewLine.Length;
+                    e.Handled = true;
+                }
+            }
+        }
+
         private void ShowFindDialog()
         {
             if (findDialog == null)
@@ -817,6 +833,7 @@ namespace UnrealLocresEditor.Views
         {
             AvaloniaXamlLoader.Load(this);
             _dataGrid = this.FindControl<DataGrid>("uiDataGrid");
+            _dataGrid.AddHandler(KeyDownEvent, DataGrid_PreviewKeyDown, RoutingStrategies.Tunnel);
 
             _searchTextBox = this.FindControl<TextBox>("uiSearchTextBox");
 
