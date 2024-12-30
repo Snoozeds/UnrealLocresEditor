@@ -41,7 +41,7 @@ namespace UnrealLocresEditor.Views
 
         // Auto saving
         private System.Timers.Timer _autoSaveTimer;
-        private bool _hasUnsavedChanges = false;
+        public bool _hasUnsavedChanges = false;
 
         // Settings
         private AppConfig _appConfig;
@@ -182,7 +182,7 @@ namespace UnrealLocresEditor.Views
             }
             else
             {
-                AutoUpdater updater = new AutoUpdater(_notificationManager);
+                AutoUpdater updater = new AutoUpdater(_notificationManager, this);
                 try
                 {
                     await updater.CheckForUpdates();
@@ -787,7 +787,7 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        private void SaveEditedData()
+        public void SaveEditedData()
         {
 
             if (_currentLocresFilePath == null)
@@ -1089,7 +1089,7 @@ namespace UnrealLocresEditor.Views
         {
             if (aboutWindow == null)
             {
-                aboutWindow = new AboutWindow(_notificationManager);
+                aboutWindow = new AboutWindow(_notificationManager, this);
                 aboutWindow.Closed += AboutWindow_Closed;
             }
 

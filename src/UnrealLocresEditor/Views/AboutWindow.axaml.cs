@@ -14,12 +14,14 @@ namespace UnrealLocresEditor.Views
         public string Version { get; private set; } = "Version: Unknown";
         private const string GitHubUrl = "https://github.com/Snoozeds/UnrealLocresEditor";
         private WindowNotificationManager _notificationManager;
+        private MainWindow _mainWindow;
 
-        public AboutWindow(WindowNotificationManager notificationManager)
+        public AboutWindow(WindowNotificationManager notificationManager, MainWindow mainWindow)
         {
             InitializeComponent();
             DataContext = this;
             _notificationManager = notificationManager;
+            _mainWindow = mainWindow;
         }
 
         private void InitializeComponent()
@@ -63,7 +65,7 @@ namespace UnrealLocresEditor.Views
 
         private async void OnCheckForUpdatesClick(object sender, RoutedEventArgs e)
         {
-            AutoUpdater updater = new AutoUpdater(_notificationManager);
+            AutoUpdater updater = new AutoUpdater(_notificationManager, _mainWindow);
             try
             {
                 await updater.CheckForUpdates();

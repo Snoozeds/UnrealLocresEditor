@@ -1,4 +1,7 @@
-﻿using Avalonia.Controls.Notifications;
+﻿using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using System;
 using System.Diagnostics;
@@ -7,6 +10,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using UnrealLocresEditor.Utils;
+using UnrealLocresEditor.Views;
 
 public class AutoUpdater
 {
@@ -14,16 +18,17 @@ public class AutoUpdater
     private const string LocalVersionFile = "version.txt";
     private const string TempUpdatePath = "update.zip";
     private readonly INotificationManager _notificationManager;
+    private readonly MainWindow _mainWindow;
     private AppConfig _appConfig;
 
-    public AutoUpdater(INotificationManager notificationManager)
+    public AutoUpdater(INotificationManager notificationManager, MainWindow mainWindow)
     {
         _notificationManager = notificationManager;
+        _mainWindow = mainWindow;
     }
 
     public async Task CheckForUpdates()
     {
-
         if (System.Diagnostics.Debugger.IsAttached)
         {
             Console.WriteLine("Skipping update check - debug mode.");
@@ -37,8 +42,17 @@ public class AutoUpdater
 
             if (latestVersion != currentVersion)
             {
-                await ShowUpdateNotification();
+                // Check for unsaved changes
+                if (_mainWindow._hasUnsavedChanges)
+                {
+                    var result = await ShowUpdateConfirmDialog();
+                    if (result != "Update")
+                    {
+                        return;
+                    }
+                }
 
+                await ShowUpdateNotification();
                 string platformSpecificUrl = GetPlatformSpecificUrl(latestVersion);
                 await DownloadUpdate(platformSpecificUrl);
                 LaunchUpdateProcess();
@@ -51,15 +65,88 @@ public class AutoUpdater
         catch (Exception ex)
         {
             Console.WriteLine($"Error checking for updates: {ex.Message}");
+            throw;
         }
     }
 
+    private async Task<string> ShowUpdateConfirmDialog()
+    {
+        var dialog = new Window
+        {
+            Title = "Unsaved Changes",
+            Width = 400,
+            Height = 150,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(20),
+                Spacing = 20,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = "You have unsaved changes. Would you like to save your changes before updating?",
+                        TextWrapping = TextWrapping.Wrap
+                    },
+                    new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 10,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Children =
+                        {
+                            new Button { Content = "Save and Update" },
+                            new Button { Content = "Update without Saving" },
+                            new Button { Content = "Cancel" }
+                        }
+                    }
+                }
+            }
+        };
+
+        var taskCompletionSource = new TaskCompletionSource<string>();
+
+        var buttons = ((StackPanel)((StackPanel)dialog.Content).Children[1]).Children;
+        ((Button)buttons[0]).Click += async (s, e) =>
+        {
+            try
+            {
+                _mainWindow.SaveEditedData();
+                taskCompletionSource.SetResult("Update");
+                dialog.Close();
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.Show(new Notification(
+                    "Save Error",
+                    $"Failed to save changes: {ex.Message}",
+                    NotificationType.Error));
+                taskCompletionSource.SetResult("Cancel");
+                dialog.Close();
+            }
+        };
+
+        ((Button)buttons[1]).Click += (s, e) =>
+        {
+            taskCompletionSource.SetResult("Update");
+            dialog.Close();
+        };
+
+        ((Button)buttons[2]).Click += (s, e) =>
+        {
+            taskCompletionSource.SetResult("Cancel");
+            dialog.Close();
+        };
+
+        await dialog.ShowDialog(_mainWindow);
+        return await taskCompletionSource.Task;
+    }
     private async Task ShowUpdateNotification()
     {
         var notification = new Notification
         {
             Title = "Update in progress",
-            Message = "Unsaved work will be lost.",
+            Message = "The application will restart after the update.",
             Type = NotificationType.Information,
             Expiration = TimeSpan.FromSeconds(10),
         };
