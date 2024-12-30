@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using System;
@@ -12,11 +13,13 @@ namespace UnrealLocresEditor.Views
         public string AppName { get; } = "Unreal Locres Editor";
         public string Version { get; private set; } = "Version: Unknown";
         private const string GitHubUrl = "https://github.com/Snoozeds/UnrealLocresEditor";
+        private WindowNotificationManager _notificationManager;
 
-        public AboutWindow()
+        public AboutWindow(WindowNotificationManager notificationManager)
         {
             InitializeComponent();
             DataContext = this;
+            _notificationManager = notificationManager;
         }
 
         private void InitializeComponent()
@@ -57,5 +60,27 @@ namespace UnrealLocresEditor.Views
             {
             }
         }
+
+        private async void OnCheckForUpdatesClick(object sender, RoutedEventArgs e)
+        {
+            AutoUpdater updater = new AutoUpdater(_notificationManager);
+            try
+            {
+                await updater.CheckForUpdates();
+                _notificationManager.Show(new Notification(
+                    "Update Check",
+                    "Your application is up to date!",
+                    NotificationType.Information));
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.Show(new Notification(
+                    "Update Check Failed",
+                    $"Could not check for updates: {ex.Message}",
+                    NotificationType.Error));
+            }
+        }
+
+
     }
 }

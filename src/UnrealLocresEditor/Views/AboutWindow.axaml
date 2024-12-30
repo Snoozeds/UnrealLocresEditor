@@ -23,8 +23,13 @@
 		<TextBlock Text="{Binding Version}"
                    HorizontalAlignment="Center"/>
 
+		<Button Content="Check for Updates"
+                HorizontalAlignment="Center"
+                Click="OnCheckForUpdatesClick"/>
+
 		<Button Content="Visit GitHub Repository"
                 HorizontalAlignment="Center"
                 Click="OnGitHubButtonClick"/>
+
 	</StackPanel>
 </Window>

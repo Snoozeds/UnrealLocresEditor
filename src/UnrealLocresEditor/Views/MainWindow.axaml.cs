@@ -45,28 +45,8 @@ namespace UnrealLocresEditor.Views
 
         // Settings
         private AppConfig _appConfig;
-        public bool DiscordRPCEnabled
-        {
-            get => _appConfig.DiscordRPCEnabled;
-            set
-            {
-                _appConfig.DiscordRPCEnabled = value;
-            }
-        }
-
-        public bool UseWine
-        {
-            get => _appConfig.UseWine;
-            set
-            {
-                _appConfig.UseWine = value;
-            }
-        }
-
-        private void SaveConfig()
-        {
-            _appConfig.Save();
-        }
+        public bool DiscordRPCEnabled;
+        public bool UseWine;
 
         // Misc
         public string csvFile = "";
@@ -77,6 +57,9 @@ namespace UnrealLocresEditor.Views
             _appConfig = AppConfig.Load();
             InitializeComponent();
             InitializeAutoSave();
+
+            UseWine = _appConfig.UseWine;
+            DiscordRPCEnabled = _appConfig.DiscordRPCEnabled;
 
             // Set theme and accent
             ApplyTheme(_appConfig.IsDarkTheme);
@@ -183,13 +166,35 @@ namespace UnrealLocresEditor.Views
         private DateTime? editStartTime;
         private DateTime? idleStartTime;
 
-        private void OnWindowLoaded(object sender, RoutedEventArgs e)
+        private async void OnWindowLoaded(object sender, RoutedEventArgs e)
         {
             _notificationManager = new WindowNotificationManager(this)
             {
                 Position = NotificationPosition.TopRight,
                 MaxItems = 1
             };
+
+            // Check for updates
+            if (_appConfig.AutoUpdateEnabled == false)
+            {
+                Console.WriteLine("Skipping update check - auto update disabled.");
+                return;
+            }
+            else
+            {
+                AutoUpdater updater = new AutoUpdater(_notificationManager);
+                try
+                {
+                    await updater.CheckForUpdates();
+                }
+                catch (Exception ex)
+                {
+                    _notificationManager.Show(new Notification(
+                        "Update Check Failed",
+                        $"Could not check for updates: {ex.Message}",
+                        NotificationType.Error));
+                }
+            }
 
             // Discord RPC
             client = new DiscordRpcClient("1251663992162619472");
@@ -1084,7 +1089,7 @@ namespace UnrealLocresEditor.Views
         {
             if (aboutWindow == null)
             {
-                aboutWindow = new AboutWindow();
+                aboutWindow = new AboutWindow(_notificationManager);
                 aboutWindow.Closed += AboutWindow_Closed;
             }
 
