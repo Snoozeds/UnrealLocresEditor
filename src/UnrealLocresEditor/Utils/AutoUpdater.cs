@@ -161,9 +161,13 @@ public class AutoUpdater
     {
         string currentProcessId = Process.GetCurrentProcess().Id.ToString();
         string currentExePath = Process.GetCurrentProcess().MainModule.FileName;
-        string updateBatchPath = Path.Combine(Path.GetTempPath(), "update.bat");
+        string updateScriptPath = Path.Combine(Path.GetTempPath(), "update_script");
 
-        string batchContent = @$"
+        string scriptContent;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            // Windows script
+            scriptContent = @$"
 @echo off
 timeout /t 1 /nobreak >nul
 :loop
@@ -178,13 +182,42 @@ if errorlevel 1 (
     timeout /t 1 /nobreak >nul
     goto loop
 )";
-
-        File.WriteAllText(updateBatchPath, batchContent);
+            File.WriteAllText(updateScriptPath + ".bat", scriptContent);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            // Linux script
+            scriptContent = @$"
+#!/bin/bash
+while true; do
+    if ! ps -p {currentProcessId} > /dev/null; then
+        unzip -o {TempUpdatePath} -d {AppDomain.CurrentDomain.BaseDirectory}
+        rm {TempUpdatePath}
+        nohup {currentExePath} &
+        rm -- ""$0""
+        exit
+    else
+        sleep 1
+    fi
+done";
+            File.WriteAllText(updateScriptPath + ".sh", scriptContent);
+            // Make the script executable
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "chmod",
+                Arguments = $"+x {updateScriptPath}.sh",
+                UseShellExecute = true
+            });
+        }
+        else
+        {
+            throw new NotSupportedException("Unsupported OS platform.");
+        }
 
         Process.Start(new ProcessStartInfo
         {
-            FileName = "cmd.exe",
-            Arguments = $"/c start /min \"\" \"{updateBatchPath}\"",
+            FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "cmd.exe" : "bash",
+            Arguments = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? $"/c start /min \"\" \"{updateScriptPath}.bat\"" : updateScriptPath + ".sh",
             UseShellExecute = true,
             CreateNoWindow = true
         });
