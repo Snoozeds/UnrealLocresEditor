@@ -16,6 +16,7 @@ namespace UnrealLocresEditor.Utils
         public static readonly bool UseWine = false;
         public static readonly TimeSpan AutoSaveInterval = TimeSpan.FromMinutes(5);
         public static readonly bool AutoSaveEnabled = true;
+        public static readonly bool AutoUpdateEnabled = true;
     }
 
     public class AppConfig
@@ -31,6 +32,7 @@ namespace UnrealLocresEditor.Utils
         public bool UseWine { get; set; } = DefaultConfig.UseWine;
         public TimeSpan AutoSaveInterval { get; set; } = DefaultConfig.AutoSaveInterval;
         public bool AutoSaveEnabled { get; set; } = DefaultConfig.AutoSaveEnabled;
+        public bool AutoUpdateEnabled { get; set; } = DefaultConfig.AutoUpdateEnabled;
 
         public static AppConfig Instance
         {
@@ -79,7 +81,8 @@ namespace UnrealLocresEditor.Utils
                 { "DiscordRPCPrivacyString", config => !string.IsNullOrEmpty(config.DiscordRPCPrivacyString) },
                 { "UseWine", config => config.UseWine == true || config.UseWine == false },
                 { "AutoSaveInterval", config => config.AutoSaveInterval > TimeSpan.Zero && config.AutoSaveInterval.TotalMilliseconds <= int.MaxValue },
-                { "AutoSaveEnabled", config => config.AutoSaveEnabled == true || config.AutoSaveEnabled == false }
+                { "AutoSaveEnabled", config => config.AutoSaveEnabled == true || config.AutoSaveEnabled == false },
+                { "AutoUpdateEnabled", config => config.AutoUpdateEnabled == true || config.AutoUpdateEnabled == false }
             };
         }
 

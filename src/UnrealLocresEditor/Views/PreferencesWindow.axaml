@@ -32,7 +32,7 @@
 			<!-- Discord Settings -->
 			<TabItem Header="Discord">
 				<StackPanel Spacing="16" Margin="16">
-					<ToggleSwitch Content="Enable Discord Rich Presence"
+					<ToggleSwitch Content="Discord Rich Presence"
                                 IsChecked="{Binding DiscordRPCEnabled}"
                                 FontSize="18"/>
 
@@ -51,7 +51,7 @@
 			<!-- Editor Settings -->
 			<TabItem Header="Editor">
 				<StackPanel Spacing="16" Margin="16">
-					<ToggleSwitch Content="Enable Auto-Save"
+					<ToggleSwitch Content="Auto-Save"
                                   IsChecked="{Binding AutoSaveEnabled}"
                                   FontSize="18"/>
 					<StackPanel IsEnabled="{Binding AutoSaveEnabled}">
@@ -65,6 +65,9 @@
 							</ComboBox.ItemTemplate>
 						</ComboBox>
 					</StackPanel>
+					<ToggleSwitch Content="Auto-Update"
+                      IsChecked="{Binding AutoUpdateEnabled}"
+                      FontSize="18"/>
 					<ToggleSwitch Content="Use Wine Compatibility (Linux)"
                                   IsChecked="{Binding UseWine}"
                                   FontSize="18"
