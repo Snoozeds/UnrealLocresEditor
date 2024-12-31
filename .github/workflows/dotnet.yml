@@ -39,7 +39,7 @@ jobs:
         run: dotnet restore src/UnrealLocresEditor.Desktop
       
       - name: Build
-        run: dotnet publish src/UnrealLocresEditor.Desktop --runtime ${{ matrix.runtime }} -c Release --output ./output/${{ matrix.runtime }}
+        run: dotnet publish src/UnrealLocresEditor.Desktop --runtime ${{ matrix.runtime }} -c Release --self-contained true -p:PublishSingleFile=true --p:PublishTrimmed=true --output ./output/${{ matrix.runtime }}
       
       - name: Create version.txt
         shell: bash
