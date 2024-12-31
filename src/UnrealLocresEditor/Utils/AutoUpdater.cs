@@ -148,7 +148,7 @@ public class AutoUpdater
             Title = "Update in progress",
             Message = "The application will restart after the update.",
             Type = NotificationType.Information,
-            Expiration = TimeSpan.FromSeconds(10),
+            Expiration = TimeSpan.FromSeconds(9999),
         };
 
         await Dispatcher.UIThread.InvokeAsync(() =>
