@@ -542,7 +542,7 @@ namespace UnrealLocresEditor.Views
 
         private static string GetOrCreateTempDirectory()
         {
-            var exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var exeDirectory = Path.GetDirectoryName(Environment.ProcessPath);
             var tempDirectoryName = ".temp-UnrealLocresEditor";
             var tempDirectoryPath = Path.Combine(exeDirectory, tempDirectoryName);
 
