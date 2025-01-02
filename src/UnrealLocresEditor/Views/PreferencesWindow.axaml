@@ -7,7 +7,8 @@
         Width="600"
         Height="400"
         WindowStartupLocation="CenterOwner"
-		Icon="/Assets/ULE-icon.ico">
+		Icon="/Assets/ULE-icon.ico"
+		CanResize="False">
 
 	<Grid RowDefinitions="Auto,*,Auto" Margin="16">
 		<TabControl Grid.Row="1">

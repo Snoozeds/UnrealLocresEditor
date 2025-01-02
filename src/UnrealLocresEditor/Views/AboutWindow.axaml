@@ -9,7 +9,9 @@
         Title="About"
         Width="400"
         Height="300"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+		Icon="/Assets/ULE-icon.ico"
+		CanResize="False">
 
 	<StackPanel Margin="20" Spacing="10">
 		<Image Source="/Assets/ULE-icon.ico"
