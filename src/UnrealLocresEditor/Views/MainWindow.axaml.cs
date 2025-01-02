@@ -433,7 +433,7 @@ namespace UnrealLocresEditor.Views
                 findDialog.MainWindow = this;
             }
 
-            findDialog.Show();
+            findDialog.Show(this);
             findDialog.Activate();
         }
 
@@ -446,7 +446,7 @@ namespace UnrealLocresEditor.Views
                 findReplaceDialog.MainWindow = this;
             }
 
-            findReplaceDialog.Show();
+            findReplaceDialog.Show(this);
             findReplaceDialog.Activate();
         }
 
@@ -1002,7 +1002,7 @@ namespace UnrealLocresEditor.Views
                 findDialog.MainWindow = this;
             }
 
-            findDialog.Show();
+            findDialog.Show(this);
             findDialog.Activate();
         }
 
@@ -1022,7 +1022,7 @@ namespace UnrealLocresEditor.Views
                 findReplaceDialog.MainWindow = this;
             }
 
-            findReplaceDialog.Show();
+            findReplaceDialog.Show(this);
             findReplaceDialog.Activate();
         }
 
@@ -1041,7 +1041,7 @@ namespace UnrealLocresEditor.Views
                 preferencesWindow.Closed += PreferencesWindow_Closed;
             }
 
-            preferencesWindow.Show();
+            preferencesWindow.Show(this);
             preferencesWindow.Activate();
         }
 
@@ -1093,7 +1093,7 @@ namespace UnrealLocresEditor.Views
                 aboutWindow.Closed += AboutWindow_Closed;
             }
 
-            aboutWindow.Show();
+            aboutWindow.Show(this);
             aboutWindow.Activate();
         }
 
