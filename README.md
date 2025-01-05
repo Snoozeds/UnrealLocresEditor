@@ -12,7 +12,7 @@ Exported locres files will be saved in the following directory: \
 
 ## Installation Instructions (Linux x64 + Wine for UnrealLocres because it has no license):
 
-## Prerequisites:
+#### Prerequisites:
 - Wine must be installed.
   - Ubuntu example: `sudo apt-get update && sudo apt-get install wine wine32`
 <hr>
