@@ -54,6 +54,7 @@ jobs:
           git add ./output/${{ matrix.runtime }}/version.txt
           git commit -m "Update version.txt for release ${{ github.event.release.tag_name }}"
           git push --force origin HEAD:${{ github.event.release.tag_name }}
+          git push --force origin HEAD:main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
