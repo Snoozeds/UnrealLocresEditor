@@ -2,6 +2,12 @@
 
 A GUI tool to edit Unreal Engine localisation files using [UnrealLocres](https://github.com/akintos/UnrealLocres).
 
+## Previews:
+| | | |
+|:-------------------------:|:-------------------------:|:-------------------------:|
+|<img width="1604" src="/wiki/assets/img/preview1.png">  |  <img width="1604" src="/wiki/assets/img/preview2.png">|<img width="1604" src="/wiki/assets/img/preview3.png">|
+|<img width="1604" src="/wiki/assets/img/preview4.png">  |  <img width="1604" src="/wiki/assets/img/preview5.png">|<img width="1604" src="/wiki/assets/img/preview6.png">|
+
 ## Installation Instructions (Windows x86/x64):
 1. Download the appropriate zip file (usually UnrealLocresEditor-x.x.x-win-x86.zip).
 2. Extract all files to a folder.
