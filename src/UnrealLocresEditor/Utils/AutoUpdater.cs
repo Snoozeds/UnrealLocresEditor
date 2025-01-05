@@ -38,7 +38,7 @@ public class AutoUpdater
         try
         {
             string latestVersion = await GetLatestVersion();
-            string currentVersion = File.Exists(LocalVersionFile) ? File.ReadAllText(LocalVersionFile) : "0.0.0";
+            string currentVersion = File.Exists(LocalVersionFile) ? File.ReadAllText(LocalVersionFile).Replace("\r", "").Replace("\n", "").Trim() : "0.0.0";
 
             if (latestVersion != currentVersion)
             {
