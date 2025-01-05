@@ -43,7 +43,9 @@ jobs:
       
       - name: Create version.txt
         shell: bash
-        run: echo "${{ github.event.release.tag_name }}" > ./output/${{ matrix.runtime }}/version.txt
+        run: |
+          echo "${{ github.event.release.tag_name }}" > ./output/${{ matrix.runtime }}/version.txt
+          echo "${{ github.event.release.tag_name }}" > ./version.txt
 
       - name: Commit and push version.txt to repo
         run: |
