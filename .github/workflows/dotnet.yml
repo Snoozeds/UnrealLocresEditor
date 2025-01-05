@@ -3,12 +3,29 @@ on:
   release:
     types:
       - published
-
 permissions:
   contents: write
-
 jobs:
+  update-version:
+    name: Update Version File
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Update version.txt
+        run: |
+          echo "${{ github.event.release.tag_name }}" > version.txt
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add version.txt
+          git commit -m "Update version.txt for release ${{ github.event.release.tag_name }}"
+          git push origin HEAD:main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build:
+    needs: update-version
     name: Build and Attach Release Assets
     runs-on: ${{ matrix.os }}
     strategy:
@@ -41,20 +58,10 @@ jobs:
       - name: Build
         run: dotnet publish src/UnrealLocresEditor.Desktop --runtime ${{ matrix.runtime }} -c Release --self-contained true -p:PublishSingleFile=true --p:PublishTrimmed=true --output ./output/${{ matrix.runtime }}
       
-      - name: Create version.txt
+      - name: Create version.txt for artifacts
         shell: bash
         run: echo "${{ github.event.release.tag_name }}" > ./output/${{ matrix.runtime }}/version.txt
 
-      - name: Commit and push version.txt to repo
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add ./output/${{ matrix.runtime }}/version.txt
-          git commit -m "Update version.txt for release ${{ github.event.release.tag_name }}"
-          git push origin HEAD:${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
       - name: Create artifacts directory
         run: mkdir -p artifacts
       
