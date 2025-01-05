@@ -51,7 +51,7 @@ jobs:
           git config user.email "actions@github.com"
           git add ./output/${{ matrix.runtime }}/version.txt
           git commit -m "Update version.txt for release ${{ github.event.release.tag_name }}"
-          git push origin HEAD:${{ github.ref }}
+          git push --force origin HEAD:${{ github.event.release.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
