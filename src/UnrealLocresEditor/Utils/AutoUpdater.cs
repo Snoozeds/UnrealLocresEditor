@@ -38,7 +38,7 @@ public class AutoUpdater
         try
         {
             string latestVersion = await GetLatestVersion();
-            string currentVersion = File.Exists(LocalVersionFile) ? File.ReadAllText(LocalVersionFile).Replace("\r", "").Replace("\n", "").Trim() : "0.0.0";
+            string currentVersion = File.Exists(LocalVersionFile) ? File.ReadAllText(LocalVersionFile).Replace("\r", "").Replace("\n", "").TrimEnd() : "0.0.0";
 
             if (latestVersion != currentVersion)
             {
@@ -237,7 +237,7 @@ done";
                     throw new Exception($"Failed to fetch version file. HTTP Status Code: {response.StatusCode}");
                 }
                 string version = await response.Content.ReadAsStringAsync();
-                return version.Replace("\r", "").Replace("\n", "").Trim();
+                return version.Replace("\r", "").Replace("\n", "").TrimEnd();
             }
             catch (Exception ex)
             {
