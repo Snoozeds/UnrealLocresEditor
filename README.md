@@ -1,6 +1,9 @@
 ![A slightly rounded but rectangular logo with a dark background, including a crossed hammer and wrench with a vibrant, rainbow gradient. The text is positioned to the right of the tools, with "Unreal" in bold red, "Locres" in bold green, and "Editor" in bold blue, each stacked vertically.](/wiki/assets/img/ULE-banner-rounded.png)
 
-A GUI tool to edit Unreal Engine localisation files using [UnrealLocres](https://github.com/akintos/UnrealLocres).
+A GUI tool to edit Unreal Engine localisation files using [UnrealLocres](https://github.com/akintos/UnrealLocres). \
+<br />
+[![Ko-fi Badge](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/snoozeds)
+
 
 ## Previews:
 | | | |
