@@ -790,12 +790,13 @@ namespace UnrealLocresEditor.Views
         public void SaveEditedData()
         {
 
-            if (_currentLocresFilePath == null)
-            {
+            if(string.IsNullOrEmpty(_currentLocresFilePath))
+    {
+                _notificationManager.Show(new Notification("Error", "No file is currently open to save.", NotificationType.Error));
                 return;
             }
 
-            var exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var exeDirectory = AppContext.BaseDirectory;
             var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + "_edited.csv";
             var csvFile = Path.Combine(exeDirectory, csvFileName);
 
@@ -851,6 +852,7 @@ namespace UnrealLocresEditor.Views
                     File.Move(modifiedLocres, destinationFile);
 
                     _notificationManager.Show(new Notification("Success!", $"File saved as {Path.GetFileName(destinationFile)} in {destinationDirectory}", NotificationType.Success));
+                    _hasUnsavedChanges = false;
                 }
                 catch (Exception ex)
                 {
