@@ -68,7 +68,7 @@ namespace UnrealLocresEditor.Views
             AutoUpdater updater = new AutoUpdater(_notificationManager, _mainWindow);
             try
             {
-                await updater.CheckForUpdates();
+                await updater.CheckForUpdates(true);
                 _notificationManager.Show(new Notification(
                     "Update Check",
                     "Your application is up to date!",

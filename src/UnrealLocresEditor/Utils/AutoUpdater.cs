@@ -27,7 +27,7 @@ public class AutoUpdater
         _mainWindow = mainWindow;
     }
 
-    public async Task CheckForUpdates()
+    public async Task CheckForUpdates(bool manualCheck = false)
     {
         if (System.Diagnostics.Debugger.IsAttached)
         {
@@ -42,13 +42,24 @@ public class AutoUpdater
 
             if (latestVersion != currentVersion)
             {
-                // Check for unsaved changes
-                if (_mainWindow._hasUnsavedChanges)
+                // Show a dialog asking the user if they want to update
+                if (manualCheck)
                 {
-                    var result = await ShowUpdateConfirmDialog();
-                    if (result != "Update")
+                    var manualUpdateDialog = await ShowManualUpdateDialog(latestVersion);
+                    if (manualUpdateDialog != "Update")
                     {
                         return;
+                    }
+                }
+                else
+                {
+                    if (_mainWindow._hasUnsavedChanges)
+                    {
+                        var result = await ShowUpdateConfirmDialog();
+                        if (result != "Update")
+                        {
+                            return;
+                        }
                     }
                 }
 
@@ -59,14 +70,88 @@ public class AutoUpdater
             }
             else
             {
-                Console.WriteLine("You are running the latest version.");
+                if (manualCheck)
+                {
+                    _notificationManager.Show(new Notification(
+                        "No Updates Available",
+                        "You are running the latest version.",
+                        NotificationType.Information));
+                }
+                else
+                {
+                    Console.WriteLine("You are running the latest version.");
+                }
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error checking for updates: {ex.Message}");
-            throw;
+
+            if (manualCheck)
+            {
+                _notificationManager.Show(new Notification(
+                    "Update Check Failed",
+                    $"Could not check for updates: {ex.Message}",
+                    NotificationType.Error));
+            }
+            else
+            {
+                throw;
+            }
         }
+    }
+
+    private async Task<string> ShowManualUpdateDialog(string latestVersion)
+    {
+        var dialog = new Window
+        {
+            Title = "Update Available",
+            Width = 400,
+            Height = 200,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(20),
+                Spacing = 20,
+                Children =
+            {
+                new TextBlock
+                {
+                    Text = $"A new version {latestVersion} is available. Would you like to update?",
+                    TextWrapping = TextWrapping.Wrap
+                },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 10,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Children =
+                    {
+                        new Button { Content = "Update" },
+                        new Button { Content = "Cancel" }
+                    }
+                }
+            }
+            }
+        };
+
+        var taskCompletionSource = new TaskCompletionSource<string>();
+
+        var buttons = ((StackPanel)((StackPanel)dialog.Content).Children[1]).Children;
+        ((Button)buttons[0]).Click += (s, e) =>
+        {
+            taskCompletionSource.SetResult("Update");
+            dialog.Close();
+        };
+
+        ((Button)buttons[1]).Click += (s, e) =>
+        {
+            taskCompletionSource.SetResult("Cancel");
+            dialog.Close();
+        };
+
+        await dialog.ShowDialog(_mainWindow);
+        return await taskCompletionSource.Task;
     }
 
     private async Task<string> ShowUpdateConfirmDialog()
