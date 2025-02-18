@@ -16,10 +16,14 @@ namespace UnrealLocresEditor.Views
         private WindowNotificationManager _notificationManager;
         private MainWindow _mainWindow;
 
-        public AboutWindow(WindowNotificationManager notificationManager, MainWindow mainWindow)
+        public AboutWindow()
         {
             InitializeComponent();
             DataContext = this;
+        }
+
+        public void Initialize(WindowNotificationManager notificationManager, MainWindow mainWindow)
+        {
             _notificationManager = notificationManager;
             _mainWindow = mainWindow;
         }
@@ -65,6 +69,11 @@ namespace UnrealLocresEditor.Views
 
         private async void OnCheckForUpdatesClick(object sender, RoutedEventArgs e)
         {
+            if (_notificationManager == null || _mainWindow == null)
+            {
+                return;
+            }
+
             AutoUpdater updater = new AutoUpdater(_notificationManager, _mainWindow);
             try
             {
@@ -82,7 +91,5 @@ namespace UnrealLocresEditor.Views
                     NotificationType.Error));
             }
         }
-
-
     }
 }

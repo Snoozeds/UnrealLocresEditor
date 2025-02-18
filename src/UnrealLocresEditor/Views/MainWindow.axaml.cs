@@ -1091,7 +1091,8 @@ namespace UnrealLocresEditor.Views
         {
             if (aboutWindow == null)
             {
-                aboutWindow = new AboutWindow(_notificationManager, this);
+                aboutWindow = new AboutWindow();
+                aboutWindow.Initialize(_notificationManager, this);
                 aboutWindow.Closed += AboutWindow_Closed;
             }
 
