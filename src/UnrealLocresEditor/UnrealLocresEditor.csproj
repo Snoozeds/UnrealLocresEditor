@@ -25,4 +25,10 @@
     <PackageReference Include="DiscordRichPresence" Version="1.2.1.24" />
     <PackageReference Include="System.Text.Json" Version="9.0.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\LicensesWindow.axaml.cs">
+      <DependentUpon>LicensesWindow.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>

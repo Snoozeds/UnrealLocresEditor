@@ -51,6 +51,12 @@ namespace UnrealLocresEditor.Views
             }
         }
 
+        private void OnLicensesButtonClick(object sender, RoutedEventArgs e)
+        {
+            LicensesWindow licensesWindow = new LicensesWindow();
+            licensesWindow.Show();
+        }
+
         private void OnGitHubButtonClick(object sender, RoutedEventArgs e)
         {
             try
