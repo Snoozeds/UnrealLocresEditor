@@ -5,7 +5,8 @@
         Width="800"
         Height="450"
 		Icon="/Assets/ULE-icon.ico"
-		CanResize="True">
+		CanResize="True"
+		WindowStartupLocation="CenterScreen">
 	<Window.Styles>
 		<Style Selector="DataGridCell">
 			<Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
