@@ -25,13 +25,21 @@
 		<TextBlock Text="{Binding Version}"
                    HorizontalAlignment="Center"/>
 
-		<Button Content="Check for Updates"
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+			<Button Content="Update check"
                 HorizontalAlignment="Center"
-                Click="OnCheckForUpdatesClick"/>
+                Click="OnCheckForUpdatesClick"
+				Margin="0,20,10,0"/>
 
-		<Button Content="Visit GitHub Repository"
-                HorizontalAlignment="Center"
-                Click="OnGitHubButtonClick"/>
+			<Button Content="Licenses"
+					HorizontalAlignment="Center"
+					Click=""
+					Margin="0,20,10,0"/>
 
+			<Button Content="GitHub"
+					HorizontalAlignment="Center"
+					Click="OnGitHubButtonClick"
+					Margin="0,20,10,0"/>
+			</StackPanel>
 	</StackPanel>
 </Window>
