@@ -1,4 +1,16 @@
-﻿using Avalonia;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Data;
@@ -12,18 +24,6 @@ using Avalonia.Threading;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DiscordRPC;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
 using UnrealLocresEditor.Utils;
 
 #nullable disable
@@ -122,17 +122,23 @@ namespace UnrealLocresEditor.Views
                     {
                         SaveEditedData();
                         _hasUnsavedChanges = false;
-                        _notificationManager.Show(new Notification(
-                            "Auto-save",
-                            "Your changes have been automatically saved.",
-                            NotificationType.Information));
+                        _notificationManager.Show(
+                            new Notification(
+                                "Auto-save",
+                                "Your changes have been automatically saved.",
+                                NotificationType.Information
+                            )
+                        );
                     }
                     catch (Exception ex)
                     {
-                        _notificationManager.Show(new Notification(
-                            "Auto-save Error",
-                            $"Failed to auto-save: {ex.Message}",
-                            NotificationType.Error));
+                        _notificationManager.Show(
+                            new Notification(
+                                "Auto-save Error",
+                                $"Failed to auto-save: {ex.Message}",
+                                NotificationType.Error
+                            )
+                        );
                     }
                 });
             }
@@ -142,24 +148,28 @@ namespace UnrealLocresEditor.Views
         private void ApplyTheme(bool isDarkTheme)
         {
             Application.Current.RequestedThemeVariant = isDarkTheme
-               ? Avalonia.Styling.ThemeVariant.Dark
-               : Avalonia.Styling.ThemeVariant.Light;
+                ? Avalonia.Styling.ThemeVariant.Dark
+                : Avalonia.Styling.ThemeVariant.Light;
         }
-
 
         // Apply accent based off of config
         // https://github.com/AvaloniaUI/Avalonia/issues/10746
         private void ApplyAccent(Color accentColor)
         {
             Application.Current!.Resources["SystemAccentColor"] = accentColor;
-            Application.Current.Resources["SystemAccentColorDark1"] = ColorUtils.ChangeColorLuminosity(accentColor, -0.3);
-            Application.Current.Resources["SystemAccentColorDark2"] = ColorUtils.ChangeColorLuminosity(accentColor, -0.5);
-            Application.Current.Resources["SystemAccentColorDark3"] = ColorUtils.ChangeColorLuminosity(accentColor, -0.7);
-            Application.Current.Resources["SystemAccentColorLight1"] = ColorUtils.ChangeColorLuminosity(accentColor, 0.3);
-            Application.Current.Resources["SystemAccentColorLight2"] = ColorUtils.ChangeColorLuminosity(accentColor, 0.5);
-            Application.Current.Resources["SystemAccentColorLight3"] = ColorUtils.ChangeColorLuminosity(accentColor, 0.7);
+            Application.Current.Resources["SystemAccentColorDark1"] =
+                ColorUtils.ChangeColorLuminosity(accentColor, -0.3);
+            Application.Current.Resources["SystemAccentColorDark2"] =
+                ColorUtils.ChangeColorLuminosity(accentColor, -0.5);
+            Application.Current.Resources["SystemAccentColorDark3"] =
+                ColorUtils.ChangeColorLuminosity(accentColor, -0.7);
+            Application.Current.Resources["SystemAccentColorLight1"] =
+                ColorUtils.ChangeColorLuminosity(accentColor, 0.3);
+            Application.Current.Resources["SystemAccentColorLight2"] =
+                ColorUtils.ChangeColorLuminosity(accentColor, 0.5);
+            Application.Current.Resources["SystemAccentColorLight3"] =
+                ColorUtils.ChangeColorLuminosity(accentColor, 0.7);
         }
-
 
         // Start Discord RPC
         public DiscordRpcClient client;
@@ -171,7 +181,7 @@ namespace UnrealLocresEditor.Views
             _notificationManager = new WindowNotificationManager(this)
             {
                 Position = NotificationPosition.TopRight,
-                MaxItems = 1
+                MaxItems = 1,
             };
 
             // Check for updates
@@ -189,10 +199,13 @@ namespace UnrealLocresEditor.Views
                 }
                 catch (Exception ex)
                 {
-                    _notificationManager.Show(new Notification(
-                        "Update Check Failed",
-                        $"Could not check for updates: {ex.Message}",
-                        NotificationType.Error));
+                    _notificationManager.Show(
+                        new Notification(
+                            "Update Check Failed",
+                            $"Could not check for updates: {ex.Message}",
+                            NotificationType.Error
+                        )
+                    );
                 }
             }
 
@@ -238,12 +251,17 @@ namespace UnrealLocresEditor.Views
                 var presence = new RichPresence
                 {
                     // Set the presence details based on the config privacy setting
-                    Details = _appConfig.DiscordRPCPrivacy ? _appConfig.DiscordRPCPrivacyString : (_currentLocresFilePath == null ? "Idling" : $"Editing file: {Path.GetFileName(_currentLocresFilePath)}"),
-                    Timestamps = editStartTime.HasValue ? new Timestamps(editStartTime.Value) : null,
-                    Assets = new Assets()
-                    {
-                        LargeImageKey = "ule-logo",
-                    }
+                    Details = _appConfig.DiscordRPCPrivacy
+                        ? _appConfig.DiscordRPCPrivacyString
+                        : (
+                            _currentLocresFilePath == null
+                                ? "Idling"
+                                : $"Editing file: {Path.GetFileName(_currentLocresFilePath)}"
+                        ),
+                    Timestamps = editStartTime.HasValue
+                        ? new Timestamps(editStartTime.Value)
+                        : null,
+                    Assets = new Assets() { LargeImageKey = "ule-logo" },
                 };
 
                 client.SetPresence(presence);
@@ -267,6 +285,7 @@ namespace UnrealLocresEditor.Views
         {
             _isSystemShutdown = true;
         }
+
         private async void OnWindowClosing(object sender, WindowClosingEventArgs e)
         {
             if (_closingHandled)
@@ -280,7 +299,9 @@ namespace UnrealLocresEditor.Views
                 // Display prompt to save changes
                 var dialog = new Window
                 {
-                    Title = _isSystemShutdown ? "System Shutdown - Unsaved Changes" : "Unsaved Changes",
+                    Title = _isSystemShutdown
+                        ? "System Shutdown - Unsaved Changes"
+                        : "Unsaved Changes",
                     Width = 300,
                     Height = 150,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -289,28 +310,28 @@ namespace UnrealLocresEditor.Views
                         Margin = new Thickness(20),
                         Spacing = 20,
                         Children =
-                {
-                    new TextBlock
-                    {
-                        Text = _isSystemShutdown
-                            ? "The system is shutting down. Do you want to save changes before exiting?"
-                            : "You have unsaved changes. Do you want to save before closing?",
-                        TextWrapping = TextWrapping.Wrap
-                    },
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 10,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Children =
                         {
-                            new Avalonia.Controls.Button { Content = "Save" },
-                            new Avalonia.Controls.Button { Content = "Don't Save" },
-                            new Avalonia.Controls.Button { Content = "Cancel" }
-                        }
-                    }
-                }
-                    }
+                            new TextBlock
+                            {
+                                Text = _isSystemShutdown
+                                    ? "The system is shutting down. Do you want to save changes before exiting?"
+                                    : "You have unsaved changes. Do you want to save before closing?",
+                                TextWrapping = TextWrapping.Wrap,
+                            },
+                            new StackPanel
+                            {
+                                Orientation = Orientation.Horizontal,
+                                Spacing = 10,
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                                Children =
+                                {
+                                    new Avalonia.Controls.Button { Content = "Save" },
+                                    new Avalonia.Controls.Button { Content = "Don't Save" },
+                                    new Avalonia.Controls.Button { Content = "Cancel" },
+                                },
+                            },
+                        },
+                    },
                 };
 
                 var result = await ShowCustomDialog(dialog);
@@ -325,10 +346,13 @@ namespace UnrealLocresEditor.Views
                         }
                         catch (Exception ex)
                         {
-                            _notificationManager.Show(new Notification(
-                                "Save Error",
-                                $"Failed to save changes: {ex.Message}",
-                                NotificationType.Error));
+                            _notificationManager.Show(
+                                new Notification(
+                                    "Save Error",
+                                    $"Failed to save changes: {ex.Message}",
+                                    NotificationType.Error
+                                )
+                            );
                         }
                         break;
 
@@ -376,7 +400,9 @@ namespace UnrealLocresEditor.Views
         {
             _dialogResult = new TaskCompletionSource<string>();
 
-            var buttons = ((StackPanel)((StackPanel)dialog.Content).Children[1]).Children.OfType<Avalonia.Controls.Button>();
+            var buttons = (
+                (StackPanel)((StackPanel)dialog.Content).Children[1]
+            ).Children.OfType<Avalonia.Controls.Button>();
 
             foreach (var button in buttons)
             {
@@ -408,9 +434,9 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        // Allow pressing shift+enter for multiline text.
-        private void DataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+        private async void DataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            // Allow pressing shift+enter for multiline text.
             if (e.Key == Key.Enter && e.KeyModifiers == KeyModifiers.Shift)
             {
                 if (sender is DataGrid grid && e.Source is TextBox textBox)
@@ -420,6 +446,71 @@ namespace UnrealLocresEditor.Views
                     textBox.Text = currentText.Insert(caretIndex, Environment.NewLine);
                     textBox.CaretIndex = caretIndex + Environment.NewLine.Length;
                     e.Handled = true;
+                }
+            }
+
+            // Handle Ctrl+C / Ctrl+V for copy-pasting when a cell is focused but not being directly edited.
+            if (e.KeyModifiers == KeyModifiers.Control)
+            {
+                var focusedControl = FocusManager.GetFocusedElement() as TextBox;
+                if (focusedControl != null)
+                {
+                    if (e.Key == Key.C)
+                    {
+                        if (!string.IsNullOrEmpty(focusedControl.SelectedText))
+                        {
+                            await this.Clipboard.SetTextAsync(focusedControl.SelectedText);
+                            e.Handled = true;
+                        }
+                    }
+                    else if (e.Key == Key.V)
+                    {
+                        var clipboardText = await this.Clipboard.GetTextAsync();
+                        if (!string.IsNullOrEmpty(clipboardText))
+                        {
+                            int caretIndex = focusedControl.CaretIndex;
+                            focusedControl.Text = focusedControl.Text.Insert(caretIndex, clipboardText);
+                            focusedControl.CaretIndex = caretIndex + clipboardText.Length;
+                            e.Handled = true;
+                        }
+                    }
+                }
+                else if (_dataGrid.SelectedItem is DataRow selectedRow)
+                {
+                    int selectedColumnIndex = _dataGrid.Columns.IndexOf(_dataGrid.CurrentColumn);
+                    if (selectedColumnIndex < 0)
+                        return;
+
+                    if (e.Key == Key.C)
+                    {
+                        // Copy cell content from the underlying data.
+                        string cellValue = selectedRow.Values[selectedColumnIndex];
+                        await this.Clipboard.SetTextAsync(cellValue);
+                        e.Handled = true;
+                    }
+                    else if (e.Key == Key.V)
+                    {
+                        // Begin editing if not already editing.
+                        _dataGrid.BeginEdit();
+
+                        // Defer the paste operation until the editing control (TextBox) is available.
+                        Dispatcher.UIThread.Post(async () =>
+                        {
+                            var editTextBox = FocusManager.GetFocusedElement() as TextBox;
+                            if (editTextBox != null)
+                            {
+                                var clipboardText = await this.Clipboard.GetTextAsync();
+                                if (!string.IsNullOrEmpty(clipboardText))
+                                {
+                                    int caretIndex = editTextBox.CaretIndex;
+                                    editTextBox.Text = editTextBox.Text.Insert(caretIndex, clipboardText);
+                                    editTextBox.CaretIndex = caretIndex + clipboardText.Length;
+                                }
+                            }
+                        }, DispatcherPriority.Background);
+
+                        e.Handled = true;
+                    }
                 }
             }
         }
@@ -450,7 +541,10 @@ namespace UnrealLocresEditor.Views
             findReplaceDialog.Activate();
         }
 
-        private static string winePrefixDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wineprefix");
+        private static string winePrefixDirectory = Path.Combine(
+            Directory.GetCurrentDirectory(),
+            "wineprefix"
+        );
 
         private static bool IsLinux()
         {
@@ -469,7 +563,12 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        private static string GetArguments(string command, string locresFilePath, bool useWine, string csvFileName = null)
+        private static string GetArguments(
+            string command,
+            string locresFilePath,
+            bool useWine,
+            string csvFileName = null
+        )
         {
             if (IsLinux())
             {
@@ -494,7 +593,11 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        private ProcessStartInfo GetProcessStartInfo(string command, string locresFilePath, string csvFileName = null)
+        private ProcessStartInfo GetProcessStartInfo(
+            string command,
+            string locresFilePath,
+            string csvFileName = null
+        )
         {
             var startInfo = new ProcessStartInfo
             {
@@ -525,8 +628,8 @@ namespace UnrealLocresEditor.Views
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
-                        CreateNoWindow = true
-                    }
+                        CreateNoWindow = true,
+                    },
                 };
 
                 process.StartInfo.Environment["WINEPREFIX"] = winePrefixDirectory;
@@ -535,7 +638,9 @@ namespace UnrealLocresEditor.Views
 
                 if (process.ExitCode != 0)
                 {
-                    throw new Exception($"Error initializing wine prefix: {process.StandardError.ReadToEnd()}");
+                    throw new Exception(
+                        $"Error initializing wine prefix: {process.StandardError.ReadToEnd()}"
+                    );
                 }
             }
         }
@@ -566,7 +671,10 @@ namespace UnrealLocresEditor.Views
                 // Set folder to hidden on Windows
                 if (OperatingSystem.IsWindows())
                 {
-                    File.SetAttributes(tempDirectoryPath, FileAttributes.Directory | FileAttributes.Hidden);
+                    File.SetAttributes(
+                        tempDirectoryPath,
+                        FileAttributes.Directory | FileAttributes.Hidden
+                    );
                 }
             }
 
@@ -576,11 +684,19 @@ namespace UnrealLocresEditor.Views
         private async void OpenMenuItem_Click(object sender, RoutedEventArgs e)
         {
             var storageProvider = StorageProvider;
-            var result = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                FileTypeFilter = new[] { new FilePickerFileType("Localization Files") { Patterns = new[] { "*.locres" } } },
-                AllowMultiple = false
-            });
+            var result = await storageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
+                {
+                    FileTypeFilter = new[]
+                    {
+                        new FilePickerFileType("Localization Files")
+                        {
+                            Patterns = new[] { "*.locres" },
+                        },
+                    },
+                    AllowMultiple = false,
+                }
+            );
 
             if (result != null && result.Count > 0)
             {
@@ -604,7 +720,7 @@ namespace UnrealLocresEditor.Views
                 // Run UnrealLocres.exe
                 var process = new Process
                 {
-                    StartInfo = GetProcessStartInfo("export", _currentLocresFilePath, csvFileName)
+                    StartInfo = GetProcessStartInfo("export", _currentLocresFilePath, csvFileName),
                 };
 
                 process.Start();
@@ -615,7 +731,10 @@ namespace UnrealLocresEditor.Views
                     try
                     {
                         var importedLocresDir = GetOrCreateTempDirectory();
-                        var importedLocresPath = Path.Combine(importedLocresDir, Path.GetFileName(_currentLocresFilePath));
+                        var importedLocresPath = Path.Combine(
+                            importedLocresDir,
+                            Path.GetFileName(_currentLocresFilePath)
+                        );
 
                         if (File.Exists(importedLocresPath))
                         {
@@ -641,8 +760,16 @@ namespace UnrealLocresEditor.Views
                 }
                 else
                 {
-                    Console.WriteLine($"Error reading locres data: {process.StandardOutput.ReadToEnd()}");
-                    _notificationManager.Show(new Notification("Error reading locres data:", $"{process.StandardOutput.ReadToEnd()}", NotificationType.Error));
+                    Console.WriteLine(
+                        $"Error reading locres data: {process.StandardOutput.ReadToEnd()}"
+                    );
+                    _notificationManager.Show(
+                        new Notification(
+                            "Error reading locres data:",
+                            $"{process.StandardOutput.ReadToEnd()}",
+                            NotificationType.Error
+                        )
+                    );
                     if (File.Exists(csvFile))
                     {
                         File.Delete(csvFile); // Clean up if UnrealLocres failed
@@ -657,7 +784,9 @@ namespace UnrealLocresEditor.Views
             var columns = new List<DataGridColumn>();
 
             using (var reader = new StreamReader(csvFile))
-            using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            using (
+                var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture))
+            )
             {
                 bool isFirstRow = true;
                 while (csv.Read())
@@ -677,7 +806,7 @@ namespace UnrealLocresEditor.Views
                                 Header = stringValues[i],
                                 Binding = new Binding($"Values[{i}]"),
                                 IsReadOnly = false,
-                                Width = new DataGridLength(300)
+                                Width = new DataGridLength(300),
                             };
                             columns.Add(column);
                         }
@@ -722,7 +851,10 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        private void DataGrid_CellPointerPressed(object sender, DataGridCellPointerPressedEventArgs e)
+        private void DataGrid_CellPointerPressed(
+            object sender,
+            DataGridCellPointerPressedEventArgs e
+        )
         {
             if (e.Column?.Header?.ToString() == "source")
             {
@@ -745,22 +877,23 @@ namespace UnrealLocresEditor.Views
                 Content = new StackPanel
                 {
                     Children =
-            {
-                new TextBlock
-                {
-                    Text = "This is the source column, this is the original text, but you should not edit it to replace the text - instead write the text you want to replace this with in the target column next to it.",
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(10)
+                    {
+                        new TextBlock
+                        {
+                            Text =
+                                "This is the source column, this is the original text, but you should not edit it to replace the text - instead write the text you want to replace this with in the target column next to it.",
+                            TextWrapping = TextWrapping.Wrap,
+                            Margin = new Thickness(10),
+                        },
+                        new Avalonia.Controls.Button
+                        {
+                            Content = "OK",
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(10),
+                        },
+                    },
                 },
-                new Avalonia.Controls.Button
-                {
-                    Content = "OK",
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(10)
-                }
-            }
-                }
             };
 
             var button = (Avalonia.Controls.Button)((StackPanel)messageBox.Content).Children[1];
@@ -769,12 +902,17 @@ namespace UnrealLocresEditor.Views
             messageBox.ShowDialog(this);
         }
 
-
         private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (_currentLocresFilePath == null)
             {
-                _notificationManager.Show(new Notification("No File Open", "Please open a locres file first.", NotificationType.Error));
+                _notificationManager.Show(
+                    new Notification(
+                        "No File Open",
+                        "Please open a locres file first.",
+                        NotificationType.Error
+                    )
+                );
                 return;
             }
             if (_rows != null && _rows.Count > 0)
@@ -783,26 +921,40 @@ namespace UnrealLocresEditor.Views
             }
             else
             {
-                _notificationManager.Show(new Notification("No Data", "There's no data to export.", NotificationType.Information));
+                _notificationManager.Show(
+                    new Notification(
+                        "No Data",
+                        "There's no data to export.",
+                        NotificationType.Information
+                    )
+                );
             }
         }
 
         public void SaveEditedData()
         {
-
-            if(string.IsNullOrEmpty(_currentLocresFilePath))
-    {
-                _notificationManager.Show(new Notification("Error", "No file is currently open to save.", NotificationType.Error));
+            if (string.IsNullOrEmpty(_currentLocresFilePath))
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "Error",
+                        "No file is currently open to save.",
+                        NotificationType.Error
+                    )
+                );
                 return;
             }
 
             var exeDirectory = AppContext.BaseDirectory;
-            var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + "_edited.csv";
+            var csvFileName =
+                Path.GetFileNameWithoutExtension(_currentLocresFilePath) + "_edited.csv";
             var csvFile = Path.Combine(exeDirectory, csvFileName);
 
             // Save edited data to CSV
             using (var writer = new StreamWriter(csvFile, false, Encoding.UTF8))
-            using (var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            using (
+                var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture))
+            )
             {
                 for (int i = 0; i < _dataGrid.Columns.Count; i++)
                 {
@@ -823,7 +975,7 @@ namespace UnrealLocresEditor.Views
             // Run UnrealLocres.exe to import edited CSV
             var process = new Process
             {
-                StartInfo = GetProcessStartInfo("import", _currentLocresFilePath, csvFileName)
+                StartInfo = GetProcessStartInfo("import", _currentLocresFilePath, csvFileName),
             };
 
             process.Start();
@@ -851,19 +1003,37 @@ namespace UnrealLocresEditor.Views
                     // Move and rename
                     File.Move(modifiedLocres, destinationFile);
 
-                    _notificationManager.Show(new Notification("Success!", $"File saved as {Path.GetFileName(destinationFile)} in {destinationDirectory}", NotificationType.Success));
+                    _notificationManager.Show(
+                        new Notification(
+                            "Success!",
+                            $"File saved as {Path.GetFileName(destinationFile)} in {destinationDirectory}",
+                            NotificationType.Success
+                        )
+                    );
                     _hasUnsavedChanges = false;
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error moving file: {ex.Message}");
-                    _notificationManager.Show(new Notification("Error moving file:", $"{ex.Message}", NotificationType.Error));
+                    _notificationManager.Show(
+                        new Notification(
+                            "Error moving file:",
+                            $"{ex.Message}",
+                            NotificationType.Error
+                        )
+                    );
                 }
             }
             else
             {
                 Console.WriteLine($"Error importing: {process.StandardOutput.ReadToEnd()}");
-                _notificationManager.Show(new Notification("Error importing:", $"{process.StandardOutput.ReadToEnd()}", NotificationType.Error));
+                _notificationManager.Show(
+                    new Notification(
+                        "Error importing:",
+                        $"{process.StandardOutput.ReadToEnd()}",
+                        NotificationType.Error
+                    )
+                );
             }
 
             // Clean up CSV file
@@ -873,14 +1043,19 @@ namespace UnrealLocresEditor.Views
         private async void OpenSpreadsheetMenuItem_Click(object sender, RoutedEventArgs e)
         {
             var storageProvider = StorageProvider;
-            var result = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                FileTypeFilter = new[]
+            var result = await storageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
                 {
-            new FilePickerFileType("Spreadsheet Files") { Patterns = new[] { "*.csv" } }
-        },
-                AllowMultiple = false
-            });
+                    FileTypeFilter = new[]
+                    {
+                        new FilePickerFileType("Spreadsheet Files")
+                        {
+                            Patterns = new[] { "*.csv" },
+                        },
+                    },
+                    AllowMultiple = false,
+                }
+            );
 
             if (result != null && result.Count > 0)
             {
@@ -906,8 +1081,8 @@ namespace UnrealLocresEditor.Views
                     SuggestedFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath),
                     FileTypeChoices = new[]
                     {
-                new FilePickerFileType("CSV file") { Patterns = new[] { "*.csv" } },
-            }
+                        new FilePickerFileType("CSV file") { Patterns = new[] { "*.csv" } },
+                    },
                 };
 
                 var storageFile = await StorageProvider.SaveFilePickerAsync(saveOptions);
@@ -917,19 +1092,33 @@ namespace UnrealLocresEditor.Views
                     var filePath = storageFile.Path.LocalPath;
                     SaveAsCsv(filePath);
 
-                    _notificationManager.Show(new Notification("Success", $"File saved as {Path.GetFileName(filePath)}", NotificationType.Success));
+                    _notificationManager.Show(
+                        new Notification(
+                            "Success",
+                            $"File saved as {Path.GetFileName(filePath)}",
+                            NotificationType.Success
+                        )
+                    );
                 }
             }
             else
             {
-                _notificationManager.Show(new Notification("No Data", "There's no data to export.", NotificationType.Information));
+                _notificationManager.Show(
+                    new Notification(
+                        "No Data",
+                        "There's no data to export.",
+                        NotificationType.Information
+                    )
+                );
             }
         }
 
         private void SaveAsCsv(string filePath)
         {
             using (var writer = new StreamWriter(filePath, false, Encoding.UTF8))
-            using (var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            using (
+                var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture))
+            )
             {
                 // Headers
                 for (int i = 0; i < _dataGrid.Columns.Count; i++)
@@ -995,6 +1184,7 @@ namespace UnrealLocresEditor.Views
 
         // Find dialog
         private FindDialog findDialog;
+
         private void FindMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (findDialog == null)
@@ -1015,6 +1205,7 @@ namespace UnrealLocresEditor.Views
 
         // Find and replace dialog
         private FindReplaceDialog findReplaceDialog;
+
         private void FindReplaceMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (findReplaceDialog == null)
@@ -1035,6 +1226,7 @@ namespace UnrealLocresEditor.Views
 
         // Preferences
         private PreferencesWindow preferencesWindow;
+
         private void PreferencesMenuItem_Click(Object sender, RoutedEventArgs e)
         {
             if (preferencesWindow == null)
@@ -1049,7 +1241,6 @@ namespace UnrealLocresEditor.Views
 
         private void PreferencesWindow_Closed(object sender, EventArgs e)
         {
-
             preferencesWindow = null;
         }
 
@@ -1059,16 +1250,30 @@ namespace UnrealLocresEditor.Views
             try
             {
                 InitializeWinePrefix();
-                _notificationManager.Show(new Notification("Success", "Success. Make sure to install Wine MONO and set to 32 bit.", NotificationType.Success));
+                _notificationManager.Show(
+                    new Notification(
+                        "Success",
+                        "Success. Make sure to install Wine MONO and set to 32 bit.",
+                        NotificationType.Success
+                    )
+                );
             }
             catch (Exception ex)
             {
-                _notificationManager.Show(new Notification("Error", $"Failed to initialize Wine prefix: {ex.Message}", NotificationType.Error));
+                _notificationManager.Show(
+                    new Notification(
+                        "Error",
+                        $"Failed to initialize Wine prefix: {ex.Message}",
+                        NotificationType.Error
+                    )
+                );
             }
         }
 
         // Report issue
-        private const string GitHubIssueUrl = "https://github.com/Snoozeds/UnrealLocresEditor/issues/new";
+        private const string GitHubIssueUrl =
+            "https://github.com/Snoozeds/UnrealLocresEditor/issues/new";
+
         private void ReportIssueMenuItem_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -1076,17 +1281,16 @@ namespace UnrealLocresEditor.Views
                 ProcessStartInfo psi = new ProcessStartInfo
                 {
                     FileName = GitHubIssueUrl,
-                    UseShellExecute = true
+                    UseShellExecute = true,
                 };
                 Process.Start(psi);
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception) { }
         }
 
         // About
         private AboutWindow aboutWindow;
+
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (aboutWindow == null)
@@ -1104,6 +1308,5 @@ namespace UnrealLocresEditor.Views
         {
             aboutWindow = null;
         }
-
     }
 }
