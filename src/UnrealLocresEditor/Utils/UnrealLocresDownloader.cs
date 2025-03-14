@@ -30,7 +30,7 @@ namespace UnrealLocresEditor.Utils
         public async Task<bool> CheckAndDownloadUnrealLocres()
         {
             var unrealLocresExePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
+                Path.GetDirectoryName(Environment.ProcessPath),
                 "UnrealLocres.exe"
             );
             if (!File.Exists(unrealLocresExePath))
