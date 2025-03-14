@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Timers;
 using Avalonia;
@@ -875,32 +876,15 @@ namespace UnrealLocresEditor.Views
             var instanceId = Process.GetCurrentProcess().Id.ToString();
             var tempDirectoryName = $".temp-UnrealLocresEditor-{instanceId}";
             var tempDirectoryPath = Path.Combine(exeDirectory, tempDirectoryName);
+            Directory.CreateDirectory(tempDirectoryPath);
 
-            if (Directory.Exists(tempDirectoryPath))
+            // Set folder to hidden on Windows
+            if (OperatingSystem.IsWindows())
             {
-                // Temp file cleanup
-                DirectoryInfo dirInfo = new DirectoryInfo(tempDirectoryPath);
-                foreach (FileInfo file in dirInfo.GetFiles())
-                {
-                    file.Delete();
-                }
-                foreach (DirectoryInfo dir in dirInfo.GetDirectories())
-                {
-                    dir.Delete(true);
-                }
-            }
-            else
-            {
-                Directory.CreateDirectory(tempDirectoryPath);
-
-                // Set folder to hidden on Windows
-                if (OperatingSystem.IsWindows())
-                {
-                    File.SetAttributes(
-                        tempDirectoryPath,
-                        FileAttributes.Directory | FileAttributes.Hidden
-                    );
-                }
+                File.SetAttributes(
+                    tempDirectoryPath,
+                    FileAttributes.Directory | FileAttributes.Hidden
+                );
             }
 
             return tempDirectoryPath;
@@ -921,10 +905,10 @@ namespace UnrealLocresEditor.Views
                 {
                     FileTypeFilter = new[]
                     {
-                new FilePickerFileType("Localization Files")
-                {
-                    Patterns = new[] { "*.locres" },
-                },
+                        new FilePickerFileType("Localization Files")
+                        {
+                            Patterns = new[] { "*.locres" },
+                        },
                     },
                     AllowMultiple = false,
                 }
@@ -977,7 +961,8 @@ namespace UnrealLocresEditor.Views
                         }
 
                         var importedLocresDir = GetOrCreateTempDirectory();
-                        var uniqueFileName = $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}_{Process.GetCurrentProcess().Id}{Path.GetExtension(_currentLocresFilePath)}";
+                        var uniqueFileName =
+                            $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}_{Process.GetCurrentProcess().Id}{Path.GetExtension(_currentLocresFilePath)}";
                         var importedLocresPath = Path.Combine(importedLocresDir, uniqueFileName);
 
                         if (File.Exists(importedLocresPath))
@@ -1229,7 +1214,11 @@ namespace UnrealLocresEditor.Views
 
             if (process.ExitCode == 0)
             {
+                var instanceId = Process.GetCurrentProcess().Id.ToString();
                 var modifiedLocres = _currentLocresFilePath + ".new";
+
+                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(modifiedLocres);
+                var baseFileName = fileNameWithoutExtension.Split('_')[0];
 
                 // Create export directory with current date and time
                 var exportDirectory = Path.Combine(exeDirectory, "export");
@@ -1241,7 +1230,7 @@ namespace UnrealLocresEditor.Views
                     Directory.CreateDirectory(destinationDirectory);
                 }
 
-                var newFileName = Path.GetFileNameWithoutExtension(modifiedLocres);
+                var newFileName = baseFileName + ".locres";
                 var destinationFile = Path.Combine(destinationDirectory, newFileName);
 
                 try
