@@ -929,7 +929,8 @@ namespace UnrealLocresEditor.Views
 
                 UpdatePresence(DiscordRPCEnabled); // Display opened file in Discord RPC
 
-                var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + ".csv";
+                var instanceId = Process.GetCurrentProcess().Id;
+                var csvFileName = $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}_{instanceId}.csv";
                 csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
 
                 // Check if UnrealLocres.exe exists
@@ -952,18 +953,24 @@ namespace UnrealLocresEditor.Views
                 {
                     try
                     {
+                        // Original csv file UnrealLocres makes (usually something like Game.csv)
+                        var originalCsvFile = Path.Combine(Directory.GetCurrentDirectory(), $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}.csv");
+
                         // Verify the CSV file exists before trying to load it
-                        if (!File.Exists(csvFile))
+                        if (!File.Exists(originalCsvFile))
                         {
                             _notificationManager.Show(
                                 new Notification(
                                     "Error",
-                                    $"CSV file not found after export: {csvFileName}",
+                                    $"CSV file not found after export: {originalCsvFile}",
                                     NotificationType.Error
                                 )
                             );
                             return;
                         }
+
+                        // Rename it to have the instance id to avoid file conflicts when multiple instances of ULE are open
+                        File.Move(originalCsvFile, csvFile);
 
                         var importedLocresDir = GetOrCreateTempDirectory();
                         var uniqueFileName =
