@@ -390,6 +390,24 @@ namespace UnrealLocresEditor.Views
             client?.ClearPresence();
             client?.Dispose();
 
+            // Clean up the temp directory for this instance
+            try
+            {
+                var instanceId = Process.GetCurrentProcess().Id.ToString();
+                var exeDirectory = Path.GetDirectoryName(Environment.ProcessPath);
+                var tempDirectoryName = $".temp-UnrealLocresEditor-{instanceId}";
+                var tempDirectoryPath = Path.Combine(exeDirectory, tempDirectoryName);
+
+                if (Directory.Exists(tempDirectoryPath))
+                {
+                    Directory.Delete(tempDirectoryPath, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error cleaning up temp directory: {ex.Message}");
+            }
+
             var window = (Window)this;
             window.Close();
         }
@@ -841,7 +859,9 @@ namespace UnrealLocresEditor.Views
         private static string GetOrCreateTempDirectory()
         {
             var exeDirectory = Path.GetDirectoryName(Environment.ProcessPath);
-            var tempDirectoryName = ".temp-UnrealLocresEditor";
+            // Create a unique instance ID so that if multiple instances are open, they don't overwrite eachother.
+            var instanceId = Process.GetCurrentProcess().Id.ToString();
+            var tempDirectoryName = $".temp-UnrealLocresEditor-{instanceId}";
             var tempDirectoryPath = Path.Combine(exeDirectory, tempDirectoryName);
 
             if (Directory.Exists(tempDirectoryPath))
