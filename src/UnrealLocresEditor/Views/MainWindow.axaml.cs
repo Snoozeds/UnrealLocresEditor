@@ -876,15 +876,20 @@ namespace UnrealLocresEditor.Views
             var instanceId = Process.GetCurrentProcess().Id.ToString();
             var tempDirectoryName = $".temp-UnrealLocresEditor-{instanceId}";
             var tempDirectoryPath = Path.Combine(exeDirectory, tempDirectoryName);
-            Directory.CreateDirectory(tempDirectoryPath);
-
-            // Set folder to hidden on Windows
-            if (OperatingSystem.IsWindows())
+            
+            // Create folder if it does not exist
+            if (!Directory.Exists(tempDirectoryPath))
             {
-                File.SetAttributes(
-                    tempDirectoryPath,
-                    FileAttributes.Directory | FileAttributes.Hidden
-                );
+                Directory.CreateDirectory(tempDirectoryPath);
+
+                // Set folder to hidden on Windows
+                if (OperatingSystem.IsWindows())
+                {
+                    File.SetAttributes(
+                        tempDirectoryPath,
+                        FileAttributes.Directory | FileAttributes.Hidden
+                    );
+                }
             }
 
             return tempDirectoryPath;
