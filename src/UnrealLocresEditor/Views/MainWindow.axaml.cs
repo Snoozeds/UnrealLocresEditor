@@ -501,7 +501,10 @@ namespace UnrealLocresEditor.Views
                         if (!string.IsNullOrEmpty(clipboardText))
                         {
                             int caretIndex = focusedControl.CaretIndex;
-                            focusedControl.Text = focusedControl.Text.Insert(caretIndex, clipboardText);
+                            focusedControl.Text = focusedControl.Text.Insert(
+                                caretIndex,
+                                clipboardText
+                            );
                             focusedControl.CaretIndex = caretIndex + clipboardText.Length;
                             e.Handled = true;
                         }
@@ -526,20 +529,26 @@ namespace UnrealLocresEditor.Views
                         _dataGrid.BeginEdit();
 
                         // Defer the paste operation until the editing control (TextBox) is available.
-                        Dispatcher.UIThread.Post(async () =>
-                        {
-                            var editTextBox = FocusManager.GetFocusedElement() as TextBox;
-                            if (editTextBox != null)
+                        Dispatcher.UIThread.Post(
+                            async () =>
                             {
-                                var clipboardText = await this.Clipboard.GetTextAsync();
-                                if (!string.IsNullOrEmpty(clipboardText))
+                                var editTextBox = FocusManager.GetFocusedElement() as TextBox;
+                                if (editTextBox != null)
                                 {
-                                    int caretIndex = editTextBox.CaretIndex;
-                                    editTextBox.Text = editTextBox.Text.Insert(caretIndex, clipboardText);
-                                    editTextBox.CaretIndex = caretIndex + clipboardText.Length;
+                                    var clipboardText = await this.Clipboard.GetTextAsync();
+                                    if (!string.IsNullOrEmpty(clipboardText))
+                                    {
+                                        int caretIndex = editTextBox.CaretIndex;
+                                        editTextBox.Text = editTextBox.Text.Insert(
+                                            caretIndex,
+                                            clipboardText
+                                        );
+                                        editTextBox.CaretIndex = caretIndex + clipboardText.Length;
+                                    }
                                 }
-                            }
-                        }, DispatcherPriority.Background);
+                            },
+                            DispatcherPriority.Background
+                        );
 
                         e.Handled = true;
                     }
@@ -628,7 +637,8 @@ namespace UnrealLocresEditor.Views
 
             // Begin editing the first editable cell in the new row
             _dataGrid.Focus();
-            Dispatcher.UIThread.Post(() => {
+            Dispatcher.UIThread.Post(() =>
+            {
                 _dataGrid.BeginEdit();
             });
 
@@ -680,24 +690,24 @@ namespace UnrealLocresEditor.Views
                     Margin = new Thickness(20),
                     Spacing = 20,
                     Children =
-            {
-                new TextBlock
-                {
-                    Text = "Are you sure you want to delete this row?",
-                    TextWrapping = TextWrapping.Wrap,
-                },
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 10,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Children =
                     {
-                        new Avalonia.Controls.Button { Content = "Delete" },
-                        new Avalonia.Controls.Button { Content = "Cancel" },
+                        new TextBlock
+                        {
+                            Text = "Are you sure you want to delete this row?",
+                            TextWrapping = TextWrapping.Wrap,
+                        },
+                        new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Spacing = 10,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            Children =
+                            {
+                                new Avalonia.Controls.Button { Content = "Delete" },
+                                new Avalonia.Controls.Button { Content = "Cancel" },
+                            },
+                        },
                     },
-                },
-            },
                 },
             };
 
@@ -743,7 +753,9 @@ namespace UnrealLocresEditor.Views
             {
                 button.Click += (s, e) =>
                 {
-                    taskCompletionSource.SetResult(((Avalonia.Controls.Button)s).Content.ToString());
+                    taskCompletionSource.SetResult(
+                        ((Avalonia.Controls.Button)s).Content.ToString()
+                    );
                     dialog.Close();
                 };
             }
@@ -894,6 +906,13 @@ namespace UnrealLocresEditor.Views
             return tempDirectoryPath;
         }
 
+        // Unique file name so multiple instances don't overwrite eachother
+        private string GetUniqueFileName(string baseName, string extension)
+        {
+            var instanceId = Process.GetCurrentProcess().Id.ToString();
+            return $"{baseName}_{instanceId}{extension}";
+        }
+
         private async void OpenMenuItem_Click(object sender, RoutedEventArgs e)
         {
             var storageProvider = StorageProvider;
@@ -920,7 +939,10 @@ namespace UnrealLocresEditor.Views
                 idleStartTime = null;
 
                 UpdatePresence(DiscordRPCEnabled); // Display opened file in Discord RPC
-                var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + ".csv";
+                var csvFileName = GetUniqueFileName(
+                    Path.GetFileNameWithoutExtension(_currentLocresFilePath),
+                    ".csv"
+                );
                 csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
 
                 // Check if UnrealLocres.exe exists
@@ -1159,8 +1181,10 @@ namespace UnrealLocresEditor.Views
             }
 
             var exeDirectory = AppContext.BaseDirectory;
-            var csvFileName =
-                Path.GetFileNameWithoutExtension(_currentLocresFilePath) + "_edited.csv";
+            var csvFileName = GetUniqueFileName(
+                Path.GetFileNameWithoutExtension(_currentLocresFilePath) + "_edited",
+                ".csv"
+            );
             var csvFile = Path.Combine(exeDirectory, csvFileName);
 
             // Save edited data to CSV
