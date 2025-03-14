@@ -14,7 +14,8 @@ namespace UnrealLocresEditor.Views
             DataContext = new PreferencesWindowViewModel(this, null);
         }
 
-        public PreferencesWindow(MainWindow mainWindow) : this()
+        public PreferencesWindow(MainWindow mainWindow)
+            : this()
         {
             _mainWindow = mainWindow;
             DataContext = new PreferencesWindowViewModel(this, _mainWindow);

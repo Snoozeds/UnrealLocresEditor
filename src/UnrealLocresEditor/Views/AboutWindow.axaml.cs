@@ -1,10 +1,10 @@
-﻿using Avalonia.Controls;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using System;
-using System.Diagnostics;
-using System.IO;
 
 namespace UnrealLocresEditor.Views
 {
@@ -38,7 +38,10 @@ namespace UnrealLocresEditor.Views
         {
             try
             {
-                string versionPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "version.txt");
+                string versionPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "version.txt"
+                );
                 if (File.Exists(versionPath))
                 {
                     string version = File.ReadAllText(versionPath).Trim();
@@ -64,13 +67,11 @@ namespace UnrealLocresEditor.Views
                 ProcessStartInfo psi = new ProcessStartInfo
                 {
                     FileName = GitHubUrl,
-                    UseShellExecute = true
+                    UseShellExecute = true,
                 };
                 Process.Start(psi);
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception) { }
         }
 
         private async void OnCheckForUpdatesClick(object sender, RoutedEventArgs e)
@@ -84,17 +85,23 @@ namespace UnrealLocresEditor.Views
             try
             {
                 await updater.CheckForUpdates(true);
-                _notificationManager.Show(new Notification(
-                    "Update Check",
-                    "Your application is up to date!",
-                    NotificationType.Information));
+                _notificationManager.Show(
+                    new Notification(
+                        "Update Check",
+                        "Your application is up to date!",
+                        NotificationType.Information
+                    )
+                );
             }
             catch (Exception ex)
             {
-                _notificationManager.Show(new Notification(
-                    "Update Check Failed",
-                    $"Could not check for updates: {ex.Message}",
-                    NotificationType.Error));
+                _notificationManager.Show(
+                    new Notification(
+                        "Update Check Failed",
+                        $"Could not check for updates: {ex.Message}",
+                        NotificationType.Error
+                    )
+                );
             }
         }
     }

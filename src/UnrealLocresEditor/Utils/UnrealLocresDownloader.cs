@@ -1,23 +1,27 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.Notifications;
-using Avalonia.Layout;
-using Avalonia.Media;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
+using Avalonia.Layout;
+using Avalonia.Media;
 
 namespace UnrealLocresEditor.Utils
 {
     public class UnrealLocresDownloader
     {
-        private const string UnrealLocresReleaseUrl = "https://github.com/akintos/UnrealLocres/releases/latest/download/UnrealLocres.exe";
+        private const string UnrealLocresReleaseUrl =
+            "https://github.com/akintos/UnrealLocres/releases/latest/download/UnrealLocres.exe";
         private readonly WindowNotificationManager _notificationManager;
         private readonly Window _parentWindow;
 
-        public UnrealLocresDownloader(Window parentWindow, WindowNotificationManager notificationManager)
+        public UnrealLocresDownloader(
+            Window parentWindow,
+            WindowNotificationManager notificationManager
+        )
         {
             _parentWindow = parentWindow;
             _notificationManager = notificationManager;
@@ -25,7 +29,10 @@ namespace UnrealLocresEditor.Utils
 
         public async Task<bool> CheckAndDownloadUnrealLocres()
         {
-            var unrealLocresExePath = Path.Combine(Directory.GetCurrentDirectory(), "UnrealLocres.exe");
+            var unrealLocresExePath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "UnrealLocres.exe"
+            );
             if (!File.Exists(unrealLocresExePath))
             {
                 return await PromptAndDownloadUnrealLocres();
@@ -49,8 +56,9 @@ namespace UnrealLocresEditor.Utils
                     {
                         new TextBlock
                         {
-                            Text = "UnrealLocres is required but not found. Would you like to download it now?",
-                            TextWrapping = TextWrapping.Wrap
+                            Text =
+                                "UnrealLocres is required but not found. Would you like to download it now?",
+                            TextWrapping = TextWrapping.Wrap,
                         },
                         new StackPanel
                         {
@@ -60,11 +68,11 @@ namespace UnrealLocresEditor.Utils
                             Children =
                             {
                                 new Button { Content = "Download" },
-                                new Button { Content = "Cancel" }
-                            }
-                        }
-                    }
-                }
+                                new Button { Content = "Cancel" },
+                            },
+                        },
+                    },
+                },
             };
 
             var result = await ShowCustomDialog(dialog);
@@ -83,10 +91,13 @@ namespace UnrealLocresEditor.Utils
             {
                 using (var client = new HttpClient())
                 {
-                    _notificationManager.Show(new Notification(
-                        "Downloading",
-                        "Downloading UnrealLocres...",
-                        NotificationType.Information));
+                    _notificationManager.Show(
+                        new Notification(
+                            "Downloading",
+                            "Downloading UnrealLocres...",
+                            NotificationType.Information
+                        )
+                    );
 
                     var response = await client.GetByteArrayAsync(UnrealLocresReleaseUrl);
                     var exeDirectory = Directory.GetCurrentDirectory();
@@ -94,20 +105,26 @@ namespace UnrealLocresEditor.Utils
 
                     await File.WriteAllBytesAsync(unrealLocresPath, response);
 
-                    _notificationManager.Show(new Notification(
-                        "Success",
-                        "UnrealLocres has been downloaded successfully.",
-                        NotificationType.Success));
+                    _notificationManager.Show(
+                        new Notification(
+                            "Success",
+                            "UnrealLocres has been downloaded successfully.",
+                            NotificationType.Success
+                        )
+                    );
 
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                _notificationManager.Show(new Notification(
-                    "Error",
-                    $"Failed to download UnrealLocres: {ex.Message}",
-                    NotificationType.Error));
+                _notificationManager.Show(
+                    new Notification(
+                        "Error",
+                        $"Failed to download UnrealLocres: {ex.Message}",
+                        NotificationType.Error
+                    )
+                );
                 return false;
             }
         }
@@ -118,7 +135,9 @@ namespace UnrealLocresEditor.Utils
         {
             _dialogResult = new TaskCompletionSource<string>();
 
-            var buttons = ((StackPanel)((StackPanel)dialog.Content).Children[1]).Children.OfType<Button>();
+            var buttons = (
+                (StackPanel)((StackPanel)dialog.Content).Children[1]
+            ).Children.OfType<Button>();
 
             foreach (var button in buttons)
             {

@@ -1,11 +1,11 @@
-﻿using Avalonia.Controls;
-using Avalonia.Media;
-using ReactiveUI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Runtime.InteropServices;
+using Avalonia.Controls;
+using Avalonia.Media;
+using ReactiveUI;
 using UnrealLocresEditor.Utils;
 using UnrealLocresEditor.Views;
 
@@ -47,7 +47,9 @@ namespace UnrealLocresEditor.ViewModels
                 }
                 else
                 {
-                    Console.WriteLine($"Invalid AccentColor selected: {hexColor}. Reverting to default.");
+                    Console.WriteLine(
+                        $"Invalid AccentColor selected: {hexColor}. Reverting to default."
+                    );
                     this.RaiseAndSetIfChanged(ref _accentColor, Color.Parse("#4e3cb2"));
                 }
             }
@@ -83,14 +85,15 @@ namespace UnrealLocresEditor.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selectedAutoSaveInterval, value);
         }
 
-        public IEnumerable<TimeSpan> AutoSaveIntervals { get; } = new[]
-        {
-            TimeSpan.FromMinutes(1),
-            TimeSpan.FromMinutes(5),
-            TimeSpan.FromMinutes(10),
-            TimeSpan.FromMinutes(15),
-            TimeSpan.FromMinutes(30)
-        };
+        public IEnumerable<TimeSpan> AutoSaveIntervals { get; } =
+            new[]
+            {
+                TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(5),
+                TimeSpan.FromMinutes(10),
+                TimeSpan.FromMinutes(15),
+                TimeSpan.FromMinutes(30),
+            };
         public bool AutoSaveEnabled
         {
             get => _autoSaveEnabled;

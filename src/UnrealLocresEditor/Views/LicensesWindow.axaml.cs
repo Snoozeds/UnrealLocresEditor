@@ -1,22 +1,21 @@
-using Avalonia.Controls;
-using Avalonia.Interactivity;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace UnrealLocresEditor;
 
 public partial class LicensesWindow : Window
 {
-
     private readonly Dictionary<string, string> urlMappings = new()
-        {
-            { "Avalonia", "https://github.com/AvaloniaUI/Avalonia" },
-            { "ClosedXML", "https://github.com/ClosedXML/ClosedXML" },
-            { "CsvHelper", "https://github.com/JoshClose/CsvHelper" },
-            { "DiscordRichPresence", "https://github.com/Lachee/discord-rpc-csharp" },
-            { "SystemTextJson", "https://github.com/dotnet/runtime" }
-        };
+    {
+        { "Avalonia", "https://github.com/AvaloniaUI/Avalonia" },
+        { "ClosedXML", "https://github.com/ClosedXML/ClosedXML" },
+        { "CsvHelper", "https://github.com/JoshClose/CsvHelper" },
+        { "DiscordRichPresence", "https://github.com/Lachee/discord-rpc-csharp" },
+        { "SystemTextJson", "https://github.com/dotnet/runtime" },
+    };
 
     public LicensesWindow()
     {
@@ -27,11 +26,7 @@ public partial class LicensesWindow : Window
     {
         try
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
+            Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
         }
         catch (Exception ex)
         {
@@ -49,7 +44,11 @@ public partial class LicensesWindow : Window
 
     private void HandleUrlClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && button.Name is string name && urlMappings.TryGetValue(name, out var url))
+        if (
+            sender is Button button
+            && button.Name is string name
+            && urlMappings.TryGetValue(name, out var url)
+        )
         {
             LaunchUrl(url);
         }

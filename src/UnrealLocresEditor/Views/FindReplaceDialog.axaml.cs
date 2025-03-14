@@ -1,12 +1,12 @@
-﻿using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
-using Avalonia.Threading;
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 
 namespace UnrealLocresEditor.Views
 {
@@ -51,7 +51,12 @@ namespace UnrealLocresEditor.Views
 
         private async void ScrollToSelectedRow(DataGrid dataGrid, int rowIndex, int colIndex)
         {
-            if (rowIndex < 0 || rowIndex >= MainWindow._rows.Count || colIndex < 0 || colIndex >= dataGrid.Columns.Count)
+            if (
+                rowIndex < 0
+                || rowIndex >= MainWindow._rows.Count
+                || colIndex < 0
+                || colIndex >= dataGrid.Columns.Count
+            )
             {
                 return;
             }
@@ -67,12 +72,14 @@ namespace UnrealLocresEditor.Views
 
         public async void FindText(string searchTerm, bool forward = true)
         {
-            if (string.IsNullOrEmpty(searchTerm)) return;
+            if (string.IsNullOrEmpty(searchTerm))
+                return;
 
             var dataGrid = MainWindow._dataGrid;
             var items = MainWindow._rows;
 
-            if (items == null || dataGrid.Columns.Count == 0) return;
+            if (items == null || dataGrid.Columns.Count == 0)
+                return;
 
             bool isMatchCaseChecked = uiMatchCaseCheckBox.IsChecked ?? false;
             bool isMatchWholeWordChecked = uiMatchWholeWordCheckBox.IsChecked ?? false;
@@ -90,25 +97,41 @@ namespace UnrealLocresEditor.Views
             }
 
             int startRowIndex = (_currentRowIndex + increment + items.Count) % items.Count;
-            StringComparison comparison = isMatchCaseChecked ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            StringComparison comparison = isMatchCaseChecked
+                ? StringComparison.Ordinal
+                : StringComparison.OrdinalIgnoreCase;
 
             bool foundMatch = false;
 
-            for (int rowIndex = startRowIndex; ; rowIndex = (rowIndex + increment + items.Count) % items.Count)
+            for (
+                int rowIndex = startRowIndex;
+                ;
+                rowIndex = (rowIndex + increment + items.Count) % items.Count
+            )
             {
                 var row = items[rowIndex];
-                int startColIndex = (rowIndex == _currentRowIndex) ? _currentMatchIndex + increment : (forward ? 0 : dataGrid.Columns.Count - 1);
+                int startColIndex =
+                    (rowIndex == _currentRowIndex)
+                        ? _currentMatchIndex + increment
+                        : (forward ? 0 : dataGrid.Columns.Count - 1);
 
-                for (int colIndex = startColIndex; colIndex >= 0 && colIndex < dataGrid.Columns.Count; colIndex += increment)
+                for (
+                    int colIndex = startColIndex;
+                    colIndex >= 0 && colIndex < dataGrid.Columns.Count;
+                    colIndex += increment
+                )
                 {
                     var cellContent = row.Values[colIndex] as string;
-                    if (cellContent == null) continue;
+                    if (cellContent == null)
+                        continue;
 
                     bool matchFound = isMatchCellChecked
                         ? string.Equals(cellContent, searchTerm, comparison)
-                        : (isMatchWholeWordChecked
-                            ? IsWholeWordMatch(cellContent, searchTerm, comparison)
-                            : cellContent.IndexOf(searchTerm, comparison) >= 0);
+                        : (
+                            isMatchWholeWordChecked
+                                ? IsWholeWordMatch(cellContent, searchTerm, comparison)
+                                : cellContent.IndexOf(searchTerm, comparison) >= 0
+                        );
 
                     if (matchFound)
                     {
@@ -129,7 +152,8 @@ namespace UnrealLocresEditor.Views
                     }
                 }
 
-                if (foundMatch || rowIndex == startRowIndex) break;
+                if (foundMatch || rowIndex == startRowIndex)
+                    break;
             }
 
             if (!foundMatch)
@@ -140,16 +164,25 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        private bool IsWholeWordMatch(string cellValue, string searchText, StringComparison comparison)
+        private bool IsWholeWordMatch(
+            string cellValue,
+            string searchText,
+            StringComparison comparison
+        )
         {
             string pattern = $@"\b{Regex.Escape(searchText)}\b";
-            var options = comparison == StringComparison.Ordinal ? RegexOptions.None : RegexOptions.IgnoreCase;
+            var options =
+                comparison == StringComparison.Ordinal
+                    ? RegexOptions.None
+                    : RegexOptions.IgnoreCase;
             return Regex.IsMatch(cellValue, pattern, options);
         }
 
         private bool IsEntireCellMatch(string cellValue, string searchText, bool matchCase)
         {
-            StringComparison comparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            StringComparison comparison = matchCase
+                ? StringComparison.Ordinal
+                : StringComparison.OrdinalIgnoreCase;
             return string.Equals(cellValue, searchText, comparison);
         }
 
@@ -169,14 +202,30 @@ namespace UnrealLocresEditor.Views
 
                     if (locresMode)
                     {
-                        ReplaceTextInLocresMode(row, searchText, replaceText, matchCase, matchWholeWord, matchCell);
+                        ReplaceTextInLocresMode(
+                            row,
+                            searchText,
+                            replaceText,
+                            matchCase,
+                            matchWholeWord,
+                            matchCell
+                        );
                     }
                     else
                     {
-                        ReplaceTextInRow(row, searchText, replaceText, matchCase, matchWholeWord, matchCell);
+                        ReplaceTextInRow(
+                            row,
+                            searchText,
+                            replaceText,
+                            matchCase,
+                            matchWholeWord,
+                            matchCell
+                        );
                     }
 
-                    MainWindow._dataGrid.ItemsSource = new ObservableCollection<MainWindow.DataRow>(MainWindow._dataGrid.ItemsSource.Cast<MainWindow.DataRow>().ToList());
+                    MainWindow._dataGrid.ItemsSource = new ObservableCollection<MainWindow.DataRow>(
+                        MainWindow._dataGrid.ItemsSource.Cast<MainWindow.DataRow>().ToList()
+                    );
                     FindText(searchText, true);
                 }
             }
@@ -184,63 +233,132 @@ namespace UnrealLocresEditor.Views
 
         private async void ReplaceAllButton_Click(object? sender, RoutedEventArgs e)
         {
-            if (MainWindow?._dataGrid?.ItemsSource == null) return;
+            if (MainWindow?._dataGrid?.ItemsSource == null)
+                return;
 
             var searchText = uiSearchTextBox.Text;
             var replaceText = uiReplaceTextBox.Text;
-            if (string.IsNullOrEmpty(searchText) || string.IsNullOrEmpty(replaceText)) return;
+            if (string.IsNullOrEmpty(searchText) || string.IsNullOrEmpty(replaceText))
+                return;
 
             var items = MainWindow._dataGrid.ItemsSource.Cast<MainWindow.DataRow>().ToList();
-            bool matchCase = await Dispatcher.UIThread.InvokeAsync(() => uiMatchCaseCheckBox.IsChecked == true);
-            bool matchWholeWord = await Dispatcher.UIThread.InvokeAsync(() => uiMatchWholeWordCheckBox.IsChecked == true);
-            bool matchCell = await Dispatcher.UIThread.InvokeAsync(() => uiMatchCellCheckBox.IsChecked == true);
-            bool locresMode = await Dispatcher.UIThread.InvokeAsync(() => uiLocresModeCheckBox.IsChecked == true);
+            bool matchCase = await Dispatcher.UIThread.InvokeAsync(
+                () => uiMatchCaseCheckBox.IsChecked == true
+            );
+            bool matchWholeWord = await Dispatcher.UIThread.InvokeAsync(
+                () => uiMatchWholeWordCheckBox.IsChecked == true
+            );
+            bool matchCell = await Dispatcher.UIThread.InvokeAsync(
+                () => uiMatchCellCheckBox.IsChecked == true
+            );
+            bool locresMode = await Dispatcher.UIThread.InvokeAsync(
+                () => uiLocresModeCheckBox.IsChecked == true
+            );
 
-            var tasks = items.Select(row => Task.Run(() =>
-            {
-                if (locresMode)
-                {
-                    ReplaceTextInLocresMode(row, searchText, replaceText, matchCase, matchWholeWord, matchCell);
-                }
-                else
-                {
-                    ReplaceTextInRow(row, searchText, replaceText, matchCase, matchWholeWord, matchCell);
-                }
-            })).ToArray();
+            var tasks = items
+                .Select(row =>
+                    Task.Run(() =>
+                    {
+                        if (locresMode)
+                        {
+                            ReplaceTextInLocresMode(
+                                row,
+                                searchText,
+                                replaceText,
+                                matchCase,
+                                matchWholeWord,
+                                matchCell
+                            );
+                        }
+                        else
+                        {
+                            ReplaceTextInRow(
+                                row,
+                                searchText,
+                                replaceText,
+                                matchCase,
+                                matchWholeWord,
+                                matchCell
+                            );
+                        }
+                    })
+                )
+                .ToArray();
 
             await Task.WhenAll(tasks);
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                MainWindow._dataGrid.ItemsSource = new ObservableCollection<MainWindow.DataRow>(items);
+                MainWindow._dataGrid.ItemsSource = new ObservableCollection<MainWindow.DataRow>(
+                    items
+                );
             });
         }
 
-
-        private void ReplaceTextInRow(MainWindow.DataRow row, string searchText, string replaceText, bool matchCase, bool matchWholeWord, bool matchCell)
+        private void ReplaceTextInRow(
+            MainWindow.DataRow row,
+            string searchText,
+            string replaceText,
+            bool matchCase,
+            bool matchWholeWord,
+            bool matchCell
+        )
         {
             for (int i = 0; i < row.Values.Length; i++)
             {
-                if (ShouldReplaceInCell(row.Values[i], searchText, matchCase, matchWholeWord, matchCell))
+                if (
+                    ShouldReplaceInCell(
+                        row.Values[i],
+                        searchText,
+                        matchCase,
+                        matchWholeWord,
+                        matchCell
+                    )
+                )
                 {
-                    row.Values[i] = row.Values[i].Replace(searchText, replaceText, matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
+                    row.Values[i] = row.Values[i]
+                        .Replace(
+                            searchText,
+                            replaceText,
+                            matchCase
+                                ? StringComparison.Ordinal
+                                : StringComparison.OrdinalIgnoreCase
+                        );
                 }
             }
             row.OnPropertyChanged(nameof(row.Values));
         }
 
-        private void ReplaceTextInLocresMode(MainWindow.DataRow row, string searchText, string replaceText, bool matchCase, bool matchWholeWord, bool matchCell)
+        private void ReplaceTextInLocresMode(
+            MainWindow.DataRow row,
+            string searchText,
+            string replaceText,
+            bool matchCase,
+            bool matchWholeWord,
+            bool matchCell
+        )
         {
-            if (ShouldReplaceInCell(row.Values[1], searchText, matchCase, matchWholeWord, matchCell))
+            if (
+                ShouldReplaceInCell(row.Values[1], searchText, matchCase, matchWholeWord, matchCell)
+            )
             {
-                row.Values[2] = row.Values[1].Replace(searchText, replaceText, StringComparison.OrdinalIgnoreCase);
+                row.Values[2] = row.Values[1]
+                    .Replace(searchText, replaceText, StringComparison.OrdinalIgnoreCase);
             }
             row.OnPropertyChanged(nameof(row.Values));
         }
 
-        private bool ShouldReplaceInCell(string cellValue, string searchText, bool matchCase, bool matchWholeWord, bool matchCell)
+        private bool ShouldReplaceInCell(
+            string cellValue,
+            string searchText,
+            bool matchCase,
+            bool matchWholeWord,
+            bool matchCell
+        )
         {
-            StringComparison comparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            StringComparison comparison = matchCase
+                ? StringComparison.Ordinal
+                : StringComparison.OrdinalIgnoreCase;
 
             if (matchCase)
             {
@@ -276,14 +394,35 @@ namespace UnrealLocresEditor.Views
             return true;
         }
 
-
-        private async Task ReplaceTextInRowAsync(MainWindow.DataRow row, string searchText, string replaceText, bool matchCase, bool matchWholeWord, bool matchCell)
+        private async Task ReplaceTextInRowAsync(
+            MainWindow.DataRow row,
+            string searchText,
+            string replaceText,
+            bool matchCase,
+            bool matchWholeWord,
+            bool matchCell
+        )
         {
             for (int i = 0; i < row.Values.Length; i++)
             {
-                if (ShouldReplaceInCell(row.Values[i], searchText, matchCase, matchWholeWord, matchCell))
+                if (
+                    ShouldReplaceInCell(
+                        row.Values[i],
+                        searchText,
+                        matchCase,
+                        matchWholeWord,
+                        matchCell
+                    )
+                )
                 {
-                    row.Values[i] = row.Values[i].Replace(searchText, replaceText, matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
+                    row.Values[i] = row.Values[i]
+                        .Replace(
+                            searchText,
+                            replaceText,
+                            matchCase
+                                ? StringComparison.Ordinal
+                                : StringComparison.OrdinalIgnoreCase
+                        );
                 }
             }
 

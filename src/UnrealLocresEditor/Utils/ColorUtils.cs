@@ -1,5 +1,5 @@
-﻿using Avalonia.Media;
-using System;
+﻿using System;
+using Avalonia.Media;
 
 public static class ColorUtils
 {
@@ -19,7 +19,9 @@ public static class ColorUtils
 
         double max = Math.Max(r, Math.Max(g, b));
         double min = Math.Min(r, Math.Min(g, b));
-        double h = 0, s = 0, l = (max + min) / 2;
+        double h = 0,
+            s = 0,
+            l = (max + min) / 2;
 
         if (max != min)
         {
@@ -42,7 +44,9 @@ public static class ColorUtils
     // Helper method to convert HSL to RGB
     public static Color HSLToColor((double H, double S, double L) hsl)
     {
-        double r, g, b;
+        double r,
+            g,
+            b;
 
         if (hsl.S == 0)
         {
@@ -65,11 +69,16 @@ public static class ColorUtils
     // Helper method to calculate RGB value based on HSL
     private static double HueToRGB(double temp1, double temp2, double t)
     {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1 / 6.0) return temp1 + (temp2 - temp1) * 6 * t;
-        if (t < 1 / 2.0) return temp2;
-        if (t < 2 / 3.0) return temp1 + (temp2 - temp1) * (2 / 3.0 - t) * 6;
+        if (t < 0)
+            t += 1;
+        if (t > 1)
+            t -= 1;
+        if (t < 1 / 6.0)
+            return temp1 + (temp2 - temp1) * 6 * t;
+        if (t < 1 / 2.0)
+            return temp2;
+        if (t < 2 / 3.0)
+            return temp1 + (temp2 - temp1) * (2 / 3.0 - t) * 6;
         return temp1;
     }
 }

@@ -1,8 +1,8 @@
+using System;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using System;
-using System.Threading.Tasks;
 
 #nullable disable
 
@@ -87,13 +87,16 @@ namespace UnrealLocresEditor.Views
             var dataGrid = MainWindow._dataGrid;
             var items = MainWindow._rows;
 
-            if (items == null || dataGrid.Columns.Count == 0) return;
+            if (items == null || dataGrid.Columns.Count == 0)
+                return;
 
             bool isMatchCase = uiMatchCaseCheckBox.IsChecked ?? false;
             bool isMatchWholeWord = uiMatchWholeWordCheckBox.IsChecked ?? false;
             bool isMatchEntireCell = uiMatchCellCheckBox.IsChecked ?? false;
 
-            StringComparison comparison = isMatchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            StringComparison comparison = isMatchCase
+                ? StringComparison.Ordinal
+                : StringComparison.OrdinalIgnoreCase;
 
             int rowCount = items.Count;
             int colCount = dataGrid.Columns.Count;
@@ -115,7 +118,9 @@ namespace UnrealLocresEditor.Views
 
             for (int i = 0; i < rowCount; i++)
             {
-                int rowIndex = forward ? (startRow + 1 + i) % rowCount : (startRow - 1 - i + rowCount) % rowCount;
+                int rowIndex = forward
+                    ? (startRow + 1 + i) % rowCount
+                    : (startRow - 1 - i + rowCount) % rowCount;
                 var row = items[rowIndex];
 
                 // Iterate through columns
@@ -147,13 +152,16 @@ namespace UnrealLocresEditor.Views
                             _currentMatchIndex = colIndex;
                             foundMatch = true;
 
-                            await Dispatcher.UIThread.InvokeAsync(async () =>
-                            {
-                                dataGrid.SelectedItem = row;
-                                dataGrid.Focus();
-                                await ScrollToSelectedRow(dataGrid, rowIndex, colIndex);
-                                UpdateMatchCount();
-                            }, DispatcherPriority.Background);
+                            await Dispatcher.UIThread.InvokeAsync(
+                                async () =>
+                                {
+                                    dataGrid.SelectedItem = row;
+                                    dataGrid.Focus();
+                                    await ScrollToSelectedRow(dataGrid, rowIndex, colIndex);
+                                    UpdateMatchCount();
+                                },
+                                DispatcherPriority.Background
+                            );
 
                             return;
                         }
@@ -187,7 +195,9 @@ namespace UnrealLocresEditor.Views
             bool isMatchWholeWord = uiMatchWholeWordCheckBox.IsChecked ?? false;
             bool isMatchEntireCell = uiMatchCellCheckBox.IsChecked ?? false;
 
-            StringComparison comparison = isMatchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            StringComparison comparison = isMatchCase
+                ? StringComparison.Ordinal
+                : StringComparison.OrdinalIgnoreCase;
 
             foreach (var row in items)
             {
@@ -227,7 +237,9 @@ namespace UnrealLocresEditor.Views
             while (index != -1)
             {
                 bool isStartBoundary = index == 0 || !char.IsLetterOrDigit(text[index - 1]);
-                bool isEndBoundary = (index + searchTerm.Length) == text.Length || !char.IsLetterOrDigit(text[index + searchTerm.Length]);
+                bool isEndBoundary =
+                    (index + searchTerm.Length) == text.Length
+                    || !char.IsLetterOrDigit(text[index + searchTerm.Length]);
 
                 if (isStartBoundary && isEndBoundary)
                     return true;
@@ -240,7 +252,8 @@ namespace UnrealLocresEditor.Views
 
         private async Task ScrollToSelectedRow(DataGrid dataGrid, int rowIndex, int colIndex)
         {
-            if (rowIndex < 0 || rowIndex >= MainWindow._rows.Count) return;
+            if (rowIndex < 0 || rowIndex >= MainWindow._rows.Count)
+                return;
 
             var row = MainWindow._rows[rowIndex];
             var column = dataGrid.Columns[colIndex];

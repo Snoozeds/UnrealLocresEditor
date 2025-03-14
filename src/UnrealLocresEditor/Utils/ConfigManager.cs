@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace UnrealLocresEditor.Utils
 {
@@ -53,11 +53,18 @@ namespace UnrealLocresEditor.Utils
         {
             if (OperatingSystem.IsWindows())
             {
-                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UnrealLocresEditor");
+                return Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "UnrealLocresEditor"
+                );
             }
             else if (OperatingSystem.IsLinux())
             {
-                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "UnrealLocresEditor");
+                return Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    ".config",
+                    "UnrealLocresEditor"
+                );
             }
 
             throw new PlatformNotSupportedException("Unsupported OS.");
@@ -74,15 +81,38 @@ namespace UnrealLocresEditor.Utils
         {
             return new Dictionary<string, Func<AppConfig, bool>>()
             {
-                { "IsDarkTheme", config => config.IsDarkTheme == true || config.IsDarkTheme == false },
+                {
+                    "IsDarkTheme",
+                    config => config.IsDarkTheme == true || config.IsDarkTheme == false
+                },
                 { "AccentColor", config => IsValidHexColor(config.AccentColor) },
-                { "DiscordRPCEnabled", config => config.DiscordRPCEnabled == true || config.DiscordRPCEnabled == false },
-                { "DiscordRPCPrivacy", config => config.DiscordRPCPrivacy == true || config.DiscordRPCPrivacy == false },
-                { "DiscordRPCPrivacyString", config => !string.IsNullOrEmpty(config.DiscordRPCPrivacyString) },
+                {
+                    "DiscordRPCEnabled",
+                    config => config.DiscordRPCEnabled == true || config.DiscordRPCEnabled == false
+                },
+                {
+                    "DiscordRPCPrivacy",
+                    config => config.DiscordRPCPrivacy == true || config.DiscordRPCPrivacy == false
+                },
+                {
+                    "DiscordRPCPrivacyString",
+                    config => !string.IsNullOrEmpty(config.DiscordRPCPrivacyString)
+                },
                 { "UseWine", config => config.UseWine == true || config.UseWine == false },
-                { "AutoSaveInterval", config => config.AutoSaveInterval > TimeSpan.Zero && config.AutoSaveInterval.TotalMilliseconds <= int.MaxValue },
-                { "AutoSaveEnabled", config => config.AutoSaveEnabled == true || config.AutoSaveEnabled == false },
-                { "AutoUpdateEnabled", config => config.AutoUpdateEnabled == true || config.AutoUpdateEnabled == false }
+                {
+                    "AutoSaveInterval",
+                    config =>
+                        config.AutoSaveInterval > TimeSpan.Zero
+                        && config.AutoSaveInterval.TotalMilliseconds <= int.MaxValue
+                },
+                {
+                    "AutoSaveEnabled",
+                    config => config.AutoSaveEnabled == true || config.AutoSaveEnabled == false
+                },
+                {
+                    "AutoUpdateEnabled",
+                    config => config.AutoUpdateEnabled == true || config.AutoUpdateEnabled == false
+                },
             };
         }
 
@@ -121,7 +151,10 @@ namespace UnrealLocresEditor.Utils
                                 if (!rule.Value(config))
                                 {
                                     // If validation fails, revert to the default config value
-                                    property.SetValue(config, typeof(DefaultConfig).GetProperty(rule.Key)?.GetValue(null));
+                                    property.SetValue(
+                                        config,
+                                        typeof(DefaultConfig).GetProperty(rule.Key)?.GetValue(null)
+                                    );
                                 }
                             }
                         }
@@ -130,9 +163,7 @@ namespace UnrealLocresEditor.Utils
                     }
                 }
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception) { }
 
             return new AppConfig();
         }
@@ -141,7 +172,9 @@ namespace UnrealLocresEditor.Utils
         {
             try
             {
-                Console.WriteLine($"Saving config: {JsonConvert.SerializeObject(this, Formatting.Indented)}");
+                Console.WriteLine(
+                    $"Saving config: {JsonConvert.SerializeObject(this, Formatting.Indented)}"
+                );
                 string filePath = GetConfigFilePath();
                 string json = JsonConvert.SerializeObject(this, Formatting.Indented);
                 File.WriteAllText(filePath, json);

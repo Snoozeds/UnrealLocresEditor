@@ -1,11 +1,11 @@
-﻿using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Markup.Xaml;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
 using UnrealLocresEditor.ViewModels;
 using UnrealLocresEditor.Views;
 
@@ -44,17 +44,11 @@ namespace UnrealLocresEditor
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainWindow
-                {
-                    DataContext = new MainViewModel()
-                };
+                desktop.MainWindow = new MainWindow { DataContext = new MainViewModel() };
             }
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
             {
-                singleViewPlatform.MainView = new MainView
-                {
-                    DataContext = new MainViewModel()
-                };
+                singleViewPlatform.MainView = new MainView { DataContext = new MainViewModel() };
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -82,12 +76,15 @@ namespace UnrealLocresEditor
         {
             try
             {
-                string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string appDataPath = Environment.GetFolderPath(
+                    Environment.SpecialFolder.ApplicationData
+                );
                 string logDirectory = Path.Combine(appDataPath, "UnrealLocresEditor", "Logs");
                 Directory.CreateDirectory(logDirectory);
 
                 string logFilePath = Path.Combine(logDirectory, "crashlog.txt");
-                string logMessage = $"{DateTime.Now}: {exceptionType} - {ex?.Message}\n{ex?.StackTrace}\n\n";
+                string logMessage =
+                    $"{DateTime.Now}: {exceptionType} - {ex?.Message}\n{ex?.StackTrace}\n\n";
 
                 File.AppendAllText(logFilePath, logMessage);
 

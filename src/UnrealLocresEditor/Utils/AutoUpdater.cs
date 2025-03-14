@@ -1,20 +1,21 @@
-﻿using Avalonia.Controls;
-using Avalonia.Controls.Notifications;
-using Avalonia.Layout;
-using Avalonia.Media;
-using Avalonia.Threading;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Threading;
 using UnrealLocresEditor.Utils;
 using UnrealLocresEditor.Views;
 
 public class AutoUpdater
 {
-    private const string VersionUrl = "https://raw.githubusercontent.com/Snoozeds/UnrealLocresEditor/main/version.txt";
+    private const string VersionUrl =
+        "https://raw.githubusercontent.com/Snoozeds/UnrealLocresEditor/main/version.txt";
     private const string LocalVersionFile = "version.txt";
     private const string TempUpdatePath = "update.zip";
     private readonly INotificationManager _notificationManager;
@@ -38,7 +39,9 @@ public class AutoUpdater
         try
         {
             string latestVersion = await GetLatestVersion();
-            string currentVersion = File.Exists(LocalVersionFile) ? File.ReadAllText(LocalVersionFile).Replace("\r", "").Replace("\n", "").TrimEnd() : "0.0.0";
+            string currentVersion = File.Exists(LocalVersionFile)
+                ? File.ReadAllText(LocalVersionFile).Replace("\r", "").Replace("\n", "").TrimEnd()
+                : "0.0.0";
 
             if (latestVersion != currentVersion)
             {
@@ -72,10 +75,13 @@ public class AutoUpdater
             {
                 if (manualCheck)
                 {
-                    _notificationManager.Show(new Notification(
-                        "No Updates Available",
-                        "You are running the latest version.",
-                        NotificationType.Information));
+                    _notificationManager.Show(
+                        new Notification(
+                            "No Updates Available",
+                            "You are running the latest version.",
+                            NotificationType.Information
+                        )
+                    );
                 }
                 else
                 {
@@ -89,10 +95,13 @@ public class AutoUpdater
 
             if (manualCheck)
             {
-                _notificationManager.Show(new Notification(
-                    "Update Check Failed",
-                    $"Could not check for updates: {ex.Message}",
-                    NotificationType.Error));
+                _notificationManager.Show(
+                    new Notification(
+                        "Update Check Failed",
+                        $"Could not check for updates: {ex.Message}",
+                        NotificationType.Error
+                    )
+                );
             }
             else
             {
@@ -114,25 +123,26 @@ public class AutoUpdater
                 Margin = new Avalonia.Thickness(20),
                 Spacing = 20,
                 Children =
-            {
-                new TextBlock
                 {
-                    Text = $"A new version {latestVersion} is available. Would you like to update?",
-                    TextWrapping = TextWrapping.Wrap
-                },
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 10,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Children =
+                    new TextBlock
                     {
-                        new Button { Content = "Update" },
-                        new Button { Content = "Cancel" }
-                    }
-                }
-            }
-            }
+                        Text =
+                            $"A new version {latestVersion} is available. Would you like to update?",
+                        TextWrapping = TextWrapping.Wrap,
+                    },
+                    new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 10,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Children =
+                        {
+                            new Button { Content = "Update" },
+                            new Button { Content = "Cancel" },
+                        },
+                    },
+                },
+            },
         };
 
         var taskCompletionSource = new TaskCompletionSource<string>();
@@ -170,8 +180,9 @@ public class AutoUpdater
                 {
                     new TextBlock
                     {
-                        Text = "You have unsaved changes. Would you like to save your changes before updating?",
-                        TextWrapping = TextWrapping.Wrap
+                        Text =
+                            "You have unsaved changes. Would you like to save your changes before updating?",
+                        TextWrapping = TextWrapping.Wrap,
                     },
                     new StackPanel
                     {
@@ -182,11 +193,11 @@ public class AutoUpdater
                         {
                             new Button { Content = "Save and Update" },
                             new Button { Content = "Update without Saving" },
-                            new Button { Content = "Cancel" }
-                        }
-                    }
-                }
-            }
+                            new Button { Content = "Cancel" },
+                        },
+                    },
+                },
+            },
         };
 
         var taskCompletionSource = new TaskCompletionSource<string>();
@@ -202,10 +213,13 @@ public class AutoUpdater
             }
             catch (Exception ex)
             {
-                _notificationManager.Show(new Notification(
-                    "Save Error",
-                    $"Failed to save changes: {ex.Message}",
-                    NotificationType.Error));
+                _notificationManager.Show(
+                    new Notification(
+                        "Save Error",
+                        $"Failed to save changes: {ex.Message}",
+                        NotificationType.Error
+                    )
+                );
                 taskCompletionSource.SetResult("Cancel");
                 dialog.Close();
             }
@@ -226,6 +240,7 @@ public class AutoUpdater
         await dialog.ShowDialog(_mainWindow);
         return await taskCompletionSource.Task;
     }
+
     private async Task ShowUpdateNotification()
     {
         var notification = new Notification
@@ -252,7 +267,8 @@ public class AutoUpdater
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             // Windows script
-            scriptContent = @$"
+            scriptContent =
+                @$"
 @echo off
 timeout /t 1 /nobreak >nul
 :loop
@@ -272,7 +288,8 @@ if errorlevel 1 (
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             // Linux script
-            scriptContent = @$"
+            scriptContent =
+                @$"
 #!/bin/bash
 while true; do
     if ! ps -p {currentProcessId} > /dev/null; then
@@ -287,25 +304,31 @@ while true; do
 done";
             File.WriteAllText(updateScriptPath + ".sh", scriptContent);
             // Make the script executable
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "chmod",
-                Arguments = $"+x {updateScriptPath}.sh",
-                UseShellExecute = true
-            });
+            Process.Start(
+                new ProcessStartInfo
+                {
+                    FileName = "chmod",
+                    Arguments = $"+x {updateScriptPath}.sh",
+                    UseShellExecute = true,
+                }
+            );
         }
         else
         {
             throw new NotSupportedException("Unsupported OS platform.");
         }
 
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "cmd.exe" : "bash",
-            Arguments = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? $"/c start /min \"\" \"{updateScriptPath}.bat\"" : updateScriptPath + ".sh",
-            UseShellExecute = true,
-            CreateNoWindow = true
-        });
+        Process.Start(
+            new ProcessStartInfo
+            {
+                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "cmd.exe" : "bash",
+                Arguments = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                    ? $"/c start /min \"\" \"{updateScriptPath}.bat\""
+                    : updateScriptPath + ".sh",
+                UseShellExecute = true,
+                CreateNoWindow = true,
+            }
+        );
 
         Environment.Exit(0);
     }
@@ -319,7 +342,9 @@ done";
                 HttpResponseMessage response = await client.GetAsync(VersionUrl);
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception($"Failed to fetch version file. HTTP Status Code: {response.StatusCode}");
+                    throw new Exception(
+                        $"Failed to fetch version file. HTTP Status Code: {response.StatusCode}"
+                    );
                 }
                 string version = await response.Content.ReadAsStringAsync();
                 return version.Replace("\r", "").Replace("\n", "").TrimEnd();
