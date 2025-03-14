@@ -921,10 +921,10 @@ namespace UnrealLocresEditor.Views
                 {
                     FileTypeFilter = new[]
                     {
-                        new FilePickerFileType("Localization Files")
-                        {
-                            Patterns = new[] { "*.locres" },
-                        },
+                new FilePickerFileType("Localization Files")
+                {
+                    Patterns = new[] { "*.locres" },
+                },
                     },
                     AllowMultiple = false,
                 }
@@ -939,10 +939,8 @@ namespace UnrealLocresEditor.Views
                 idleStartTime = null;
 
                 UpdatePresence(DiscordRPCEnabled); // Display opened file in Discord RPC
-                var csvFileName = GetUniqueFileName(
-                    Path.GetFileNameWithoutExtension(_currentLocresFilePath),
-                    ".csv"
-                );
+
+                var csvFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath) + ".csv";
                 csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
 
                 // Check if UnrealLocres.exe exists
@@ -965,11 +963,22 @@ namespace UnrealLocresEditor.Views
                 {
                     try
                     {
+                        // Verify the CSV file exists before trying to load it
+                        if (!File.Exists(csvFile))
+                        {
+                            _notificationManager.Show(
+                                new Notification(
+                                    "Error",
+                                    $"CSV file not found after export: {csvFileName}",
+                                    NotificationType.Error
+                                )
+                            );
+                            return;
+                        }
+
                         var importedLocresDir = GetOrCreateTempDirectory();
-                        var importedLocresPath = Path.Combine(
-                            importedLocresDir,
-                            Path.GetFileName(_currentLocresFilePath)
-                        );
+                        var uniqueFileName = $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}_{Process.GetCurrentProcess().Id}{Path.GetExtension(_currentLocresFilePath)}";
+                        var importedLocresPath = Path.Combine(importedLocresDir, uniqueFileName);
 
                         if (File.Exists(importedLocresPath))
                         {
