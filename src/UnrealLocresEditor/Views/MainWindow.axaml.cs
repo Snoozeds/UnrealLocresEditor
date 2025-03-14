@@ -430,6 +430,20 @@ namespace UnrealLocresEditor.Views
                     case Key.H:
                         ShowFindReplaceDialog();
                         break;
+                    case Key.Space:
+                        AddNewRow(sender, null);
+                        e.Handled = true;
+                        break;
+                }
+            }
+            else if (e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
+            {
+                switch (e.Key)
+                {
+                    case Key.Space:
+                        DeleteSelectedRow(sender, null);
+                        e.Handled = true;
+                        break;
                 }
             }
         }
@@ -539,6 +553,185 @@ namespace UnrealLocresEditor.Views
 
             findReplaceDialog.Show(this);
             findReplaceDialog.Activate();
+        }
+
+        // Allow adding new row
+        private void AddNewRow(object sender, RoutedEventArgs e)
+        {
+            if (_rows == null)
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "No Data",
+                        "Please open a file first before adding rows.",
+                        NotificationType.Warning
+                    )
+                );
+                return;
+            }
+
+            // Determine number of columns
+            int columnCount = _dataGrid.Columns.Count;
+
+            if (columnCount == 0)
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "Error",
+                        "Cannot determine column structure. Please open a file first.",
+                        NotificationType.Error
+                    )
+                );
+                return;
+            }
+
+            // Create an empty row with the correct number of columns
+            string[] emptyValues = new string[columnCount];
+            for (int i = 0; i < columnCount; i++)
+            {
+                emptyValues[i] = "";
+            }
+
+            DataRow newRow = new DataRow { Values = emptyValues };
+
+            int insertIndex = _rows.Count; // Default to end of list
+
+            if (_dataGrid.SelectedItem is DataRow selectedRow)
+            {
+                // Insert after the selected row
+                insertIndex = _rows.IndexOf(selectedRow) + 1;
+            }
+
+            _rows.Insert(insertIndex, newRow);
+
+            // Select and focus the new row
+            _dataGrid.SelectedItem = newRow;
+            _dataGrid.ScrollIntoView(newRow, null);
+
+            // Begin editing the first editable cell in the new row
+            _dataGrid.Focus();
+            Dispatcher.UIThread.Post(() => {
+                _dataGrid.BeginEdit();
+            });
+
+            _hasUnsavedChanges = true;
+        }
+
+        // Allow deleting row
+        private void DeleteSelectedRow(object sender, RoutedEventArgs e)
+        {
+            if (_rows == null || _rows.Count == 0)
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "No Data",
+                        "There are no rows to delete.",
+                        NotificationType.Warning
+                    )
+                );
+                return;
+            }
+
+            if (_dataGrid.SelectedItem is DataRow selectedRow)
+            {
+                // Ask for confirmation before deleting
+                ShowDeleteConfirmationDialog(selectedRow);
+            }
+            else
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "No Selection",
+                        "Please select a row to delete.",
+                        NotificationType.Information
+                    )
+                );
+            }
+        }
+
+        private async void ShowDeleteConfirmationDialog(DataRow rowToDelete)
+        {
+            var dialog = new Window
+            {
+                Title = "Confirm Deletion",
+                Width = 300,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Content = new StackPanel
+                {
+                    Margin = new Thickness(20),
+                    Spacing = 20,
+                    Children =
+            {
+                new TextBlock
+                {
+                    Text = "Are you sure you want to delete this row?",
+                    TextWrapping = TextWrapping.Wrap,
+                },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 10,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Children =
+                    {
+                        new Avalonia.Controls.Button { Content = "Delete" },
+                        new Avalonia.Controls.Button { Content = "Cancel" },
+                    },
+                },
+            },
+                },
+            };
+
+            var result = await ShowDeleteDialog(dialog);
+
+            if (result == "Delete")
+            {
+                int index = _rows.IndexOf(rowToDelete);
+                _rows.Remove(rowToDelete);
+                _hasUnsavedChanges = true;
+
+                // Select the next row if available or the previous one
+                if (_rows.Count > 0)
+                {
+                    // If we deleted the last row, select the new last row
+                    if (index >= _rows.Count)
+                    {
+                        index = _rows.Count - 1;
+                    }
+                    _dataGrid.SelectedItem = _rows[index];
+                    _dataGrid.ScrollIntoView(_rows[index], null);
+                }
+
+                _notificationManager.Show(
+                    new Notification(
+                        "Row Deleted",
+                        "The row has been deleted successfully.",
+                        NotificationType.Information
+                    )
+                );
+            }
+        }
+
+        private async Task<string> ShowDeleteDialog(Window dialog)
+        {
+            var taskCompletionSource = new TaskCompletionSource<string>();
+
+            var buttons = (
+                (StackPanel)((StackPanel)dialog.Content).Children[1]
+            ).Children.OfType<Avalonia.Controls.Button>();
+
+            foreach (var button in buttons)
+            {
+                button.Click += (s, e) =>
+                {
+                    taskCompletionSource.SetResult(((Avalonia.Controls.Button)s).Content.ToString());
+                    dialog.Close();
+                };
+            }
+
+            await dialog.ShowDialog(this);
+            return await taskCompletionSource.Task;
         }
 
         private static string winePrefixDirectory = Path.Combine(
@@ -1167,6 +1360,12 @@ namespace UnrealLocresEditor.Views
 
             var findReplaceMenuItem = this.FindControl<MenuItem>("uiFindReplaceMenuItem");
             findReplaceMenuItem.Click += FindReplaceMenuItem_Click;
+
+            var addNewRowMenuItem = this.FindControl<MenuItem>("uiAddNewRowMenuItem");
+            addNewRowMenuItem.Click += AddNewRow;
+
+            var deleteRowMenuItem = this.FindControl<MenuItem>("uiDeleteRowMenuItem");
+            deleteRowMenuItem.Click += DeleteSelectedRow;
 
             var preferencesMenuItem = this.FindControl<MenuItem>("uiPreferencesMenuItem");
             preferencesMenuItem.Click += PreferencesMenuItem_Click;

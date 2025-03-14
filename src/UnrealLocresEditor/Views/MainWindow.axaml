@@ -24,12 +24,14 @@
 			<MenuItem Header="_Edit">
 				<MenuItem Header="Find" Name="uiFindMenuItem" InputGesture="Ctrl+F"/>
 				<MenuItem Header="Find and replace" Name="uiFindReplaceMenuItem" InputGesture="Ctrl+H"/>
+				<MenuItem Header="New Row" Name="uiAddNewRowMenuItem" InputGesture="Ctrl+Space"/>
+				<MenuItem Header="Delete Row" Name="uiDeleteRowMenuItem" InputGesture="Ctrl+Shift+Space"/>
 				<MenuItem Header="-"/>
 				<MenuItem Header="Preferences" Name="uiPreferencesMenuItem"/>
 			</MenuItem>
 			<MenuItem Header="_Linux" Name="uiLinuxHeader">
 				<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix"/>
-				</MenuItem>
+			</MenuItem>
 			<MenuItem Header="_Help">
 				<MenuItem Header="Report issue" Name="reportIssueMenuItem"/>
 				<MenuItem Header="About" Name="uiAboutMenuItem"/>
