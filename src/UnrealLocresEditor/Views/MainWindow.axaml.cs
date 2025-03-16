@@ -539,12 +539,22 @@ namespace UnrealLocresEditor.Views
                                     var clipboardText = await this.Clipboard.GetTextAsync();
                                     if (!string.IsNullOrEmpty(clipboardText))
                                     {
-                                        int caretIndex = editTextBox.CaretIndex;
-                                        editTextBox.Text = editTextBox.Text.Insert(
-                                            caretIndex,
-                                            clipboardText
-                                        );
-                                        editTextBox.CaretIndex = caretIndex + clipboardText.Length;
+                                        // If user has selected text, replace that
+                                        if (!string.IsNullOrEmpty(editTextBox.SelectedText))
+                                        {
+                                            int selectionStart = editTextBox.SelectionStart;
+                                            editTextBox.Text = editTextBox.Text.Remove(
+                                                selectionStart,
+                                                editTextBox.SelectionEnd - selectionStart
+                                            ).Insert(selectionStart, clipboardText);
+                                            editTextBox.CaretIndex = selectionStart + clipboardText.Length;
+                                        }
+                                        // Otherwise, replace entire cell
+                                        else
+                                        {
+                                            editTextBox.Text = clipboardText;
+                                            editTextBox.CaretIndex = clipboardText.Length;
+                                        }
                                     }
                                 }
                             },
