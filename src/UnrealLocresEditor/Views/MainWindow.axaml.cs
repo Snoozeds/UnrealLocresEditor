@@ -37,7 +37,7 @@ namespace UnrealLocresEditor.Views
         public DataGrid _dataGrid;
         private TextBox _searchTextBox;
         public ObservableCollection<DataRow> _rows;
-        private string _currentLocresFilePath;
+        public string _currentLocresFilePath;
         private WindowNotificationManager _notificationManager;
 
         // Auto saving
@@ -46,7 +46,7 @@ namespace UnrealLocresEditor.Views
 
         // Settings
         private AppConfig _appConfig;
-        public bool DiscordRPCEnabled;
+        private DiscordRPC _discordRPC;
         public bool UseWine;
 
         // Misc
@@ -60,7 +60,7 @@ namespace UnrealLocresEditor.Views
             InitializeAutoSave();
 
             UseWine = _appConfig.UseWine;
-            DiscordRPCEnabled = _appConfig.DiscordRPCEnabled;
+            _discordRPC = new DiscordRPC();
 
             // Set theme and accent
             ApplyTheme(_appConfig.IsDarkTheme);
@@ -76,7 +76,7 @@ namespace UnrealLocresEditor.Views
             _rows = new ObservableCollection<DataRow>();
             DataContext = this;
 
-            idleStartTime = DateTime.UtcNow;
+            _discordRPC.idleStartTime = DateTime.UtcNow;
 
             // For displaying warning upon clicking cell in second (source) column
             _dataGrid.CellPointerPressed += DataGrid_CellPointerPressed;
@@ -172,11 +172,6 @@ namespace UnrealLocresEditor.Views
                 ColorUtils.ChangeColorLuminosity(accentColor, 0.7);
         }
 
-        // Start Discord RPC
-        public DiscordRpcClient client;
-        private DateTime? editStartTime;
-        private DateTime? idleStartTime;
-
         private async void OnWindowLoaded(object sender, RoutedEventArgs e)
         {
             _notificationManager = new WindowNotificationManager(this)
@@ -209,73 +204,7 @@ namespace UnrealLocresEditor.Views
                     );
                 }
             }
-
-            // Discord RPC
-            client = new DiscordRpcClient("1251663992162619472");
-
-            client.OnReady += (sender, e) =>
-            {
-                Console.WriteLine("Received Ready from user {0}", e.User.Username);
-            };
-
-            client.OnPresenceUpdate += (sender, e) =>
-            {
-                Console.WriteLine("Received Update! {0}", e.Presence);
-            };
-
-            client.Initialize();
-            UpdatePresence(DiscordRPCEnabled);
-        }
-
-        public void UpdatePresence(bool enabled)
-        {
-            if (enabled)
-            {
-                // Restart the client if it's disposed
-                if (client == null || client.IsDisposed)
-                {
-                    client = new DiscordRpcClient("1251663992162619472");
-
-                    client.OnReady += (sender, e) =>
-                    {
-                        Console.WriteLine("Received Ready from user {0}", e.User.Username);
-                    };
-
-                    client.OnPresenceUpdate += (sender, e) =>
-                    {
-                        Console.WriteLine("Received Update! {0}", e.Presence);
-                    };
-
-                    client.Initialize();
-                }
-
-                var presence = new RichPresence
-                {
-                    // Set the presence details based on the config privacy setting
-                    Details = _appConfig.DiscordRPCPrivacy
-                        ? _appConfig.DiscordRPCPrivacyString
-                        : (
-                            _currentLocresFilePath == null
-                                ? "Idling"
-                                : $"Editing file: {Path.GetFileName(_currentLocresFilePath)}"
-                        ),
-                    Timestamps = editStartTime.HasValue
-                        ? new Timestamps(editStartTime.Value)
-                        : null,
-                    Assets = new Assets() { LargeImageKey = "ule-logo" },
-                };
-
-                client.SetPresence(presence);
-            }
-            else
-            {
-                if (client != null && !client.IsDisposed)
-                {
-                    client.ClearPresence();
-                    client.Dispose();
-                    client = null;
-                }
-            }
+            _discordRPC.Initialize(_currentLocresFilePath);
         }
 
         // Ask if user wants to save when window closes + has unsaved changes
@@ -388,8 +317,8 @@ namespace UnrealLocresEditor.Views
         {
             _autoSaveTimer?.Stop();
             _autoSaveTimer?.Dispose();
-            client?.ClearPresence();
-            client?.Dispose();
+            _discordRPC.client?.ClearPresence();
+            _discordRPC.client?.Dispose();
 
             // Clean up the temp directory for this instance
             try
@@ -543,11 +472,14 @@ namespace UnrealLocresEditor.Views
                                         if (!string.IsNullOrEmpty(editTextBox.SelectedText))
                                         {
                                             int selectionStart = editTextBox.SelectionStart;
-                                            editTextBox.Text = editTextBox.Text.Remove(
-                                                selectionStart,
-                                                editTextBox.SelectionEnd - selectionStart
-                                            ).Insert(selectionStart, clipboardText);
-                                            editTextBox.CaretIndex = selectionStart + clipboardText.Length;
+                                            editTextBox.Text = editTextBox
+                                                .Text.Remove(
+                                                    selectionStart,
+                                                    editTextBox.SelectionEnd - selectionStart
+                                                )
+                                                .Insert(selectionStart, clipboardText);
+                                            editTextBox.CaretIndex =
+                                                selectionStart + clipboardText.Length;
                                         }
                                         // Otherwise, replace entire cell
                                         else
@@ -886,7 +818,7 @@ namespace UnrealLocresEditor.Views
             var instanceId = Process.GetCurrentProcess().Id.ToString();
             var tempDirectoryName = $".temp-UnrealLocresEditor-{instanceId}";
             var tempDirectoryPath = Path.Combine(exeDirectory, tempDirectoryName);
-            
+
             // Create folder if it does not exist
             if (!Directory.Exists(tempDirectoryPath))
             {
@@ -934,13 +866,14 @@ namespace UnrealLocresEditor.Views
                 _currentLocresFilePath = result[0].Path.LocalPath;
 
                 // Update timers for RPC
-                editStartTime = DateTime.UtcNow;
-                idleStartTime = null;
+                _discordRPC.editStartTime = DateTime.UtcNow;
+                _discordRPC.idleStartTime = null;
 
-                UpdatePresence(DiscordRPCEnabled); // Display opened file in Discord RPC
+                _discordRPC.UpdatePresence(_appConfig.DiscordRPCEnabled, _currentLocresFilePath); // Display opened file in Discord RPC
 
                 var instanceId = Process.GetCurrentProcess().Id;
-                var csvFileName = $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}_{instanceId}.csv";
+                var csvFileName =
+                    $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}_{instanceId}.csv";
                 csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
 
                 // Check if UnrealLocres.exe exists
@@ -964,7 +897,10 @@ namespace UnrealLocresEditor.Views
                     try
                     {
                         // Original csv file UnrealLocres makes (usually something like Game.csv)
-                        var originalCsvFile = Path.Combine(Directory.GetCurrentDirectory(), $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}.csv");
+                        var originalCsvFile = Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}.csv"
+                        );
 
                         // Verify the CSV file exists before trying to load it
                         if (!File.Exists(originalCsvFile))
@@ -1322,10 +1258,10 @@ namespace UnrealLocresEditor.Views
                 LoadCsv(filePath);
 
                 csvFile = filePath; // Update to the newly opened CSV file
-                editStartTime = DateTime.UtcNow;
-                idleStartTime = null;
+                _discordRPC.editStartTime = DateTime.UtcNow;
+                _discordRPC.idleStartTime = null;
 
-                UpdatePresence(DiscordRPCEnabled); // Update Discord presence
+                _discordRPC.UpdatePresence(_appConfig.DiscordRPCEnabled, _currentLocresFilePath); // Update Discord presence
             }
         }
 
@@ -1402,47 +1338,14 @@ namespace UnrealLocresEditor.Views
             _dataGrid = this.FindControl<DataGrid>("uiDataGrid");
             _dataGrid.AddHandler(KeyDownEvent, DataGrid_PreviewKeyDown, RoutingStrategies.Tunnel);
 
-            _searchTextBox = this.FindControl<TextBox>("uiSearchTextBox");
-
-            var saveMenuItem = this.FindControl<MenuItem>("uiSaveMenuItem");
-            saveMenuItem.Click += SaveMenuItem_Click;
-
-            var uiOpenSpreadsheetMenuItem = this.FindControl<MenuItem>("uiOpenSpreadsheetMenuItem");
-            uiOpenSpreadsheetMenuItem.Click += OpenSpreadsheetMenuItem_Click;
-
-            var saveAsMenuItem = this.FindControl<MenuItem>("uiSaveAsMenuItem");
-            saveAsMenuItem.Click += SaveAsMenuItem_Click;
-
-            var openMenuItem = this.FindControl<MenuItem>("uiOpenMenuItem");
-            openMenuItem.Click += OpenMenuItem_Click;
-
             var linuxMenuItem = this.FindControl<MenuItem>("uiLinuxHeader");
             linuxMenuItem.IsVisible = IsLinux();
-
-            var findMenuItem = this.FindControl<MenuItem>("uiFindMenuItem");
-            findMenuItem.Click += FindMenuItem_Click;
-
-            var findReplaceMenuItem = this.FindControl<MenuItem>("uiFindReplaceMenuItem");
-            findReplaceMenuItem.Click += FindReplaceMenuItem_Click;
-
-            var addNewRowMenuItem = this.FindControl<MenuItem>("uiAddNewRowMenuItem");
-            addNewRowMenuItem.Click += AddNewRow;
-
-            var deleteRowMenuItem = this.FindControl<MenuItem>("uiDeleteRowMenuItem");
-            deleteRowMenuItem.Click += DeleteSelectedRow;
 
             var preferencesMenuItem = this.FindControl<MenuItem>("uiPreferencesMenuItem");
             preferencesMenuItem.Click += PreferencesMenuItem_Click;
 
             var winePrefixMenuItem = this.FindControl<MenuItem>("uiWinePrefix");
-            winePrefixMenuItem.Click += WinePrefix_Click;
             winePrefixMenuItem.IsVisible = IsLinux();
-
-            var reportIssueMenuItem = this.FindControl<MenuItem>("reportIssueMenuItem");
-            reportIssueMenuItem.Click += ReportIssueMenuItem_Click;
-
-            var aboutMenuItem = this.FindControl<MenuItem>("uiAboutMenuItem");
-            aboutMenuItem.Click += AboutMenuItem_Click;
         }
 
         // Find dialog

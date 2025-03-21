@@ -19,6 +19,7 @@ namespace UnrealLocresEditor.ViewModels
         private readonly MainWindow _mainWindow;
         private bool _isDarkTheme;
         private Color _accentColor;
+        private DiscordRPC _discordRPC;
         private bool _discordRPCEnabled;
         private bool _discordRPCPrivacy;
         private string _discordRPCPrivacyString;
@@ -149,7 +150,7 @@ namespace UnrealLocresEditor.ViewModels
             config.AutoSaveEnabled = AutoSaveEnabled;
             config.AutoUpdateEnabled = AutoUpdateEnabled;
 
-            _mainWindow.UpdatePresence(DiscordRPCEnabled);
+            _discordRPC.UpdatePresence(DiscordRPCEnabled, _mainWindow._currentLocresFilePath);
 
             config.Save();
             Console.WriteLine("Config saved.");
