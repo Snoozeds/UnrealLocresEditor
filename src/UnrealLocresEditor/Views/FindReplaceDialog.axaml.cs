@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using UnrealLocresEditor.Models;
 
 namespace UnrealLocresEditor.Views
 {
@@ -190,7 +191,7 @@ namespace UnrealLocresEditor.Views
         {
             if (MainWindow?._dataGrid?.SelectedItem != null)
             {
-                var row = MainWindow._dataGrid.SelectedItem as MainWindow.DataRow;
+                var row = MainWindow._dataGrid.SelectedItem as DataRow;
                 if (row != null)
                 {
                     var searchText = uiSearchTextBox.Text;
@@ -223,8 +224,8 @@ namespace UnrealLocresEditor.Views
                         );
                     }
 
-                    MainWindow._dataGrid.ItemsSource = new ObservableCollection<MainWindow.DataRow>(
-                        MainWindow._dataGrid.ItemsSource.Cast<MainWindow.DataRow>().ToList()
+                    MainWindow._dataGrid.ItemsSource = new ObservableCollection<DataRow>(
+                        MainWindow._dataGrid.ItemsSource.Cast<DataRow>().ToList()
                     );
                     FindText(searchText, true);
                 }
@@ -241,7 +242,7 @@ namespace UnrealLocresEditor.Views
             if (string.IsNullOrEmpty(searchText) || string.IsNullOrEmpty(replaceText))
                 return;
 
-            var items = MainWindow._dataGrid.ItemsSource.Cast<MainWindow.DataRow>().ToList();
+            var items = MainWindow._dataGrid.ItemsSource.Cast<DataRow>().ToList();
             bool matchCase = await Dispatcher.UIThread.InvokeAsync(
                 () => uiMatchCaseCheckBox.IsChecked == true
             );
@@ -289,14 +290,14 @@ namespace UnrealLocresEditor.Views
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                MainWindow._dataGrid.ItemsSource = new ObservableCollection<MainWindow.DataRow>(
+                MainWindow._dataGrid.ItemsSource = new ObservableCollection<DataRow>(
                     items
                 );
             });
         }
 
         private void ReplaceTextInRow(
-            MainWindow.DataRow row,
+            DataRow row,
             string searchText,
             string replaceText,
             bool matchCase,
@@ -330,7 +331,7 @@ namespace UnrealLocresEditor.Views
         }
 
         private void ReplaceTextInLocresMode(
-            MainWindow.DataRow row,
+            DataRow row,
             string searchText,
             string replaceText,
             bool matchCase,
@@ -395,7 +396,7 @@ namespace UnrealLocresEditor.Views
         }
 
         private async Task ReplaceTextInRowAsync(
-            MainWindow.DataRow row,
+            DataRow row,
             string searchText,
             string replaceText,
             bool matchCase,

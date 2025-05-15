@@ -150,7 +150,7 @@ namespace UnrealLocresEditor.ViewModels
             config.AutoSaveEnabled = AutoSaveEnabled;
             config.AutoUpdateEnabled = AutoUpdateEnabled;
 
-            _discordRPC.UpdatePresence(DiscordRPCEnabled, _mainWindow._currentLocresFilePath);
+            _discordRPC?.UpdatePresence(DiscordRPCEnabled, _mainWindow._currentLocresFilePath);
 
             config.Save();
             Console.WriteLine("Config saved.");

@@ -1,17 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Timers;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Data;
@@ -24,7 +11,18 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CsvHelper;
 using CsvHelper.Configuration;
-using DiscordRPC;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
+using UnrealLocresEditor.Models;
 using UnrealLocresEditor.Utils;
 
 #nullable disable
@@ -707,110 +705,6 @@ namespace UnrealLocresEditor.Views
             return await taskCompletionSource.Task;
         }
 
-        private static string winePrefixDirectory = Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "wineprefix"
-        );
-
-        private static bool IsLinux()
-        {
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-        }
-
-        private static string GetExecutablePath(bool useWine)
-        {
-            if (IsLinux())
-            {
-                return useWine ? "wine UnrealLocres.exe" : "./UnrealLocres";
-            }
-            else // Windows
-            {
-                return "UnrealLocres.exe";
-            }
-        }
-
-        private static string GetArguments(
-            string command,
-            string locresFilePath,
-            bool useWine,
-            string csvFileName = null
-        )
-        {
-            if (IsLinux())
-            {
-                if (useWine)
-                {
-                    return csvFileName == null
-                        ? $"UnrealLocres.exe {command} \"{locresFilePath}\""
-                        : $"UnrealLocres.exe {command} \"{locresFilePath}\" \"{csvFileName}\"";
-                }
-                else
-                {
-                    return csvFileName == null
-                        ? $"./UnrealLocres {command} \"{locresFilePath}\""
-                        : $"./UnrealLocres {command} \"{locresFilePath}\" \"{csvFileName}\"";
-                }
-            }
-            else
-            {
-                return csvFileName == null
-                    ? $"{command} \"{locresFilePath}\""
-                    : $"{command} \"{locresFilePath}\" \"{csvFileName}\"";
-            }
-        }
-
-        private ProcessStartInfo GetProcessStartInfo(
-            string command,
-            string locresFilePath,
-            string csvFileName = null
-        )
-        {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = GetExecutablePath(UseWine),
-                Arguments = GetArguments(command, locresFilePath, UseWine, csvFileName),
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-            };
-
-            if (IsLinux() && UseWine)
-            {
-                startInfo.Environment["WINEPREFIX"] = winePrefixDirectory;
-            }
-
-            return startInfo;
-        }
-
-        private static void InitializeWinePrefix()
-        {
-            if (IsLinux() && !Directory.Exists(winePrefixDirectory))
-            {
-                var process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "wineboot",
-                        Arguments = $"--init",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true,
-                    },
-                };
-
-                process.StartInfo.Environment["WINEPREFIX"] = winePrefixDirectory;
-                process.Start();
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
-                {
-                    throw new Exception(
-                        $"Error initializing wine prefix: {process.StandardError.ReadToEnd()}"
-                    );
-                }
-            }
-        }
-
         private static string GetOrCreateTempDirectory()
         {
             var exeDirectory = Path.GetDirectoryName(Environment.ProcessPath);
@@ -886,7 +780,12 @@ namespace UnrealLocresEditor.Views
                 // Run UnrealLocres.exe
                 var process = new Process
                 {
-                    StartInfo = GetProcessStartInfo("export", _currentLocresFilePath, csvFileName),
+                    StartInfo = ProcessUtils.GetProcessStartInfo(
+                    command: "export",
+                    locresFilePath: _currentLocresFilePath,
+                    useWine: this.UseWine,
+                    csvFileName: csvFileName
+                )
                 };
 
                 process.Start();
@@ -1011,31 +910,6 @@ namespace UnrealLocresEditor.Views
                 }
             }
             _dataGrid.ItemsSource = _rows;
-        }
-
-        public class DataRow : INotifyPropertyChanged
-        {
-            private string[] _values;
-
-            public string[] Values
-            {
-                get => _values;
-                set
-                {
-                    if (_values != value)
-                    {
-                        _values = value;
-                        OnPropertyChanged(nameof(Values));
-                    }
-                }
-            }
-
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            public virtual void OnPropertyChanged(string propertyName)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
         }
 
         private void DataGrid_CellPointerPressed(
@@ -1164,7 +1038,7 @@ namespace UnrealLocresEditor.Views
             // Run UnrealLocres.exe to import edited CSV
             var process = new Process
             {
-                StartInfo = GetProcessStartInfo("import", _currentLocresFilePath, csvFileName),
+                StartInfo = ProcessUtils.GetProcessStartInfo(command: "import", locresFilePath: _currentLocresFilePath, useWine: this.UseWine, csvFileName: csvFileName),
             };
 
             process.Start();
@@ -1339,13 +1213,13 @@ namespace UnrealLocresEditor.Views
             _dataGrid.AddHandler(KeyDownEvent, DataGrid_PreviewKeyDown, RoutingStrategies.Tunnel);
 
             var linuxMenuItem = this.FindControl<MenuItem>("uiLinuxHeader");
-            linuxMenuItem.IsVisible = IsLinux();
+            linuxMenuItem.IsVisible = PlatformUtils.IsLinux();
 
             var preferencesMenuItem = this.FindControl<MenuItem>("uiPreferencesMenuItem");
             preferencesMenuItem.Click += PreferencesMenuItem_Click;
 
             var winePrefixMenuItem = this.FindControl<MenuItem>("uiWinePrefix");
-            winePrefixMenuItem.IsVisible = IsLinux();
+            winePrefixMenuItem.IsVisible = PlatformUtils.IsLinux();
         }
 
         // Find dialog
@@ -1415,7 +1289,7 @@ namespace UnrealLocresEditor.Views
         {
             try
             {
-                InitializeWinePrefix();
+                WineUtils.InitializeWinePrefix();
                 _notificationManager.Show(
                     new Notification(
                         "Success",
