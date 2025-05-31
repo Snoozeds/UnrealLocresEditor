@@ -6,9 +6,8 @@ namespace UnrealLocresEditor.Utils
 {
     public static class WineUtils
     {
-        public static string WinePrefixDirectory { get; } = Path.Combine(
-            Directory.GetCurrentDirectory(), "wineprefix"
-        );
+        public static string WinePrefixDirectory { get; } =
+            Path.Combine(Directory.GetCurrentDirectory(), "wineprefix");
 
         public static void InitializeWinePrefix()
         {

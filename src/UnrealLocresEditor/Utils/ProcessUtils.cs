@@ -24,7 +24,7 @@ namespace UnrealLocresEditor.Utils
                 FileName = GetExecutablePath(useWine),
                 Arguments = GetArguments(command, locresFilePath, useWine, csvFileName),
                 RedirectStandardOutput = true,
-                UseShellExecute = false
+                UseShellExecute = false,
             };
 
             if (PlatformUtils.IsLinux() && useWine)

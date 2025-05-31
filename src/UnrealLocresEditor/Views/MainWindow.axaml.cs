@@ -1,4 +1,15 @@
-﻿using Avalonia;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Data;
@@ -11,17 +22,6 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CsvHelper;
 using CsvHelper.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
 using UnrealLocresEditor.Models;
 using UnrealLocresEditor.Utils;
 
@@ -178,7 +178,16 @@ namespace UnrealLocresEditor.Views
                 MaxItems = 1,
             };
 
-            // Check for updates
+            // Skip update check in Avalonia Designer
+            if (Design.IsDesignMode)
+            {
+                Console.WriteLine("In designer - skipping update check.");
+                return;
+            }
+
+#if DEBUG
+            Console.WriteLine("Skipping update check - DEBUG mode.");
+#else
             if (_appConfig.AutoUpdateEnabled == false)
             {
                 Console.WriteLine("Skipping update check - auto update disabled.");
@@ -202,6 +211,8 @@ namespace UnrealLocresEditor.Views
                     );
                 }
             }
+#endif
+
             _discordRPC.Initialize(_currentLocresFilePath);
         }
 
@@ -707,7 +718,7 @@ namespace UnrealLocresEditor.Views
 
         private static string GetOrCreateTempDirectory()
         {
-            var exeDirectory = Path.GetDirectoryName(Environment.ProcessPath);
+            var exeDirectory = AppContext.BaseDirectory;
             // Create a unique instance ID so that if multiple instances are open, they don't overwrite eachother.
             var instanceId = Process.GetCurrentProcess().Id.ToString();
             var tempDirectoryName = $".temp-UnrealLocresEditor-{instanceId}";
@@ -781,11 +792,11 @@ namespace UnrealLocresEditor.Views
                 var process = new Process
                 {
                     StartInfo = ProcessUtils.GetProcessStartInfo(
-                    command: "export",
-                    locresFilePath: _currentLocresFilePath,
-                    useWine: this.UseWine,
-                    csvFileName: csvFileName
-                )
+                        command: "export",
+                        locresFilePath: _currentLocresFilePath,
+                        useWine: this.UseWine,
+                        csvFileName: csvFileName
+                    ),
                 };
 
                 process.Start();
@@ -1038,7 +1049,12 @@ namespace UnrealLocresEditor.Views
             // Run UnrealLocres.exe to import edited CSV
             var process = new Process
             {
-                StartInfo = ProcessUtils.GetProcessStartInfo(command: "import", locresFilePath: _currentLocresFilePath, useWine: this.UseWine, csvFileName: csvFileName),
+                StartInfo = ProcessUtils.GetProcessStartInfo(
+                    command: "import",
+                    locresFilePath: _currentLocresFilePath,
+                    useWine: this.UseWine,
+                    csvFileName: csvFileName
+                ),
             };
 
             process.Start();

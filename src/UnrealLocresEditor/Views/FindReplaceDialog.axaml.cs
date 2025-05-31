@@ -290,9 +290,7 @@ namespace UnrealLocresEditor.Views
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                MainWindow._dataGrid.ItemsSource = new ObservableCollection<DataRow>(
-                    items
-                );
+                MainWindow._dataGrid.ItemsSource = new ObservableCollection<DataRow>(items);
             });
         }
 
