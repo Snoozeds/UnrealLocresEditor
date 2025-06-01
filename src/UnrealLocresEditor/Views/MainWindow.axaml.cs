@@ -50,6 +50,7 @@ namespace UnrealLocresEditor.Views
         // Misc
         public string csvFile = "";
         public bool shownSourceWarningDialog = false;
+        public bool shownAddRowWarningDialog = false;
 
         public MainWindow()
         {
@@ -537,6 +538,12 @@ namespace UnrealLocresEditor.Views
         // Allow adding new row
         private void AddNewRow(object sender, RoutedEventArgs e)
         {
+            if (!shownAddRowWarningDialog)
+            {
+                ShowAddRowWarningDialog();
+                return;
+            }
+
             if (_rows == null)
             {
                 _notificationManager.Show(
@@ -595,6 +602,73 @@ namespace UnrealLocresEditor.Views
             });
 
             _hasUnsavedChanges = true;
+        }
+
+        private async void ShowAddRowWarningDialog()
+        {
+            var dialog = new Window
+            {
+                Title = "Add New Row - Warning",
+                Width = 450,
+                Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Content = new StackPanel
+                {
+                    Margin = new Thickness(20),
+                    Spacing = 20,
+                    Children =
+            {
+                new TextBlock
+                {
+                    Text = "Warning: Most games will not display new localization entries as they are not referenced in the game's string tables or other areas. Only add new rows if you know what you're doing and understand how your specific game handles localization keys.",
+                    TextWrapping = TextWrapping.Wrap,
+                    FontWeight = FontWeight.Medium,
+                },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 10,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Children =
+                    {
+                        new Avalonia.Controls.Button { Content = "I Understand, Proceed" },
+                        new Avalonia.Controls.Button { Content = "Cancel" },
+                    },
+                },
+            },
+                },
+            };
+
+            var result = await ShowAddRowWarningResult(dialog);
+
+            if (result == "I Understand, Proceed")
+            {
+                shownAddRowWarningDialog = true;
+                AddNewRow(null, null);
+            }
+        }
+
+        private async Task<string> ShowAddRowWarningResult(Window dialog)
+        {
+            var taskCompletionSource = new TaskCompletionSource<string>();
+
+            var buttons = (
+                (StackPanel)((StackPanel)dialog.Content).Children[1]
+            ).Children.OfType<Avalonia.Controls.Button>();
+
+            foreach (var button in buttons)
+            {
+                button.Click += (s, e) =>
+                {
+                    taskCompletionSource.SetResult(
+                        ((Avalonia.Controls.Button)s).Content.ToString()
+                    );
+                    dialog.Close();
+                };
+            }
+
+            await dialog.ShowDialog(this);
+            return await taskCompletionSource.Task;
         }
 
         // Allow deleting row
