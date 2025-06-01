@@ -11,7 +11,24 @@
         Height="300"
         WindowStartupLocation="CenterOwner"
 		Icon="/Assets/ULE-icon.ico"
-		CanResize="False">
+		CanResize="False"
+        Background="{DynamicResource BackgroundColor}"
+        Foreground="{DynamicResource TextColor}">
+
+	<Window.Styles>
+		<Style Selector="Button">
+			<Setter Property="Background" Value="{DynamicResource ButtonColor}"/>
+			<Setter Property="Foreground" Value="{DynamicResource ButtonTextColor}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+			<Setter Property="Padding" Value="10,5"/>
+		</Style>
+		<Style Selector="Button:pointerover">
+			<Setter Property="Background" Value="{DynamicResource MenuHoverColor}"/>
+		</Style>
+		<Style Selector="TextBlock">
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+		</Style>
+	</Window.Styles>
 
 	<StackPanel Margin="20" Spacing="10">
 		<Image Source="/Assets/ULE-icon.ico"
@@ -40,6 +57,6 @@
 					HorizontalAlignment="Center"
 					Click="OnGitHubButtonClick"
 					Margin="0,20,10,0"/>
-			</StackPanel>
+		</StackPanel>
 	</StackPanel>
 </Window>

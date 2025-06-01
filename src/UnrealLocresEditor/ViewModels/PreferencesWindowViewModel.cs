@@ -27,6 +27,7 @@ namespace UnrealLocresEditor.ViewModels
         private TimeSpan _selectedAutoSaveInterval;
         private bool _autoSaveEnabled;
         private bool _autoUpdateEnabled;
+        private double _defaultColumnWidth;
 
         public bool IsDarkTheme
         {
@@ -106,6 +107,17 @@ namespace UnrealLocresEditor.ViewModels
             set => this.RaiseAndSetIfChanged(ref _autoUpdateEnabled, value);
         }
 
+        public double DefaultColumnWidth
+        {
+            get => _defaultColumnWidth;
+            set
+            {
+                var clamped = Math.Clamp(value, 10, 10000);
+                var snapped = Math.Round(clamped / 50.0) * 50.0;
+                this.RaiseAndSetIfChanged(ref _defaultColumnWidth, snapped);
+            }
+        }
+
         public bool IsLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
         public ReactiveCommand<Unit, Unit> CancelCommand { get; }
@@ -126,6 +138,7 @@ namespace UnrealLocresEditor.ViewModels
             SelectedAutoSaveInterval = config.AutoSaveInterval;
             AutoSaveEnabled = config.AutoSaveEnabled;
             AutoUpdateEnabled = config.AutoUpdateEnabled;
+            DefaultColumnWidth = config.DefaultColumnWidth;
 
             if (!AutoSaveIntervals.Contains(SelectedAutoSaveInterval))
             {
@@ -149,6 +162,7 @@ namespace UnrealLocresEditor.ViewModels
             config.AutoSaveInterval = SelectedAutoSaveInterval;
             config.AutoSaveEnabled = AutoSaveEnabled;
             config.AutoUpdateEnabled = AutoUpdateEnabled;
+            config.DefaultColumnWidth = DefaultColumnWidth;
 
             _discordRPC?.UpdatePresence(DiscordRPCEnabled, _mainWindow._currentLocresFilePath);
 

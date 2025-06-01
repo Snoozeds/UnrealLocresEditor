@@ -8,13 +8,45 @@
         Height="400"
         WindowStartupLocation="CenterOwner"
 		Icon="/Assets/ULE-icon.ico"
-		CanResize="False">
+		CanResize="False"
+        Background="{DynamicResource BackgroundColor}"
+        Foreground="{DynamicResource TextColor}">
+
+	<Window.Styles>
+		<Style Selector="TabItem">
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+		</Style>
+		<Style Selector="ToggleSwitch">
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+		</Style>
+		<Style Selector="TextBlock">
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+		</Style>
+		<Style Selector="ComboBox">
+			<Setter Property="Background" Value="{DynamicResource BorderBackgroundColor}"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+		</Style>
+		<Style Selector="TextBox">
+			<Setter Property="Background" Value="{DynamicResource BorderBackgroundColor}"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+		</Style>
+		<Style Selector="Button">
+			<Setter Property="Background" Value="{DynamicResource ButtonColor}"/>
+			<Setter Property="Foreground" Value="{DynamicResource ButtonTextColor}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+		</Style>
+		<Style Selector="Button:pointerover">
+			<Setter Property="Background" Value="{DynamicResource MenuHoverColor}"/>
+		</Style>
+	</Window.Styles>
 
 	<Grid RowDefinitions="Auto,*,Auto" Margin="16">
 		<TabControl Grid.Row="1">
 			<!-- Appearance Settings -->
 			<TabItem Header="Appearance">
-				<StackPanel Spacing="16" Margin="16">
+				<StackPanel Spacing="16" Margin="16" Classes="settingsSection">
 					<StackPanel>
 						<ToggleSwitch Content="Dark Theme (requires restart)"
                                     IsChecked="{Binding IsDarkTheme}"
@@ -27,12 +59,33 @@
                                      HorizontalAlignment="Left"
                                      VerticalAlignment="Center"/>
 					</StackPanel>
+					<StackPanel>
+						<TextBlock Text="Default column width" Margin="0,0,0,8" FontSize="18"/>
+						<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+							<Slider Minimum="10"
+									Maximum="2500"
+									TickFrequency="50"
+									TickPlacement="BottomRight"
+									SmallChange="50"
+									LargeChange="50"
+									IsSnapToTickEnabled="True"
+									Value="{Binding DefaultColumnWidth, Mode=TwoWay}"
+									Width="200"/>
+
+							<TextBox Text="{Binding DefaultColumnWidth, Mode=TwoWay, StringFormat='F0'}"
+									 Width="60"
+									 HorizontalContentAlignment="Center"
+									 VerticalAlignment="Center"/>
+							<TextBlock Text="px"
+									   VerticalAlignment="Center"/>
+						</StackPanel>
+					</StackPanel>
 				</StackPanel>
 			</TabItem>
 
 			<!-- Discord Settings -->
 			<TabItem Header="Discord">
-				<StackPanel Spacing="16" Margin="16">
+				<StackPanel Spacing="16" Margin="16" Classes="settingsSection">
 					<ToggleSwitch Content="Discord Rich Presence"
                                 IsChecked="{Binding DiscordRPCEnabled}"
                                 FontSize="18"/>
@@ -42,7 +95,8 @@
                                     IsChecked="{Binding DiscordRPCPrivacy}"
                                     FontSize="18"/>
 
-						<TextBlock Text="Privacy Message" Margin="0,8,0,4"/>
+						<TextBlock Text="Privacy Message"
+                                  Margin="0,8,0,4"/>
 						<TextBox Text="{Binding DiscordRPCPrivacyString}"
                                 IsEnabled="{Binding DiscordRPCPrivacy}"/>
 					</StackPanel>
@@ -51,12 +105,14 @@
 
 			<!-- Editor Settings -->
 			<TabItem Header="Editor">
-				<StackPanel Spacing="16" Margin="16">
+				<StackPanel Spacing="16" Margin="16" Classes="settingsSection">
 					<ToggleSwitch Content="Auto-Save"
                                   IsChecked="{Binding AutoSaveEnabled}"
                                   FontSize="18"/>
 					<StackPanel IsEnabled="{Binding AutoSaveEnabled}">
-						<TextBlock Text="Auto-Save Interval" Margin="0,0,0,8" FontSize="18"/>
+						<TextBlock Text="Auto-Save Interval"
+                                  Margin="0,0,0,8"
+                                  FontSize="18"/>
 						<ComboBox ItemsSource="{Binding AutoSaveIntervals}"
                                   SelectedItem="{Binding SelectedAutoSaveInterval}">
 							<ComboBox.ItemTemplate>

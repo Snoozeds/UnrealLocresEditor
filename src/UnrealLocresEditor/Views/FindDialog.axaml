@@ -6,12 +6,36 @@
         Height="200"
 		Icon="/Assets/ULE-icon.ico"
 		CanResize="False"
-		WindowStartupLocation="CenterOwner">
+		WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundColor}"
+        Foreground="{DynamicResource TextColor}">
+
+	<Window.Styles>
+		<Style Selector="Button">
+			<Setter Property="Background" Value="{DynamicResource ButtonColor}"/>
+			<Setter Property="Foreground" Value="{DynamicResource ButtonTextColor}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+		</Style>
+		<Style Selector="Button:pointerover">
+			<Setter Property="Background" Value="{DynamicResource MenuHoverColor}"/>
+		</Style>
+		<Style Selector="TextBox">
+			<Setter Property="Background" Value="{DynamicResource BorderBackgroundColor}"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+		</Style>
+		<Style Selector="CheckBox">
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+		</Style>
+		<Style Selector="TextBlock">
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+		</Style>
+	</Window.Styles>
 
 	<Grid RowDefinitions="Auto,Auto,*,Auto, Auto" ColumnDefinitions="*,Auto" Margin="10">
 		<TextBox x:Name="uiSearchTextBox" Watermark="Find" Grid.Row="0" Grid.Column="0" Margin="0,0,5,0" />
 		<Button Name="uiFindButton" Content="Find" Grid.Row="0" Grid.Column="1" />
-		<TextBlock x:Name="uiMatchCountTextBlock" Grid.Row="1" Grid.ColumnSpan="2" 
+		<TextBlock x:Name="uiMatchCountTextBlock" Grid.Row="1" Grid.ColumnSpan="2"
            HorizontalAlignment="Center" VerticalAlignment="Center" Text="" />
 		<StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Spacing="10">
 			<Button x:Name="uiFindNextButton" Content="Next" Width="100" />
@@ -25,5 +49,4 @@
 			<CheckBox x:Name="uiMatchCellCheckBox" Content="Match Entire cell contents" />
 		</StackPanel>
 	</Grid>
-
 </Window>

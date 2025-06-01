@@ -5,7 +5,8 @@
         x:DataType="local:LicensesWindow"
         Title="Licenses"
         Height="800" Width="1200"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundColor}">
 
 	<Grid RowDefinitions="Auto,*,Auto" Margin="20">
 		<!-- Header -->
@@ -13,26 +14,34 @@
                    Text="Licenses for packages &amp; code used:"
                    FontSize="24"
                    HorizontalAlignment="Center"
-                   Margin="0,0,0,20"/>
+                   Margin="0,0,0,20"
+                   Foreground="{DynamicResource TextColor}"/>
 
 		<!-- Main Content -->
-		<ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+		<ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled"
+                      Background="Transparent">
 			<UniformGrid Columns="3" HorizontalAlignment="Center" VerticalAlignment="Top">
 
 				<!-- Avalonia Card -->
-				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350">
+				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350"
+                        Background="{DynamicResource BorderBackgroundColor}"
+                        BorderBrush="{DynamicResource BorderColor}">
 					<Grid RowDefinitions="Auto,*">
 						<Button Grid.Row="0"
-								Name="Avalonia"
-								Click="HandleUrlClick"
-								Margin="10,10,10,5"
-								HorizontalAlignment="Center">
+                                Name="Avalonia"
+                                Click="HandleUrlClick"
+                                Margin="10,10,10,5"
+                                HorizontalAlignment="Center"
+                                Foreground="{DynamicResource SettingsTextColor}">
 							<Button.Styles>
 								<Style Selector="Button">
 									<Setter Property="Background" Value="Transparent"/>
 									<Setter Property="BorderThickness" Value="0"/>
 									<Setter Property="Padding" Value="5"/>
 									<Setter Property="Cursor" Value="Hand"/>
+								</Style>
+								<Style Selector="Button:pointerover">
+									<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
 								</Style>
 								<Style Selector="Button:pointerover /template/ ContentPresenter">
 									<Setter Property="TextBlock.TextDecorations" Value="Underline"/>
@@ -42,8 +51,10 @@
 						</Button>
 
 						<!-- License Text -->
-						<ScrollViewer Grid.Row="1" Margin="10,5,10,10">
-							<SelectableTextBlock FontSize="12" TextWrapping="Wrap">
+						<ScrollViewer Grid.Row="1" Margin="10,5,10,10"
+                                      Background="Transparent">
+							<SelectableTextBlock FontSize="12" TextWrapping="Wrap"
+                                                Foreground="{DynamicResource TextColor}">
 								MIT License <LineBreak />
 								Copyright (c) AvaloniaUI OÜ All Rights Reserved
 								<LineBreak />
@@ -73,13 +84,16 @@
 				</Border>
 
 				<!-- ClosedXML Card -->
-				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350">
-					<Grid RowDefinitions="Auto,*">
-						<Button Grid.Row="0"
-								Name="ClosedXML"
-								Click="HandleUrlClick"
-								Margin="10,10,10,5"
-								HorizontalAlignment="Center">
+				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350"
+                        Background="{DynamicResource BorderBackgroundColor}"
+                        BorderBrush="{DynamicResource BorderColor}">
+                    <Grid RowDefinitions="Auto,*">
+                        <Button Grid.Row="0"
+                                Name="ClosedXML"
+                                Click="HandleUrlClick"
+                                Margin="10,10,10,5"
+                                HorizontalAlignment="Center"
+                                Foreground="{DynamicResource SettingsTextColor}">
 							<Button.Styles>
 								<Style Selector="Button">
 									<Setter Property="Background" Value="Transparent"/>
@@ -95,8 +109,10 @@
 						</Button>
 
 						<!-- License Text -->
-						<ScrollViewer Grid.Row="1" Margin="10,5,10,10">
-							<SelectableTextBlock FontSize="12" TextWrapping="Wrap">
+						<ScrollViewer Grid.Row="1" Margin="10,5,10,10"
+									 Background="Transparent">
+							<SelectableTextBlock FontSize="12" TextWrapping="Wrap"
+                                                Foreground="{DynamicResource TextColor}">
 								MIT License
 								<LineBreak />
 								Copyright (c) 2016 ClosedXML
@@ -127,13 +143,16 @@
 					</Border>
 
 				<!-- CsvHelper -->
-				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350">
+				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350"
+                        Background="{DynamicResource BorderBackgroundColor}"
+                        BorderBrush="{DynamicResource BorderColor}">
 					<Grid RowDefinitions="Auto,*">
 						<Button Grid.Row="0"
 								Name="CsvHelper"
 								Click="HandleUrlClick"
 								Margin="10,10,10,5"
-								HorizontalAlignment="Center">
+								HorizontalAlignment="Center"
+								Foreground="{DynamicResource SettingsTextColor}">
 							<Button.Styles>
 								<Style Selector="Button">
 									<Setter Property="Background" Value="Transparent"/>
@@ -149,14 +168,18 @@
 						</Button>
 
 						<!-- License Text -->
-						<ScrollViewer Grid.Row="1" Margin="10,5,10,10">
-							<SelectableTextBlock FontSize="12" TextWrapping="Wrap">
+						<ScrollViewer Grid.Row="1" Margin="10,5,10,10"
+						 Background="Transparent">
+							<SelectableTextBlock FontSize="12" TextWrapping="Wrap"
+									Foreground="{DynamicResource TextColor}">
 								Dual licensing under MS-PL and Apache 2.0
+								<LineBreak />
+								<LineBreak />
 
 Microsoft Public License (MS-PL)
-
+<LineBreak />
+<LineBreak />
 This license governs use of the accompanying software. If you use the software, you accept this license. If you do not accept the license, do not use the software.
-
    1. Definitions
       The terms "reproduce," "reproduction," "derivative works," and "distribution" have the same meaning here as under U.S. copyright law. A "contribution" is the original software, or any additions or changes to the software. A "contributor" is any person that distributes its contribution under this license. "Licensed patents" are a contributor's patent claims that read directly on its contribution.
    2. Grant of Rights
@@ -168,11 +191,15 @@ This license governs use of the accompanying software. If you use the software, 
       (C) If you distribute any portion of the software, you must retain all copyright, patent, trademark, and attribution notices that are present in the software.
       (D) If you distribute any portion of the software in source code form, you may do so only under this license by including a complete copy of this license with your distribution. If you distribute any portion of the software in compiled or object code form, you may only do so under a license that complies with this license.
       (E) The software is licensed "as-is." You bear the risk of using it. The contributors give no express warranties, guarantees, or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the contributors exclude the implied warranties of merchantability, fitness for a particular purpose and non-infringement.
-
+<LineBreak />
+<LineBreak />
+<LineBreak />
 Apache License, Version 2.0
 Apache License
 Version 2.0, January 2004
 http://www.apache.org/licenses/
+<LineBreak />
+<LineBreak />
 
 TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
@@ -261,13 +288,16 @@ To apply the Apache License to your work, attach the following boilerplate notic
 					</Border>
 				
 				<!-- DiscordRichPresence Card -->
-				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350">
+				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350"
+                        Background="{DynamicResource BorderBackgroundColor}"
+                        BorderBrush="{DynamicResource BorderColor}">
 					<Grid RowDefinitions="Auto,*">
 						<Button Grid.Row="0"
 								Name="DiscordRichPresence"
 								Click="HandleUrlClick"
 								Margin="10,10,10,5"
-								HorizontalAlignment="Center">
+								HorizontalAlignment="Center"
+								Foreground="{DynamicResource SettingsTextColor}">
 							<Button.Styles>
 								<Style Selector="Button">
 									<Setter Property="Background" Value="Transparent"/>
@@ -283,8 +313,10 @@ To apply the Apache License to your work, attach the following boilerplate notic
 						</Button>
 
 						<!-- License Text -->
-						<ScrollViewer Grid.Row="1" Margin="10,5,10,10">
-							<SelectableTextBlock FontSize="12" TextWrapping="Wrap">
+						<ScrollViewer Grid.Row="1" Margin="10,5,10,10"
+						 Background="Transparent">
+							<SelectableTextBlock FontSize="12" TextWrapping="Wrap"
+									Foreground="{DynamicResource TextColor}">
 								MIT License
 								<LineBreak />
 								Copyright (c) 2021 Lachee
@@ -315,13 +347,16 @@ To apply the Apache License to your work, attach the following boilerplate notic
 					</Border>
 
 				<!-- System.Text.Json Card -->
-				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350">
+				<Border Margin="10" BorderThickness="1" CornerRadius="8" Width="350" Height="350"
+                        Background="{DynamicResource BorderBackgroundColor}"
+                        BorderBrush="{DynamicResource BorderColor}">
 					<Grid RowDefinitions="Auto,*">
 						<Button Grid.Row="0"
 								Name="SystemTextJson"
 								Click="HandleUrlClick"
 								Margin="10,10,10,5"
-								HorizontalAlignment="Center">
+								HorizontalAlignment="Center"
+								Foreground="{DynamicResource SettingsTextColor}">
 							<Button.Styles>
 								<Style Selector="Button">
 									<Setter Property="Background" Value="Transparent"/>
@@ -337,13 +372,16 @@ To apply the Apache License to your work, attach the following boilerplate notic
 						</Button>
 
 						<!-- License Text -->
-						<ScrollViewer Grid.Row="1" Margin="10,5,10,10">
-							<SelectableTextBlock FontSize="12" TextWrapping="Wrap">
+						<ScrollViewer Grid.Row="1" Margin="10,5,10,10"
+						 Background="Transparent">
+							<SelectableTextBlock FontSize="12" TextWrapping="Wrap"
+									Foreground="{DynamicResource TextColor}">
 								The MIT License (MIT)
 								<LineBreak />
 								Copyright (c) .NET Foundation and Contributors
 								<LineBreak />
 								All rights reserved.
+								<LineBreak />
 								<LineBreak />
 								Permission is hereby granted, free of charge, to any person obtaining a copy
 								of this software and associated documentation files (the "Software"), to deal
@@ -381,11 +419,17 @@ To apply the Apache License to your work, attach the following boilerplate notic
                 Click="CloseClick">
 			<Button.Styles>
 				<Style Selector="Button">
-					<Setter Property="Foreground" Value="White"/>
+					<Setter Property="Foreground" Value="{DynamicResource ButtonTextColor}"/>
+					<Setter Property="Background" Value="{DynamicResource ButtonColor}"/>
 					<Setter Property="FontSize" Value="16"/>
 					<Setter Property="Padding" Value="10,5"/>
 					<Setter Property="VerticalContentAlignment" Value="Center"/>
 					<Setter Property="HorizontalContentAlignment" Value="Center"/>
+					<Setter Property="BorderThickness" Value="0"/>
+					<Setter Property="CornerRadius" Value="4"/>
+				</Style>
+				<Style Selector="Button:pointerover">
+					<Setter Property="Background" Value="{DynamicResource MenuHoverColor}"/>
 				</Style>
 			</Button.Styles>
 		</Button>

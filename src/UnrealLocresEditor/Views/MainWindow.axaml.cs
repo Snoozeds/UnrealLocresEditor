@@ -903,7 +903,7 @@ namespace UnrealLocresEditor.Views
                                 Header = stringValues[i],
                                 Binding = new Binding($"Values[{i}]"),
                                 IsReadOnly = false,
-                                Width = new DataGridLength(300),
+                                Width = new DataGridLength(AppConfig.Instance.DefaultColumnWidth), // Load default column width from config
                             };
                             columns.Add(column);
                         }

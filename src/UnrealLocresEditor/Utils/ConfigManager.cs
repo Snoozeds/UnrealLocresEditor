@@ -17,6 +17,7 @@ namespace UnrealLocresEditor.Utils
         public static readonly TimeSpan AutoSaveInterval = TimeSpan.FromMinutes(5);
         public static readonly bool AutoSaveEnabled = true;
         public static readonly bool AutoUpdateEnabled = true;
+        public static readonly double DefaultColumnWidth = 50;
     }
 
     public class AppConfig
@@ -33,6 +34,7 @@ namespace UnrealLocresEditor.Utils
         public TimeSpan AutoSaveInterval { get; set; } = DefaultConfig.AutoSaveInterval;
         public bool AutoSaveEnabled { get; set; } = DefaultConfig.AutoSaveEnabled;
         public bool AutoUpdateEnabled { get; set; } = DefaultConfig.AutoUpdateEnabled;
+        public double DefaultColumnWidth { get; set; } = DefaultConfig.DefaultColumnWidth;
 
         public static AppConfig Instance
         {
@@ -113,6 +115,10 @@ namespace UnrealLocresEditor.Utils
                     "AutoUpdateEnabled",
                     config => config.AutoUpdateEnabled == true || config.AutoUpdateEnabled == false
                 },
+                {
+                    "DefaultColumnWidth",
+                    config => config.DefaultColumnWidth > 0 && config.DefaultColumnWidth <= 2500
+                }
             };
         }
 

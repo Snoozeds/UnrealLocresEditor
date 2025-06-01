@@ -6,12 +6,25 @@
         Height="450"
 		Icon="/Assets/ULE-icon.ico"
 		CanResize="True"
-		WindowStartupLocation="CenterScreen">
+		WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundColor}"
+        Foreground="{DynamicResource TextColor}">
 	<Window.Styles>
 		<Style Selector="DataGridCell">
 			<Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
 		</Style>
-	</Window.Styles>
+		<Style Selector="DataGridColumnHeader">
+			<Setter Property="Background" Value="{DynamicResource DataGridHeaderColor}"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+		</Style>
+		<Style Selector="DataGridRow:nth-child(2n)">
+			<Setter Property="Background" Value="{DynamicResource DataGridAlternateRowColor}"/>
+		</Style>
+		
+		</Window.Styles>
+
 	<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*,Auto">
 		<Menu Grid.Row="0" Grid.ColumnSpan="2">
 			<MenuItem Header="_File">
@@ -45,12 +58,14 @@
                   IsReadOnly="False"
                   GridLinesVisibility="All"
                   BorderThickness="2"
-                  BorderBrush="Gray"
+                  BorderBrush="{DynamicResource BorderColor}"
+                  Background="{DynamicResource BackgroundColor}"
                   MinColumnWidth="50"
                   ClipboardCopyMode="IncludeHeader">
 			<DataGrid.Styles>
 				<Style Selector="DataGridCell">
 					<Setter Property="MaxWidth" Value="{Binding Width, RelativeSource={RelativeSource AncestorType=DataGridColumn}}"/>
+					<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
 				</Style>
 			</DataGrid.Styles>
 		</DataGrid>
