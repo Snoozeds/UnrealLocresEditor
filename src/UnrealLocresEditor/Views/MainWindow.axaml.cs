@@ -617,25 +617,26 @@ namespace UnrealLocresEditor.Views
                     Margin = new Thickness(20),
                     Spacing = 20,
                     Children =
-            {
-                new TextBlock
-                {
-                    Text = "Warning: Most games will not display new localization entries as they are not referenced in the game's string tables or other areas. Only add new rows if you know what you're doing and understand how your specific game handles localization keys.",
-                    TextWrapping = TextWrapping.Wrap,
-                    FontWeight = FontWeight.Medium,
-                },
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 10,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Children =
                     {
-                        new Avalonia.Controls.Button { Content = "I Understand, Proceed" },
-                        new Avalonia.Controls.Button { Content = "Cancel" },
+                        new TextBlock
+                        {
+                            Text =
+                                "Warning: Most games will not display new localization entries as they are not referenced in the game's string tables or other areas. Only add new rows if you know what you're doing and understand how your specific game handles localization keys.",
+                            TextWrapping = TextWrapping.Wrap,
+                            FontWeight = FontWeight.Medium,
+                        },
+                        new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Spacing = 10,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            Children =
+                            {
+                                new Avalonia.Controls.Button { Content = "I Understand, Proceed" },
+                                new Avalonia.Controls.Button { Content = "Cancel" },
+                            },
+                        },
                     },
-                },
-            },
                 },
             };
 

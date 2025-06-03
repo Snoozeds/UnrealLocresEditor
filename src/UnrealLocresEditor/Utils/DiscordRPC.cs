@@ -15,28 +15,37 @@ namespace UnrealLocresEditor
 
         public void Initialize(string locresPath)
         {
-            // Discord RPC
-            client = new DiscordRpcClient("1251663992162619472");
+            _appConfig = AppConfig.Instance;
+            rpcEnabled = _appConfig.DiscordRPCEnabled;
 
-            client.OnReady += (sender, e) =>
+            // Initialize Discord RPC client only if enabled
+            if (rpcEnabled)
             {
-                Console.WriteLine("Received Ready from user {0}", e.User.Username);
-            };
+                client = new DiscordRpcClient("1251663992162619472");
 
-            client.OnPresenceUpdate += (sender, e) =>
-            {
-                Console.WriteLine("Received Update! {0}", e.Presence);
-            };
+                client.OnReady += (sender, e) =>
+                {
+                    Console.WriteLine("Received Ready from user {0}", e.User.Username);
+                };
 
-            client.Initialize();
+                client.OnPresenceUpdate += (sender, e) =>
+                {
+                    Console.WriteLine("Received Update! {0}", e.Presence);
+                };
+
+                client.Initialize();
+            }
+
             UpdatePresence(rpcEnabled, locresPath);
         }
 
         public void UpdatePresence(bool enabled, string locresPath)
         {
+            // Load config if not already loaded
+            _appConfig ??= AppConfig.Instance;
+
             if (enabled)
             {
-                // Restart the client if it's disposed
                 if (client == null || client.IsDisposed)
                 {
                     client = new DiscordRpcClient("1251663992162619472");
@@ -56,7 +65,6 @@ namespace UnrealLocresEditor
 
                 var presence = new RichPresence
                 {
-                    // Set the presence details based on the config privacy setting
                     Details = _appConfig.DiscordRPCPrivacy
                         ? _appConfig.DiscordRPCPrivacyString
                         : (
@@ -67,7 +75,7 @@ namespace UnrealLocresEditor
                     Timestamps = editStartTime.HasValue
                         ? new Timestamps(editStartTime.Value)
                         : null,
-                    Assets = new Assets() { LargeImageKey = "ule-logo" },
+                    Assets = new Assets { LargeImageKey = "ule-logo" },
                 };
 
                 client.SetPresence(presence);
