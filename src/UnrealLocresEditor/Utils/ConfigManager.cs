@@ -17,7 +17,7 @@ namespace UnrealLocresEditor.Utils
         public static readonly TimeSpan AutoSaveInterval = TimeSpan.FromMinutes(5);
         public static readonly bool AutoSaveEnabled = true;
         public static readonly bool AutoUpdateEnabled = true;
-        public static readonly double DefaultColumnWidth = 50;
+        public static readonly double DefaultColumnWidth = 300;
     }
 
     public class AppConfig
@@ -118,7 +118,7 @@ namespace UnrealLocresEditor.Utils
                 {
                     "DefaultColumnWidth",
                     config => config.DefaultColumnWidth > 0 && config.DefaultColumnWidth <= 2500
-                }
+                },
             };
         }
 
