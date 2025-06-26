@@ -1,67 +1,68 @@
-<Application xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="UnrealLocresEditor.App"
-             RequestedThemeVariant="Default">
+<Application
+    x:Class="UnrealLocresEditor.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedThemeVariant="Default">
 
-	<Application.Resources>
-		<ResourceDictionary>
-			<ResourceDictionary.ThemeDictionaries>
-				<!-- Default Theme -->
-				<ResourceDictionary x:Key="Default">
-					<Color x:Key="BackgroundColor">#1A1625</Color>
-					<Color x:Key="TextColor">#E8E3FF</Color>
-					<Color x:Key="ButtonColor">#7C3AED</Color>
-					<Color x:Key="ButtonTextColor">#FFFFFF</Color>
-					<Color x:Key="SecondaryButtonColor">#C4B5FD</Color>
-					<Color x:Key="SecondaryButtonTextColor">#1A1625</Color>
-					<Color x:Key="BorderColor">#8B5CF6</Color>
-					<Color x:Key="TertiaryColor">#2D1B4E</Color>
-					<Color x:Key="BorderBackgroundColor">#3C2A5C</Color>
-					<Color x:Key="WarningTextColor">#FBBF24</Color>
-					<Color x:Key="SettingsTextColor">#A78BFA</Color>
-					<Color x:Key="MenuHoverColor">#5B21B6</Color>
-					<Color x:Key="SystemAccentColor">#A855F7</Color>
-					<Color x:Key="DataGridHeaderColor">#4C1D95</Color>
-					<Color x:Key="DataGridAlternateRowColor">#231836</Color>
-				</ResourceDictionary>
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <!--  Default Theme  -->
+                <ResourceDictionary x:Key="Default">
+                    <Color x:Key="BackgroundColor">#1A1625</Color>
+                    <Color x:Key="TextColor">#E8E3FF</Color>
+                    <Color x:Key="ButtonColor">#7C3AED</Color>
+                    <Color x:Key="ButtonTextColor">#FFFFFF</Color>
+                    <Color x:Key="SecondaryButtonColor">#C4B5FD</Color>
+                    <Color x:Key="SecondaryButtonTextColor">#1A1625</Color>
+                    <Color x:Key="BorderColor">#8B5CF6</Color>
+                    <Color x:Key="TertiaryColor">#2D1B4E</Color>
+                    <Color x:Key="BorderBackgroundColor">#3C2A5C</Color>
+                    <Color x:Key="WarningTextColor">#FBBF24</Color>
+                    <Color x:Key="SettingsTextColor">#A78BFA</Color>
+                    <Color x:Key="MenuHoverColor">#5B21B6</Color>
+                    <Color x:Key="SystemAccentColor">#A855F7</Color>
+                    <Color x:Key="DataGridHeaderColor">#4C1D95</Color>
+                    <Color x:Key="DataGridAlternateRowColor">#231836</Color>
+                </ResourceDictionary>
 
-				<!-- Light Theme -->
-				<ResourceDictionary x:Key="Light">
-					<Color x:Key="BackgroundColor">#FFFFFF</Color>
-					<Color x:Key="TextColor">#1A1625</Color>
-					<Color x:Key="ButtonColor">#7C3AED</Color>
-					<Color x:Key="ButtonTextColor">#FFFFFF</Color>
-					<Color x:Key="SecondaryButtonColor">#E0D9FD</Color>
-					<Color x:Key="SecondaryButtonTextColor">#1A1625</Color>
-					<Color x:Key="BorderColor">#7C3AED</Color>
-					<Color x:Key="TertiaryColor">#F3F0FF</Color>
-					<Color x:Key="BorderBackgroundColor">#DDD6F3</Color>
-					<Color x:Key="WarningTextColor">#B45309</Color>
-					<Color x:Key="SettingsTextColor">#6B21A8</Color>
-					<Color x:Key="MenuHoverColor">#DDD6F3</Color>
-					<Color x:Key="SystemAccentColor">#9333EA</Color>
-					<Color x:Key="DataGridHeaderColor">#EDE9FE</Color>
-					<Color x:Key="DataGridAlternateRowColor">#F5F3FF</Color>
-				</ResourceDictionary>
-			</ResourceDictionary.ThemeDictionaries>
-		</ResourceDictionary>
-		<SolidColorBrush x:Key="SystemAccentBrush" Color="{DynamicResource SystemAccentColor}"/>
-	</Application.Resources>
+                <!--  Light Theme  -->
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="BackgroundColor">#FFFFFF</Color>
+                    <Color x:Key="TextColor">#1A1625</Color>
+                    <Color x:Key="ButtonColor">#7C3AED</Color>
+                    <Color x:Key="ButtonTextColor">#FFFFFF</Color>
+                    <Color x:Key="SecondaryButtonColor">#E0D9FD</Color>
+                    <Color x:Key="SecondaryButtonTextColor">#1A1625</Color>
+                    <Color x:Key="BorderColor">#7C3AED</Color>
+                    <Color x:Key="TertiaryColor">#F3F0FF</Color>
+                    <Color x:Key="BorderBackgroundColor">#DDD6F3</Color>
+                    <Color x:Key="WarningTextColor">#B45309</Color>
+                    <Color x:Key="SettingsTextColor">#6B21A8</Color>
+                    <Color x:Key="MenuHoverColor">#DDD6F3</Color>
+                    <Color x:Key="SystemAccentColor">#9333EA</Color>
+                    <Color x:Key="DataGridHeaderColor">#EDE9FE</Color>
+                    <Color x:Key="DataGridAlternateRowColor">#F5F3FF</Color>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+        <SolidColorBrush x:Key="SystemAccentBrush" Color="{DynamicResource SystemAccentColor}" />
+    </Application.Resources>
 
-	<Application.Styles>
-		<FluentTheme />
-		<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
-		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
-		<Style Selector="Menu">
-			<Setter Property="Background" Value="{DynamicResource TertiaryColor}"/>
-			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
-		</Style>
+        <Style Selector="Menu">
+            <Setter Property="Background" Value="{DynamicResource TertiaryColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+        </Style>
 
-		<Style Selector="Menu Separator">
-			<Setter Property="Background" Value="{DynamicResource BorderColor}"/>
-			<Setter Property="Height" Value="1"/>
-			<Setter Property="Margin" Value="4 2"/>
-		</Style>
-	</Application.Styles>
+        <Style Selector="Menu Separator">
+            <Setter Property="Background" Value="{DynamicResource BorderColor}" />
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="4 2" />
+        </Style>
+    </Application.Styles>
 </Application>

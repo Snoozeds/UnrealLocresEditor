@@ -1297,6 +1297,135 @@ namespace UnrealLocresEditor.Views
             }
         }
 
+        #region Merge Operation
+        /***
+         * Merging Files:
+         *
+         * usage: UnrealLocres.exe merge target_locres_path source_locres_path [-o output_path]
+         *
+         * positional arguments:
+         * target_locres_path      Merge target locres file path, the file you want to translate
+         * source_locres_path      Merge source locres file path, the file that has additional lines
+         *
+         * optional arguments:
+         * -o                      Output locres file path (default: {target_locres_path}.new)
+         *
+         * Merge two locres files into one, adding strings that are present in source but not in target file.
+         ***/
+
+        private async void MergeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Pick TARGET file (base file to update)
+                var targetFileResult = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Select BASE Locres File (to be updated)",
+                    FileTypeFilter = new List<FilePickerFileType>
+            {
+                new FilePickerFileType("Locres Files") { Patterns = new[] { "*.locres" } }
+            },
+                    AllowMultiple = false
+                });
+                if (targetFileResult.Count == 0) return;
+                var targetFile = targetFileResult[0].Path.LocalPath;
+
+                // Pick SOURCE file (with additional keys)
+                var sourceFileResult = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Select ADDITIONAL Locres File (with new keys)",
+                    FileTypeFilter = new List<FilePickerFileType>
+            {
+                new FilePickerFileType("Locres Files") { Patterns = new[] { "*.locres" } }
+            },
+                    AllowMultiple = false
+                });
+                if (sourceFileResult.Count == 0) return;
+                var sourceFile = sourceFileResult[0].Path.LocalPath;
+
+                // Set default output path
+                var outputPath = Path.Combine(
+                    Path.GetDirectoryName(targetFile),
+                    $"{Path.GetFileNameWithoutExtension(targetFile)}_merged{Path.GetExtension(targetFile)}"
+                );
+
+                // Show save dialog
+                var outputFileResult = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "Save Merged Locres File",
+                    SuggestedFileName = Path.GetFileName(outputPath),
+                    FileTypeChoices = new List<FilePickerFileType>
+            {
+                new FilePickerFileType("Locres Files") { Patterns = new[] { "*.locres" } }
+            }
+                });
+                if (outputFileResult == null) return;
+                outputPath = outputFileResult.Path.LocalPath;
+
+                // Check if UnrealLocres exists
+                var downloader = new UnrealLocresDownloader(this, _notificationManager);
+                if (!await downloader.CheckAndDownloadUnrealLocres()) return;
+
+                // Run merge command
+                using (var process = new Process())
+                {
+                    process.StartInfo = ProcessUtils.GetMergeProcessStartInfo(
+                        targetLocresPath: targetFile,
+                        sourceLocresPath: sourceFile,
+                        useWine: UseWine,
+                        outputPath: outputPath
+                    );
+
+                    var outputBuilder = new StringBuilder();
+                    var errorBuilder = new StringBuilder();
+
+                    process.OutputDataReceived += (sender, args) => {
+                        if (args.Data != null) outputBuilder.AppendLine(args.Data);
+                    };
+                    process.ErrorDataReceived += (sender, args) => {
+                        if (args.Data != null) errorBuilder.AppendLine(args.Data);
+                    };
+
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+
+                    await Task.Run(() => process.WaitForExit());
+
+                    string output = outputBuilder.ToString();
+                    string error = errorBuilder.ToString();
+
+                    if (process.ExitCode == 0)
+                    {
+                        _notificationManager.Show(new Notification(
+                            "Merge Successful",
+                            $"Files merged successfully!\nOutput: {outputPath}",
+                            NotificationType.Success
+                        ));
+                    }
+                    else
+                    {
+                        _notificationManager.Show(new Notification(
+                            "Merge Failed",
+                            $"Error merging files:\nExit Code: {process.ExitCode}\nOutput: {output}\nError: {error}",
+                            NotificationType.Error
+                        ));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.Show(new Notification(
+                    "Merge Error",
+                    $"Unexpected error: {ex.Message}",
+                    NotificationType.Error
+                ));
+            }
+        }
+
+        #endregion
+
+
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);

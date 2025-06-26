@@ -1,73 +1,124 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="UnrealLocresEditor.Views.MainWindow"
-        Title="Unreal Locres Editor"
-        Width="800"
-        Height="450"
-		Icon="/Assets/ULE-icon.ico"
-		CanResize="True"
-		WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource BackgroundColor}"
-        Foreground="{DynamicResource TextColor}">
-	<Window.Styles>
-		<Style Selector="DataGridCell">
-			<Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
-			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
-		</Style>
-		<Style Selector="DataGridColumnHeader">
-			<Setter Property="Background" Value="{DynamicResource DataGridHeaderColor}"/>
-			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
-		</Style>
-		<Style Selector="DataGridRow:nth-child(2n)">
-			<Setter Property="Background" Value="{DynamicResource DataGridAlternateRowColor}"/>
-		</Style>
-		
-		</Window.Styles>
+<Window
+    x:Class="UnrealLocresEditor.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Unreal Locres Editor"
+    Width="800"
+    Height="450"
+    Background="{DynamicResource BackgroundColor}"
+    CanResize="True"
+    Foreground="{DynamicResource TextColor}"
+    Icon="/Assets/ULE-icon.ico"
+    WindowStartupLocation="CenterScreen">
+    <Window.Styles>
+        <Style Selector="DataGridCell">
+            <Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+        </Style>
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Background" Value="{DynamicResource DataGridHeaderColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        </Style>
+        <Style Selector="DataGridRow:nth-child(2n)">
+            <Setter Property="Background" Value="{DynamicResource DataGridAlternateRowColor}" />
+        </Style>
 
-	<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*,Auto">
-		<Menu Grid.Row="0" Grid.ColumnSpan="2">
-			<MenuItem Header="_File">
-				<MenuItem Header="Open locres" Name="uiOpenMenuItem" Click="OpenMenuItem_Click"/>
-				<MenuItem Header="Export locres" Name="uiSaveMenuItem" Click="SaveMenuItem_Click"/>
-				<MenuItem Header="-"/>
-				<MenuItem Header="Open Spreadsheet" Name="uiOpenSpreadsheetMenuItem" Click="OpenSpreadsheetMenuItem_Click"/>
-				<MenuItem Header="Save As..." Name="uiSaveAsMenuItem" Click="SaveAsMenuItem_Click"/>
-			</MenuItem>
-			<MenuItem Header="_Edit">
-				<MenuItem Header="Find" Name="uiFindMenuItem" InputGesture="Ctrl+F" Click="FindMenuItem_Click"/>
-				<MenuItem Header="Find and replace" Name="uiFindReplaceMenuItem" InputGesture="Ctrl+H" Click="FindReplaceMenuItem_Click"/>
-				<MenuItem Header="New Row" Name="uiAddNewRowMenuItem" InputGesture="Ctrl+Space" Click="AddNewRow"/>
-				<MenuItem Header="Delete Row" Name="uiDeleteRowMenuItem" InputGesture="Ctrl+Shift+Space" Click="DeleteSelectedRow"/>
-				<MenuItem Header="-"/>
-				<MenuItem Header="Preferences" Name="uiPreferencesMenuItem"/>
-			</MenuItem>
-			<MenuItem Header="_Linux" Name="uiLinuxHeader">
-				<MenuItem Header="Attempt wine prefix" Name="uiWinePrefix" Click="WinePrefix_Click"/>
-			</MenuItem>
-			<MenuItem Header="_Help">
-				<MenuItem Header="Report issue" Name="reportIssueMenuItem" Click="ReportIssueMenuItem_Click"/>
-				<MenuItem Header="About" Name="uiAboutMenuItem" Click="AboutMenuItem_Click"/>
-			</MenuItem>
-		</Menu>
-		<DataGrid x:Name="uiDataGrid"
-                  Grid.Row="1"
-                  Grid.ColumnSpan="2"
-                  AutoGenerateColumns="False"
-                  CanUserResizeColumns="True"
-                  IsReadOnly="False"
-                  GridLinesVisibility="All"
-                  BorderThickness="2"
-                  BorderBrush="{DynamicResource BorderColor}"
-                  Background="{DynamicResource BackgroundColor}"
-                  MinColumnWidth="50"
-                  ClipboardCopyMode="IncludeHeader">
-			<DataGrid.Styles>
-				<Style Selector="DataGridCell">
-					<Setter Property="MaxWidth" Value="{Binding Width, RelativeSource={RelativeSource AncestorType=DataGridColumn}}"/>
-					<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
-				</Style>
-			</DataGrid.Styles>
-		</DataGrid>
-	</Grid>
+        <!--  Merged locres highlighting  -->
+        <Style Selector="DataGridRow.merged">
+            <Setter Property="Background" Value="#E6F2FA" />
+        </Style>
+        <Style Selector="DataGridRow.merged:nth-child(2n)">
+            <Setter Property="Background" Value="#D4E6F4" />
+        </Style>
+
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*,Auto">
+        <Menu Grid.Row="0" Grid.ColumnSpan="2">
+            <MenuItem Header="_File">
+                <MenuItem
+                    Name="uiOpenMenuItem"
+                    Click="OpenMenuItem_Click"
+                    Header="Open locres" />
+                <MenuItem
+                    Name="uiSaveMenuItem"
+                    Click="SaveMenuItem_Click"
+                    Header="Export locres" />
+                <MenuItem
+                    Name="uiMergeMenuItem"
+                    Click="MergeMenuItem_Click"
+                    Header="Merge locres" />
+                <MenuItem Header="-" />
+                <MenuItem
+                    Name="uiOpenSpreadsheetMenuItem"
+                    Click="OpenSpreadsheetMenuItem_Click"
+                    Header="Open Spreadsheet" />
+                <MenuItem
+                    Name="uiSaveAsMenuItem"
+                    Click="SaveAsMenuItem_Click"
+                    Header="Save As..." />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem
+                    Name="uiFindMenuItem"
+                    Click="FindMenuItem_Click"
+                    Header="Find"
+                    InputGesture="Ctrl+F" />
+                <MenuItem
+                    Name="uiFindReplaceMenuItem"
+                    Click="FindReplaceMenuItem_Click"
+                    Header="Find and replace"
+                    InputGesture="Ctrl+H" />
+                <MenuItem
+                    Name="uiAddNewRowMenuItem"
+                    Click="AddNewRow"
+                    Header="New Row"
+                    InputGesture="Ctrl+Space" />
+                <MenuItem
+                    Name="uiDeleteRowMenuItem"
+                    Click="DeleteSelectedRow"
+                    Header="Delete Row"
+                    InputGesture="Ctrl+Shift+Space" />
+                <MenuItem Header="-" />
+                <MenuItem Name="uiPreferencesMenuItem" Header="Preferences" />
+            </MenuItem>
+            <MenuItem Name="uiLinuxHeader" Header="_Linux">
+                <MenuItem
+                    Name="uiWinePrefix"
+                    Click="WinePrefix_Click"
+                    Header="Attempt wine prefix" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem
+                    Name="reportIssueMenuItem"
+                    Click="ReportIssueMenuItem_Click"
+                    Header="Report issue" />
+                <MenuItem
+                    Name="uiAboutMenuItem"
+                    Click="AboutMenuItem_Click"
+                    Header="About" />
+            </MenuItem>
+        </Menu>
+        <DataGrid
+            x:Name="uiDataGrid"
+            Grid.Row="1"
+            Grid.ColumnSpan="2"
+            AutoGenerateColumns="False"
+            Background="{DynamicResource BackgroundColor}"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="2"
+            CanUserResizeColumns="True"
+            ClipboardCopyMode="IncludeHeader"
+            GridLinesVisibility="All"
+            IsReadOnly="False"
+            MinColumnWidth="50">
+            <DataGrid.Styles>
+                <Style Selector="DataGridCell">
+                    <Setter Property="MaxWidth" Value="{Binding Width, RelativeSource={RelativeSource AncestorType=DataGridColumn}}" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+                </Style>
+            </DataGrid.Styles>
+        </DataGrid>
+    </Grid>
 </Window>
