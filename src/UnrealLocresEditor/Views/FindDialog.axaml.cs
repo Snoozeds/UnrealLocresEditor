@@ -209,9 +209,10 @@ namespace UnrealLocresEditor.Views
                 // Reset UI and match data if no matches found
                 _currentMatchIndex = -1;
                 _currentRowIndex = -1;
-                uiMatchCountTextBlock.Text = searchNewKeysOnly && string.IsNullOrWhiteSpace(searchTerm)
-                    ? "No new keys found."
-                    : "No matches found.";
+                uiMatchCountTextBlock.Text =
+                    searchNewKeysOnly && string.IsNullOrWhiteSpace(searchTerm)
+                        ? "No new keys found."
+                        : "No matches found.";
             }
             else
             {

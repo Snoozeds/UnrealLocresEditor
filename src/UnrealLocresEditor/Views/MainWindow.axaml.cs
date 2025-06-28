@@ -1306,7 +1306,7 @@ namespace UnrealLocresEditor.Views
         }
 
         #region Merge Operation
-        
+
         /***
          * Merging Files:
          *
@@ -1323,6 +1323,7 @@ namespace UnrealLocresEditor.Views
          ***/
 
         private HashSet<string> _newKeySet = new();
+
         private async void MergeMenuItem_Click(object sender, RoutedEventArgs e)
         {
             // Check if there are unsaved changes before mergin g
@@ -1332,39 +1333,53 @@ namespace UnrealLocresEditor.Views
             try
             {
                 // Pick TARGET file (base file to update)
-                var targetFileResult = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-                {
-                    Title = "Select BASE Locres File (to be updated)",
-                    FileTypeFilter = new List<FilePickerFileType>
-            {
-                new FilePickerFileType("Locres Files") { Patterns = new[] { "*.locres" } }
-            },
-                    AllowMultiple = false
-                });
-                if (targetFileResult.Count == 0) return;
+                var targetFileResult = await StorageProvider.OpenFilePickerAsync(
+                    new FilePickerOpenOptions
+                    {
+                        Title = "Select BASE Locres File (to be updated)",
+                        FileTypeFilter = new List<FilePickerFileType>
+                        {
+                            new FilePickerFileType("Locres Files")
+                            {
+                                Patterns = new[] { "*.locres" },
+                            },
+                        },
+                        AllowMultiple = false,
+                    }
+                );
+                if (targetFileResult.Count == 0)
+                    return;
                 var targetFile = targetFileResult[0].Path.LocalPath;
 
                 // Pick SOURCE file (with additional keys)
-                var sourceFileResult = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-                {
-                    Title = "Select ADDITIONAL Locres File (with new keys)",
-                    FileTypeFilter = new List<FilePickerFileType>
-            {
-                new FilePickerFileType("Locres Files") { Patterns = new[] { "*.locres" } }
-            },
-                    AllowMultiple = false
-                });
-                if (sourceFileResult.Count == 0) return;
+                var sourceFileResult = await StorageProvider.OpenFilePickerAsync(
+                    new FilePickerOpenOptions
+                    {
+                        Title = "Select ADDITIONAL Locres File (with new keys)",
+                        FileTypeFilter = new List<FilePickerFileType>
+                        {
+                            new FilePickerFileType("Locres Files")
+                            {
+                                Patterns = new[] { "*.locres" },
+                            },
+                        },
+                        AllowMultiple = false,
+                    }
+                );
+                if (sourceFileResult.Count == 0)
+                    return;
                 var sourceFile = sourceFileResult[0].Path.LocalPath;
 
                 // Set output path to a temp file
                 var tempDir = GetOrCreateTempDirectory();
-                var mergedFileName = $"{Path.GetFileNameWithoutExtension(targetFile)}_merged_{Process.GetCurrentProcess().Id}{Path.GetExtension(targetFile)}";
+                var mergedFileName =
+                    $"{Path.GetFileNameWithoutExtension(targetFile)}_merged_{Process.GetCurrentProcess().Id}{Path.GetExtension(targetFile)}";
                 var outputPath = Path.Combine(tempDir, mergedFileName);
 
                 // Check if UnrealLocres exists
                 var downloader = new UnrealLocresDownloader(this, _notificationManager);
-                if (!await downloader.CheckAndDownloadUnrealLocres()) return;
+                if (!await downloader.CheckAndDownloadUnrealLocres())
+                    return;
 
                 // Run merge command
                 using (var process = new Process())
@@ -1379,11 +1394,15 @@ namespace UnrealLocresEditor.Views
                     var outputBuilder = new StringBuilder();
                     var errorBuilder = new StringBuilder();
 
-                    process.OutputDataReceived += (sender2, args) => {
-                        if (args.Data != null) outputBuilder.AppendLine(args.Data);
+                    process.OutputDataReceived += (sender2, args) =>
+                    {
+                        if (args.Data != null)
+                            outputBuilder.AppendLine(args.Data);
                     };
-                    process.ErrorDataReceived += (sender2, args) => {
-                        if (args.Data != null) errorBuilder.AppendLine(args.Data);
+                    process.ErrorDataReceived += (sender2, args) =>
+                    {
+                        if (args.Data != null)
+                            errorBuilder.AppendLine(args.Data);
                     };
 
                     process.Start();
@@ -1397,33 +1416,38 @@ namespace UnrealLocresEditor.Views
 
                     if (process.ExitCode == 0)
                     {
-                        _notificationManager.Show(new Notification(
-                            "Merge Successful",
-                            $"Files merged successfully!\nOpening merged file...",
-                            NotificationType.Success
-                        ));
+                        _notificationManager.Show(
+                            new Notification(
+                                "Merge Successful",
+                                $"Files merged successfully!\nOpening merged file...",
+                                NotificationType.Success
+                            )
+                        );
 
                         // Highlight new keys
                         await HighlightNewKeysAndOpen(targetFile, outputPath);
-
                     }
                     else
                     {
-                        _notificationManager.Show(new Notification(
-                            "Merge Failed",
-                            $"Error merging files:\nExit Code: {process.ExitCode}\nOutput: {output}\nError: {error}",
-                            NotificationType.Error
-                        ));
+                        _notificationManager.Show(
+                            new Notification(
+                                "Merge Failed",
+                                $"Error merging files:\nExit Code: {process.ExitCode}\nOutput: {output}\nError: {error}",
+                                NotificationType.Error
+                            )
+                        );
                     }
                 }
             }
             catch (Exception ex)
             {
-                _notificationManager.Show(new Notification(
-                    "Merge Error",
-                    $"Unexpected error: {ex.Message}",
-                    NotificationType.Error
-                ));
+                _notificationManager.Show(
+                    new Notification(
+                        "Merge Error",
+                        $"Unexpected error: {ex.Message}",
+                        NotificationType.Error
+                    )
+                );
 
                 Console.WriteLine($"Error during merge operation: {ex}");
             }
@@ -1447,7 +1471,7 @@ namespace UnrealLocresEditor.Views
                         locresFilePath: targetLocresPath,
                         useWine: this.UseWine,
                         csvFileName: "target.csv"
-                    )
+                    ),
                 };
 
                 exportTarget.StartInfo.WorkingDirectory = tempDir;
@@ -1458,11 +1482,13 @@ namespace UnrealLocresEditor.Views
 
                 exportTarget.OutputDataReceived += (sender, args) =>
                 {
-                    if (args.Data != null) targetOutputBuilder.AppendLine(args.Data);
+                    if (args.Data != null)
+                        targetOutputBuilder.AppendLine(args.Data);
                 };
                 exportTarget.ErrorDataReceived += (sender, args) =>
                 {
-                    if (args.Data != null) targetErrorBuilder.AppendLine(args.Data);
+                    if (args.Data != null)
+                        targetErrorBuilder.AppendLine(args.Data);
                 };
 
                 exportTarget.Start();
@@ -1473,15 +1499,15 @@ namespace UnrealLocresEditor.Views
                 // Check if target export succeeded
                 if (exportTarget.ExitCode != 0)
                 {
-                    var errorMessage = $"Failed to export target file.\n" +
-                                     $"Exit code: {exportTarget.ExitCode}\n" +
-                                     $"Output: {targetOutputBuilder}\n" +
-                                     $"Error: {targetErrorBuilder}";
+                    var errorMessage =
+                        $"Failed to export target file.\n"
+                        + $"Exit code: {exportTarget.ExitCode}\n"
+                        + $"Output: {targetOutputBuilder}\n"
+                        + $"Error: {targetErrorBuilder}";
 
-                    _notificationManager.Show(new Notification(
-                        "Export Error",
-                        errorMessage,
-                        NotificationType.Error));
+                    _notificationManager.Show(
+                        new Notification("Export Error", errorMessage, NotificationType.Error)
+                    );
                     return;
                 }
 
@@ -1491,10 +1517,13 @@ namespace UnrealLocresEditor.Views
 
                 if (targetCsvFiles.Count == 0)
                 {
-                    _notificationManager.Show(new Notification(
-                        "Export Error",
-                        "No CSV file was created for target locres file",
-                        NotificationType.Error));
+                    _notificationManager.Show(
+                        new Notification(
+                            "Export Error",
+                            "No CSV file was created for target locres file",
+                            NotificationType.Error
+                        )
+                    );
                     return;
                 }
 
@@ -1511,7 +1540,7 @@ namespace UnrealLocresEditor.Views
                         locresFilePath: mergedLocresPath,
                         useWine: this.UseWine,
                         csvFileName: "merged.csv"
-                    )
+                    ),
                 };
 
                 exportMerged.StartInfo.WorkingDirectory = tempDir;
@@ -1522,11 +1551,13 @@ namespace UnrealLocresEditor.Views
 
                 exportMerged.OutputDataReceived += (sender, args) =>
                 {
-                    if (args.Data != null) mergedOutputBuilder.AppendLine(args.Data);
+                    if (args.Data != null)
+                        mergedOutputBuilder.AppendLine(args.Data);
                 };
                 exportMerged.ErrorDataReceived += (sender, args) =>
                 {
-                    if (args.Data != null) mergedErrorBuilder.AppendLine(args.Data);
+                    if (args.Data != null)
+                        mergedErrorBuilder.AppendLine(args.Data);
                 };
 
                 exportMerged.Start();
@@ -1537,15 +1568,15 @@ namespace UnrealLocresEditor.Views
                 // Check if merged export succeeded
                 if (exportMerged.ExitCode != 0)
                 {
-                    var errorMessage = $"Failed to export merged file.\n" +
-                                     $"Exit code: {exportMerged.ExitCode}\n" +
-                                     $"Output: {mergedOutputBuilder}\n" +
-                                     $"Error: {mergedErrorBuilder}";
+                    var errorMessage =
+                        $"Failed to export merged file.\n"
+                        + $"Exit code: {exportMerged.ExitCode}\n"
+                        + $"Output: {mergedOutputBuilder}\n"
+                        + $"Error: {mergedErrorBuilder}";
 
-                    _notificationManager.Show(new Notification(
-                        "Export Error",
-                        errorMessage,
-                        NotificationType.Error));
+                    _notificationManager.Show(
+                        new Notification("Export Error", errorMessage, NotificationType.Error)
+                    );
                     return;
                 }
 
@@ -1555,10 +1586,13 @@ namespace UnrealLocresEditor.Views
 
                 if (mergedCsvFiles.Count == 0)
                 {
-                    _notificationManager.Show(new Notification(
-                        "Export Error",
-                        "No CSV file was created for merged locres file",
-                        NotificationType.Error));
+                    _notificationManager.Show(
+                        new Notification(
+                            "Export Error",
+                            "No CSV file was created for merged locres file",
+                            NotificationType.Error
+                        )
+                    );
                     return;
                 }
 
@@ -1569,7 +1603,14 @@ namespace UnrealLocresEditor.Views
                 try
                 {
                     using (var reader = new StreamReader(targetCsv))
-                    using (var csv = new CsvHelper.CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)))
+                    using (
+                        var csv = new CsvHelper.CsvReader(
+                            reader,
+                            new CsvHelper.Configuration.CsvConfiguration(
+                                System.Globalization.CultureInfo.InvariantCulture
+                            )
+                        )
+                    )
                     {
                         if (csv.Read() && csv.ReadHeader()) // skip header if it exists
                         {
@@ -1586,10 +1627,13 @@ namespace UnrealLocresEditor.Views
                 }
                 catch (Exception ex)
                 {
-                    _notificationManager.Show(new Notification(
-                        "CSV Parse Error",
-                        $"Failed to parse target CSV ({Path.GetFileName(targetCsv)}): {ex.Message}",
-                        NotificationType.Error));
+                    _notificationManager.Show(
+                        new Notification(
+                            "CSV Parse Error",
+                            $"Failed to parse target CSV ({Path.GetFileName(targetCsv)}): {ex.Message}",
+                            NotificationType.Error
+                        )
+                    );
                     return;
                 }
 
@@ -1598,7 +1642,14 @@ namespace UnrealLocresEditor.Views
                 try
                 {
                     using (var reader = new StreamReader(mergedCsv))
-                    using (var csv = new CsvHelper.CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)))
+                    using (
+                        var csv = new CsvHelper.CsvReader(
+                            reader,
+                            new CsvHelper.Configuration.CsvConfiguration(
+                                System.Globalization.CultureInfo.InvariantCulture
+                            )
+                        )
+                    )
                     {
                         if (csv.Read() && csv.ReadHeader()) // skip header if it exists
                         {
@@ -1615,10 +1666,13 @@ namespace UnrealLocresEditor.Views
                 }
                 catch (Exception ex)
                 {
-                    _notificationManager.Show(new Notification(
-                        "CSV Parse Error",
-                        $"Failed to parse merged CSV ({Path.GetFileName(mergedCsv)}): {ex.Message}",
-                        NotificationType.Error));
+                    _notificationManager.Show(
+                        new Notification(
+                            "CSV Parse Error",
+                            $"Failed to parse merged CSV ({Path.GetFileName(mergedCsv)}): {ex.Message}",
+                            NotificationType.Error
+                        )
+                    );
                     return;
                 }
 
@@ -1628,17 +1682,23 @@ namespace UnrealLocresEditor.Views
                 // Show info about new keys found
                 if (_newKeySet.Count > 0)
                 {
-                    _notificationManager.Show(new Notification(
-                        "New Keys Found",
-                        $"Found {_newKeySet.Count} new keys.",
-                        NotificationType.Success));
+                    _notificationManager.Show(
+                        new Notification(
+                            "New Keys Found",
+                            $"Found {_newKeySet.Count} new keys.",
+                            NotificationType.Success
+                        )
+                    );
                 }
                 else
                 {
-                    _notificationManager.Show(new Notification(
-                        "No New Keys",
-                        "No new keys found in the merge operation.",
-                        NotificationType.Information));
+                    _notificationManager.Show(
+                        new Notification(
+                            "No New Keys",
+                            "No new keys found in the merge operation.",
+                            NotificationType.Information
+                        )
+                    );
                 }
 
                 // Open merged file in editor
@@ -1656,16 +1716,20 @@ namespace UnrealLocresEditor.Views
                 catch (Exception ex)
                 {
                     // Non-critical error, just log it
-                    System.Diagnostics.Debug.WriteLine($"Failed to clean up temp files: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Failed to clean up temp files: {ex.Message}"
+                    );
                 }
             }
             catch (Exception ex)
             {
-                _notificationManager.Show(new Notification(
-                    "Highlight Error",
-                    $"Error during highlight operation: {ex.Message}",
-                    NotificationType.Error
-                ));
+                _notificationManager.Show(
+                    new Notification(
+                        "Highlight Error",
+                        $"Error during highlight operation: {ex.Message}",
+                        NotificationType.Error
+                    )
+                );
             }
         }
 
@@ -1814,6 +1878,7 @@ namespace UnrealLocresEditor.Views
         {
             aboutWindow = null;
         }
+
         private async Task<bool> MergeSaveChanges()
         {
             if (!_hasUnsavedChanges)
@@ -1833,7 +1898,8 @@ namespace UnrealLocresEditor.Views
                     {
                         new TextBlock
                         {
-                            Text = "You have unsaved changes. Would you like to save before merging?",
+                            Text =
+                                "You have unsaved changes. Would you like to save before merging?",
                             TextWrapping = TextWrapping.Wrap,
                         },
                         new StackPanel
@@ -1865,7 +1931,11 @@ namespace UnrealLocresEditor.Views
                 catch (Exception ex)
                 {
                     _notificationManager.Show(
-                        new Notification("Save Error", $"Failed to save: {ex.Message}", NotificationType.Error)
+                        new Notification(
+                            "Save Error",
+                            $"Failed to save: {ex.Message}",
+                            NotificationType.Error
+                        )
                     );
                     tcs.SetResult("Cancel");
                     dialog.Close();
@@ -1893,15 +1963,30 @@ namespace UnrealLocresEditor.Views
             {
                 if (OperatingSystem.IsWindows())
                 {
-                    Process.Start(new ProcessStartInfo("explorer.exe", $"\"{directoryPath}\"") { UseShellExecute = true });
+                    Process.Start(
+                        new ProcessStartInfo("explorer.exe", $"\"{directoryPath}\"")
+                        {
+                            UseShellExecute = true,
+                        }
+                    );
                 }
                 else if (OperatingSystem.IsLinux())
                 {
-                    Process.Start(new ProcessStartInfo("xdg-open", $"\"{directoryPath}\"") { UseShellExecute = true });
+                    Process.Start(
+                        new ProcessStartInfo("xdg-open", $"\"{directoryPath}\"")
+                        {
+                            UseShellExecute = true,
+                        }
+                    );
                 }
                 else if (OperatingSystem.IsMacOS())
                 {
-                    Process.Start(new ProcessStartInfo("open", $"\"{directoryPath}\"") { UseShellExecute = true });
+                    Process.Start(
+                        new ProcessStartInfo("open", $"\"{directoryPath}\"")
+                        {
+                            UseShellExecute = true,
+                        }
+                    );
                 }
             }
             catch (Exception ex)
@@ -1915,6 +2000,5 @@ namespace UnrealLocresEditor.Views
                 );
             }
         }
-
     }
 }
