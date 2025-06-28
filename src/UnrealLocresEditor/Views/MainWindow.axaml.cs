@@ -120,7 +120,7 @@ namespace UnrealLocresEditor.Views
                 {
                     try
                     {
-                        SaveEditedData();
+                        SaveEditedData(false); // Do not open file explorer window for auto save, as it'd be annoying.
                         _hasUnsavedChanges = false;
                         _notificationManager.Show(
                             new Notification(
@@ -1066,7 +1066,7 @@ namespace UnrealLocresEditor.Views
             }
             if (_rows != null && _rows.Count > 0)
             {
-                SaveEditedData();
+                SaveEditedData(true); // Saves, and opens save location in file explorer with 'true'.
             }
             else
             {
@@ -1080,7 +1080,7 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        public void SaveEditedData()
+        public void SaveEditedData(bool openExplorer = false)
         {
             if (string.IsNullOrEmpty(_currentLocresFilePath))
             {
@@ -1162,6 +1162,12 @@ namespace UnrealLocresEditor.Views
                 {
                     // Move and rename
                     File.Move(modifiedLocres, destinationFile);
+
+                    // Open file explorer/equivalent window to where locres has been saved.
+                    if (openExplorer)
+                    {
+                        OpenDirectoryInExplorer(destinationDirectory);
+                    }
 
                     _notificationManager.Show(
                         new Notification(
@@ -1880,5 +1886,35 @@ namespace UnrealLocresEditor.Views
             var result = await tcs.Task;
             return result == "Save" || result == "Don't Save";
         }
+
+        private void OpenDirectoryInExplorer(string directoryPath)
+        {
+            try
+            {
+                if (OperatingSystem.IsWindows())
+                {
+                    Process.Start(new ProcessStartInfo("explorer.exe", $"\"{directoryPath}\"") { UseShellExecute = true });
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    Process.Start(new ProcessStartInfo("xdg-open", $"\"{directoryPath}\"") { UseShellExecute = true });
+                }
+                else if (OperatingSystem.IsMacOS())
+                {
+                    Process.Start(new ProcessStartInfo("open", $"\"{directoryPath}\"") { UseShellExecute = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "Error",
+                        $"Failed to open directory: {ex.Message}",
+                        NotificationType.Error
+                    )
+                );
+            }
+        }
+
     }
 }
