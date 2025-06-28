@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.IO;
 
 namespace UnrealLocresEditor.Utils
 {
@@ -83,6 +84,7 @@ namespace UnrealLocresEditor.Utils
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
+                WorkingDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
             };
             if (PlatformUtils.IsLinux() && useWine)
                 startInfo.Environment["WINEPREFIX"] = WineUtils.WinePrefixDirectory;

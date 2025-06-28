@@ -24,14 +24,6 @@
             <Setter Property="Background" Value="{DynamicResource DataGridAlternateRowColor}" />
         </Style>
 
-        <!--  Merged locres highlighting  -->
-        <Style Selector="DataGridRow.merged">
-            <Setter Property="Background" Value="#E6F2FA" />
-        </Style>
-        <Style Selector="DataGridRow.merged:nth-child(2n)">
-            <Setter Property="Background" Value="#D4E6F4" />
-        </Style>
-
     </Window.Styles>
 
     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*,Auto">

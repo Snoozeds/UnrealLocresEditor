@@ -1,52 +1,97 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="UnrealLocresEditor.Views.FindDialog"
-        Title="Find"
-        Width="350"
-        Height="200"
-		Icon="/Assets/ULE-icon.ico"
-		CanResize="False"
-		WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource BackgroundColor}"
-        Foreground="{DynamicResource TextColor}">
+<Window
+    x:Class="UnrealLocresEditor.Views.FindDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Find"
+    Width="350"
+    Height="220"
+    Background="{DynamicResource BackgroundColor}"
+    CanResize="False"
+    Foreground="{DynamicResource TextColor}"
+    Icon="/Assets/ULE-icon.ico"
+    WindowStartupLocation="CenterOwner">
 
-	<Window.Styles>
-		<Style Selector="Button">
-			<Setter Property="Background" Value="{DynamicResource ButtonColor}"/>
-			<Setter Property="Foreground" Value="{DynamicResource ButtonTextColor}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
-		</Style>
-		<Style Selector="Button:pointerover">
-			<Setter Property="Background" Value="{DynamicResource MenuHoverColor}"/>
-		</Style>
-		<Style Selector="TextBox">
-			<Setter Property="Background" Value="{DynamicResource BorderBackgroundColor}"/>
-			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
-		</Style>
-		<Style Selector="CheckBox">
-			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
-		</Style>
-		<Style Selector="TextBlock">
-			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
-		</Style>
-	</Window.Styles>
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="{DynamicResource ButtonColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource ButtonTextColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource MenuHoverColor}" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource BorderBackgroundColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+        </Style>
+    </Window.Styles>
 
-	<Grid RowDefinitions="Auto,Auto,*,Auto, Auto" ColumnDefinitions="*,Auto" Margin="10">
-		<TextBox x:Name="uiSearchTextBox" Watermark="Find" Grid.Row="0" Grid.Column="0" Margin="0,0,5,0" />
-		<Button Name="uiFindButton" Content="Find" Grid.Row="0" Grid.Column="1" />
-		<TextBlock x:Name="uiMatchCountTextBlock" Grid.Row="1" Grid.ColumnSpan="2"
-           HorizontalAlignment="Center" VerticalAlignment="Center" Text="" />
-		<StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Spacing="10">
-			<Button x:Name="uiFindNextButton" Content="Next" Width="100" />
-			<Button x:Name="uiFindPreviousButton" Content="Previous" Width="100" />
-		</StackPanel>
-		<StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
-			<CheckBox x:Name="uiMatchCaseCheckBox" Content="Match case" Margin="10" />
-			<CheckBox x:Name="uiMatchWholeWordCheckBox" Content="Match whole word"/>
-		</StackPanel>
-		<StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
-			<CheckBox x:Name="uiMatchCellCheckBox" Content="Match Entire cell contents" />
-		</StackPanel>
-	</Grid>
+    <Grid
+        Margin="10"
+        ColumnDefinitions="*,Auto"
+        RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+        <TextBox
+            x:Name="uiSearchTextBox"
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="0,0,5,0"
+            Watermark="Find" />
+        <Button
+            Name="uiFindButton"
+            Grid.Row="0"
+            Grid.Column="1"
+            Content="Find" />
+        <TextBlock
+            x:Name="uiMatchCountTextBlock"
+            Grid.Row="1"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Text="" />
+        <StackPanel
+            Grid.Row="2"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal"
+            Spacing="10">
+            <Button
+                x:Name="uiFindNextButton"
+                Width="100"
+                Content="Next" />
+            <Button
+                x:Name="uiFindPreviousButton"
+                Width="100"
+                Content="Previous" />
+        </StackPanel>
+        <StackPanel
+            Grid.Row="3"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <CheckBox
+                x:Name="uiMatchCaseCheckBox"
+                Margin="10"
+                Content="Match case" />
+            <CheckBox x:Name="uiMatchWholeWordCheckBox" Content="Match whole word" />
+        </StackPanel>
+        <StackPanel
+            Grid.Row="4"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <CheckBox x:Name="uiMatchCellCheckBox" Content="Match Entire cell contents" />
+            <CheckBox
+                x:Name="uiSearchNewKeysOnlyCheckBox"
+                Margin="10,0,0,0"
+                Content="New keys only"
+                ToolTip.Tip="Only search new keys from a merge operation" />
+        </StackPanel>
+    </Grid>
 </Window>

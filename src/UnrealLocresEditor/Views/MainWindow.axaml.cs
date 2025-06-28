@@ -978,7 +978,7 @@ namespace UnrealLocresEditor.Views
                                 Header = stringValues[i],
                                 Binding = new Binding($"Values[{i}]"),
                                 IsReadOnly = false,
-                                Width = new DataGridLength(AppConfig.Instance.DefaultColumnWidth), // Load default column width from config
+                                Width = new DataGridLength(AppConfig.Instance.DefaultColumnWidth),
                             };
                             columns.Add(column);
                         }
@@ -991,7 +991,9 @@ namespace UnrealLocresEditor.Views
                     }
                     else
                     {
-                        _rows.Add(new DataRow { Values = stringValues });
+                        var key = stringValues[0];
+                        var isNew = _newKeySet != null && _newKeySet.Contains(key);
+                        _rows.Add(new DataRow { Values = stringValues, IsNewKey = isNew });
                     }
                 }
             }
@@ -1313,6 +1315,7 @@ namespace UnrealLocresEditor.Views
          * Merge two locres files into one, adding strings that are present in source but not in target file.
          ***/
 
+        private HashSet<string> _newKeySet = new();
         private async void MergeMenuItem_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -1343,24 +1346,10 @@ namespace UnrealLocresEditor.Views
                 if (sourceFileResult.Count == 0) return;
                 var sourceFile = sourceFileResult[0].Path.LocalPath;
 
-                // Set default output path
-                var outputPath = Path.Combine(
-                    Path.GetDirectoryName(targetFile),
-                    $"{Path.GetFileNameWithoutExtension(targetFile)}_merged{Path.GetExtension(targetFile)}"
-                );
-
-                // Show save dialog
-                var outputFileResult = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-                {
-                    Title = "Save Merged Locres File",
-                    SuggestedFileName = Path.GetFileName(outputPath),
-                    FileTypeChoices = new List<FilePickerFileType>
-            {
-                new FilePickerFileType("Locres Files") { Patterns = new[] { "*.locres" } }
-            }
-                });
-                if (outputFileResult == null) return;
-                outputPath = outputFileResult.Path.LocalPath;
+                // Set output path to a temp file
+                var tempDir = GetOrCreateTempDirectory();
+                var mergedFileName = $"{Path.GetFileNameWithoutExtension(targetFile)}_merged_{Process.GetCurrentProcess().Id}{Path.GetExtension(targetFile)}";
+                var outputPath = Path.Combine(tempDir, mergedFileName);
 
                 // Check if UnrealLocres exists
                 var downloader = new UnrealLocresDownloader(this, _notificationManager);
@@ -1379,10 +1368,10 @@ namespace UnrealLocresEditor.Views
                     var outputBuilder = new StringBuilder();
                     var errorBuilder = new StringBuilder();
 
-                    process.OutputDataReceived += (sender, args) => {
+                    process.OutputDataReceived += (sender2, args) => {
                         if (args.Data != null) outputBuilder.AppendLine(args.Data);
                     };
-                    process.ErrorDataReceived += (sender, args) => {
+                    process.ErrorDataReceived += (sender2, args) => {
                         if (args.Data != null) errorBuilder.AppendLine(args.Data);
                     };
 
@@ -1399,9 +1388,13 @@ namespace UnrealLocresEditor.Views
                     {
                         _notificationManager.Show(new Notification(
                             "Merge Successful",
-                            $"Files merged successfully!\nOutput: {outputPath}",
+                            $"Files merged successfully!\nOpening merged file...",
                             NotificationType.Success
                         ));
+
+                        // Highlight new keys
+                        await HighlightNewKeysAndOpen(targetFile, outputPath);
+
                     }
                     else
                     {
@@ -1418,6 +1411,248 @@ namespace UnrealLocresEditor.Views
                 _notificationManager.Show(new Notification(
                     "Merge Error",
                     $"Unexpected error: {ex.Message}",
+                    NotificationType.Error
+                ));
+
+                Console.WriteLine($"Error during merge operation: {ex}");
+            }
+        }
+
+        private async Task HighlightNewKeysAndOpen(string targetLocresPath, string mergedLocresPath)
+        {
+            try
+            {
+                // Export both files to CSV
+                var tempDir = GetOrCreateTempDirectory();
+
+                // Get list of existing CSV files before export
+                var existingCsvFiles = Directory.GetFiles(tempDir, "*.csv").ToHashSet();
+
+                // Export target file
+                var exportTarget = new Process
+                {
+                    StartInfo = ProcessUtils.GetProcessStartInfo(
+                        command: "export",
+                        locresFilePath: targetLocresPath,
+                        useWine: this.UseWine,
+                        csvFileName: "target.csv"
+                    )
+                };
+
+                exportTarget.StartInfo.WorkingDirectory = tempDir;
+                exportTarget.StartInfo.RedirectStandardError = true;
+
+                var targetOutputBuilder = new StringBuilder();
+                var targetErrorBuilder = new StringBuilder();
+
+                exportTarget.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null) targetOutputBuilder.AppendLine(args.Data);
+                };
+                exportTarget.ErrorDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null) targetErrorBuilder.AppendLine(args.Data);
+                };
+
+                exportTarget.Start();
+                exportTarget.BeginOutputReadLine();
+                exportTarget.BeginErrorReadLine();
+                await Task.Run(() => exportTarget.WaitForExit());
+
+                // Check if target export succeeded
+                if (exportTarget.ExitCode != 0)
+                {
+                    var errorMessage = $"Failed to export target file.\n" +
+                                     $"Exit code: {exportTarget.ExitCode}\n" +
+                                     $"Output: {targetOutputBuilder}\n" +
+                                     $"Error: {targetErrorBuilder}";
+
+                    _notificationManager.Show(new Notification(
+                        "Export Error",
+                        errorMessage,
+                        NotificationType.Error));
+                    return;
+                }
+
+                // Find the new CSV file created for target
+                var csvFilesAfterTarget = Directory.GetFiles(tempDir, "*.csv").ToHashSet();
+                var targetCsvFiles = csvFilesAfterTarget.Except(existingCsvFiles).ToList();
+
+                if (targetCsvFiles.Count == 0)
+                {
+                    _notificationManager.Show(new Notification(
+                        "Export Error",
+                        "No CSV file was created for target locres file",
+                        NotificationType.Error));
+                    return;
+                }
+
+                var targetCsv = targetCsvFiles.First();
+
+                // Update existing files list
+                existingCsvFiles = csvFilesAfterTarget;
+
+                // Export merged file
+                var exportMerged = new Process
+                {
+                    StartInfo = ProcessUtils.GetProcessStartInfo(
+                        command: "export",
+                        locresFilePath: mergedLocresPath,
+                        useWine: this.UseWine,
+                        csvFileName: "merged.csv"
+                    )
+                };
+
+                exportMerged.StartInfo.WorkingDirectory = tempDir;
+                exportMerged.StartInfo.RedirectStandardError = true;
+
+                var mergedOutputBuilder = new StringBuilder();
+                var mergedErrorBuilder = new StringBuilder();
+
+                exportMerged.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null) mergedOutputBuilder.AppendLine(args.Data);
+                };
+                exportMerged.ErrorDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null) mergedErrorBuilder.AppendLine(args.Data);
+                };
+
+                exportMerged.Start();
+                exportMerged.BeginOutputReadLine();
+                exportMerged.BeginErrorReadLine();
+                await Task.Run(() => exportMerged.WaitForExit());
+
+                // Check if merged export succeeded
+                if (exportMerged.ExitCode != 0)
+                {
+                    var errorMessage = $"Failed to export merged file.\n" +
+                                     $"Exit code: {exportMerged.ExitCode}\n" +
+                                     $"Output: {mergedOutputBuilder}\n" +
+                                     $"Error: {mergedErrorBuilder}";
+
+                    _notificationManager.Show(new Notification(
+                        "Export Error",
+                        errorMessage,
+                        NotificationType.Error));
+                    return;
+                }
+
+                // Find the new CSV file created for merged
+                var csvFilesAfterMerged = Directory.GetFiles(tempDir, "*.csv").ToHashSet();
+                var mergedCsvFiles = csvFilesAfterMerged.Except(existingCsvFiles).ToList();
+
+                if (mergedCsvFiles.Count == 0)
+                {
+                    _notificationManager.Show(new Notification(
+                        "Export Error",
+                        "No CSV file was created for merged locres file",
+                        NotificationType.Error));
+                    return;
+                }
+
+                var mergedCsv = mergedCsvFiles.First();
+
+                // Read keys from target CSV (assume first column is the key)
+                var targetKeys = new HashSet<string>();
+                try
+                {
+                    using (var reader = new StreamReader(targetCsv))
+                    using (var csv = new CsvHelper.CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)))
+                    {
+                        if (csv.Read() && csv.ReadHeader()) // skip header if it exists
+                        {
+                            while (csv.Read())
+                            {
+                                var key = csv.GetField(0);
+                                if (!string.IsNullOrEmpty(key))
+                                {
+                                    targetKeys.Add(key);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _notificationManager.Show(new Notification(
+                        "CSV Parse Error",
+                        $"Failed to parse target CSV ({Path.GetFileName(targetCsv)}): {ex.Message}",
+                        NotificationType.Error));
+                    return;
+                }
+
+                // Read keys from merged CSV
+                var mergedKeys = new List<string>();
+                try
+                {
+                    using (var reader = new StreamReader(mergedCsv))
+                    using (var csv = new CsvHelper.CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)))
+                    {
+                        if (csv.Read() && csv.ReadHeader()) // skip header if it exists
+                        {
+                            while (csv.Read())
+                            {
+                                var key = csv.GetField(0);
+                                if (!string.IsNullOrEmpty(key))
+                                {
+                                    mergedKeys.Add(key);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _notificationManager.Show(new Notification(
+                        "CSV Parse Error",
+                        $"Failed to parse merged CSV ({Path.GetFileName(mergedCsv)}): {ex.Message}",
+                        NotificationType.Error));
+                    return;
+                }
+
+                // Find new keys (keys that are in merged but not in target)
+                _newKeySet = new HashSet<string>(mergedKeys.Where(k => !targetKeys.Contains(k)));
+
+                // Show info about new keys found
+                if (_newKeySet.Count > 0)
+                {
+                    _notificationManager.Show(new Notification(
+                        "New Keys Found",
+                        $"Found {_newKeySet.Count} new keys.",
+                        NotificationType.Success));
+                }
+                else
+                {
+                    _notificationManager.Show(new Notification(
+                        "No New Keys",
+                        "No new keys found in the merge operation.",
+                        NotificationType.Information));
+                }
+
+                // Open merged file in editor
+                _currentLocresFilePath = mergedLocresPath;
+                LoadCsv(mergedCsv);
+
+                // Clean up temp CSV files
+                try
+                {
+                    if (File.Exists(targetCsv))
+                        File.Delete(targetCsv);
+                    if (File.Exists(mergedCsv))
+                        File.Delete(mergedCsv);
+                }
+                catch (Exception ex)
+                {
+                    // Non-critical error, just log it
+                    System.Diagnostics.Debug.WriteLine($"Failed to clean up temp files: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.Show(new Notification(
+                    "Highlight Error",
+                    $"Error during highlight operation: {ex.Message}",
                     NotificationType.Error
                 ));
             }

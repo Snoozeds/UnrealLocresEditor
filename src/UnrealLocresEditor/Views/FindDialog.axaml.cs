@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -78,7 +79,13 @@ namespace UnrealLocresEditor.Views
 
         public async Task FindTextAsync(string searchTerm, bool forward = true)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
+            bool isMatchCase = uiMatchCaseCheckBox.IsChecked ?? false;
+            bool isMatchWholeWord = uiMatchWholeWordCheckBox.IsChecked ?? false;
+            bool isMatchEntireCell = uiMatchCellCheckBox.IsChecked ?? false;
+            bool searchNewKeysOnly = uiSearchNewKeysOnlyCheckBox.IsChecked ?? false;
+
+            // Allow empty search term when searching new keys only
+            if (string.IsNullOrWhiteSpace(searchTerm) && !searchNewKeysOnly)
             {
                 uiMatchCountTextBlock.Text = "Please enter a search term.";
                 return;
@@ -89,10 +96,6 @@ namespace UnrealLocresEditor.Views
 
             if (items == null || dataGrid.Columns.Count == 0)
                 return;
-
-            bool isMatchCase = uiMatchCaseCheckBox.IsChecked ?? false;
-            bool isMatchWholeWord = uiMatchWholeWordCheckBox.IsChecked ?? false;
-            bool isMatchEntireCell = uiMatchCellCheckBox.IsChecked ?? false;
 
             StringComparison comparison = isMatchCase
                 ? StringComparison.Ordinal
@@ -123,47 +126,79 @@ namespace UnrealLocresEditor.Views
                     : (startRow - 1 - i + rowCount) % rowCount;
                 var row = items[rowIndex];
 
-                // Iterate through columns
-                for (int j = 0; j < colCount; j++)
+                // Skip this row if "search new keys only" is enabled and this row is not a new key
+                if (searchNewKeysOnly && !row.IsNewKey)
                 {
-                    int colIndex = forward ? j : (colCount - 1 - j);
-                    var cellContent = row.Values[colIndex];
+                    continue;
+                }
 
-                    if (cellContent is string cellText)
+                // If we're only searching new keys and have no search term, just select the first new key
+                if (searchNewKeysOnly && string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    _currentRowIndex = rowIndex;
+                    _currentMatchIndex = 0; // Select first column
+                    foundMatch = true;
+
+                    await Dispatcher.UIThread.InvokeAsync(
+                        async () =>
+                        {
+                            dataGrid.SelectedItem = row;
+                            dataGrid.Focus();
+                            await ScrollToSelectedRow(dataGrid, rowIndex, 0);
+                            UpdateMatchCount();
+                        },
+                        DispatcherPriority.Background
+                    );
+
+                    return;
+                }
+
+                // Only search in cells if we have a search term
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    // Iterate through columns
+                    for (int j = 0; j < colCount; j++)
                     {
-                        bool matchFound = false;
+                        int colIndex = forward ? j : (colCount - 1 - j);
+                        var cellContent = row.Values[colIndex];
 
-                        if (isMatchEntireCell)
+                        if (cellContent is string cellText && !string.IsNullOrEmpty(cellText))
                         {
-                            matchFound = string.Equals(cellText, searchTerm, comparison);
-                        }
-                        else if (isMatchWholeWord)
-                        {
-                            matchFound = IsWholeWordMatch(cellText, searchTerm, comparison);
-                        }
-                        else
-                        {
-                            matchFound = cellText.IndexOf(searchTerm, comparison) >= 0;
-                        }
+                            bool matchFound = false;
 
-                        if (matchFound)
-                        {
-                            _currentRowIndex = rowIndex;
-                            _currentMatchIndex = colIndex;
-                            foundMatch = true;
+                            if (isMatchEntireCell)
+                            {
+                                matchFound = string.Equals(cellText, searchTerm, comparison);
+                            }
+                            else if (isMatchWholeWord)
+                            {
+                                matchFound = IsWholeWordMatch(cellText, searchTerm, comparison);
+                            }
+                            else
+                            {
+                                // Add null check here to prevent the exception
+                                matchFound = cellText.IndexOf(searchTerm, comparison) >= 0;
+                            }
 
-                            await Dispatcher.UIThread.InvokeAsync(
-                                async () =>
-                                {
-                                    dataGrid.SelectedItem = row;
-                                    dataGrid.Focus();
-                                    await ScrollToSelectedRow(dataGrid, rowIndex, colIndex);
-                                    UpdateMatchCount();
-                                },
-                                DispatcherPriority.Background
-                            );
+                            if (matchFound)
+                            {
+                                _currentRowIndex = rowIndex;
+                                _currentMatchIndex = colIndex;
+                                foundMatch = true;
 
-                            return;
+                                await Dispatcher.UIThread.InvokeAsync(
+                                    async () =>
+                                    {
+                                        dataGrid.SelectedItem = row;
+                                        dataGrid.Focus();
+                                        await ScrollToSelectedRow(dataGrid, rowIndex, colIndex);
+                                        UpdateMatchCount();
+                                    },
+                                    DispatcherPriority.Background
+                                );
+
+                                return;
+                            }
                         }
                     }
                 }
@@ -174,7 +209,9 @@ namespace UnrealLocresEditor.Views
                 // Reset UI and match data if no matches found
                 _currentMatchIndex = -1;
                 _currentRowIndex = -1;
-                uiMatchCountTextBlock.Text = "No matches found.";
+                uiMatchCountTextBlock.Text = searchNewKeysOnly && string.IsNullOrWhiteSpace(searchTerm)
+                    ? "No new keys found."
+                    : "No matches found.";
             }
             else
             {
@@ -188,12 +225,23 @@ namespace UnrealLocresEditor.Views
             var dataGrid = MainWindow._dataGrid;
             var items = MainWindow._rows;
 
-            if (string.IsNullOrEmpty(searchTerm) || items == null || dataGrid.Columns.Count == 0)
+            if (items == null || dataGrid.Columns.Count == 0)
                 return 0;
 
             bool isMatchCase = uiMatchCaseCheckBox.IsChecked ?? false;
             bool isMatchWholeWord = uiMatchWholeWordCheckBox.IsChecked ?? false;
             bool isMatchEntireCell = uiMatchCellCheckBox.IsChecked ?? false;
+            bool searchNewKeysOnly = uiSearchNewKeysOnlyCheckBox.IsChecked ?? false;
+
+            // If searching new keys only without a search term, count all new keys
+            if (searchNewKeysOnly && string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return items.Count(row => row.IsNewKey);
+            }
+
+            // If we don't have a search term and not searching new keys only, return 0
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return 0;
 
             StringComparison comparison = isMatchCase
                 ? StringComparison.Ordinal
@@ -201,10 +249,16 @@ namespace UnrealLocresEditor.Views
 
             foreach (var row in items)
             {
+                // Skip this row if "search new keys only" is enabled and this row is not a new key
+                if (searchNewKeysOnly && !row.IsNewKey)
+                {
+                    continue;
+                }
+
                 for (int colIndex = 0; colIndex < dataGrid.Columns.Count; colIndex++)
                 {
                     var cellContent = row.Values[colIndex];
-                    if (cellContent is string cellText)
+                    if (cellContent is string cellText && !string.IsNullOrEmpty(cellText))
                     {
                         bool matchFound = false;
 

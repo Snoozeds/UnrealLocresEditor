@@ -18,6 +18,8 @@ namespace UnrealLocresEditor.Models
             }
         }
 
+        public bool IsNewKey { get; set; }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public virtual void OnPropertyChanged(string propertyName) =>
