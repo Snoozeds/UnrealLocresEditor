@@ -1300,6 +1300,7 @@ namespace UnrealLocresEditor.Views
         }
 
         #region Merge Operation
+        
         /***
          * Merging Files:
          *
@@ -1318,6 +1319,10 @@ namespace UnrealLocresEditor.Views
         private HashSet<string> _newKeySet = new();
         private async void MergeMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            // Check if there are unsaved changes before mergin g
+            if (!await MergeSaveChanges())
+                return;
+
             try
             {
                 // Pick TARGET file (base file to update)
@@ -1802,6 +1807,78 @@ namespace UnrealLocresEditor.Views
         private void AboutWindow_Closed(Object sender, EventArgs e)
         {
             aboutWindow = null;
+        }
+        private async Task<bool> MergeSaveChanges()
+        {
+            if (!_hasUnsavedChanges)
+                return true;
+
+            var dialog = new Window
+            {
+                Title = "Unsaved Changes",
+                Width = 400,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Content = new StackPanel
+                {
+                    Margin = new Avalonia.Thickness(20),
+                    Spacing = 20,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = "You have unsaved changes. Would you like to save before merging?",
+                            TextWrapping = TextWrapping.Wrap,
+                        },
+                        new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Spacing = 10,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            Children =
+                            {
+                                new Avalonia.Controls.Button { Content = "Save" },
+                                new Avalonia.Controls.Button { Content = "Don't Save" },
+                                new Avalonia.Controls.Button { Content = "Cancel" },
+                            },
+                        },
+                    },
+                },
+            };
+
+            var tcs = new TaskCompletionSource<string>();
+            var buttons = ((StackPanel)((StackPanel)dialog.Content).Children[1]).Children;
+            ((Avalonia.Controls.Button)buttons[0]).Click += (s, e) =>
+            {
+                try
+                {
+                    SaveEditedData();
+                    tcs.SetResult("Save");
+                    dialog.Close();
+                }
+                catch (Exception ex)
+                {
+                    _notificationManager.Show(
+                        new Notification("Save Error", $"Failed to save: {ex.Message}", NotificationType.Error)
+                    );
+                    tcs.SetResult("Cancel");
+                    dialog.Close();
+                }
+            };
+            ((Avalonia.Controls.Button)buttons[1]).Click += (s, e) =>
+            {
+                tcs.SetResult("Don't Save");
+                dialog.Close();
+            };
+            ((Avalonia.Controls.Button)buttons[2]).Click += (s, e) =>
+            {
+                tcs.SetResult("Cancel");
+                dialog.Close();
+            };
+
+            await dialog.ShowDialog(this);
+            var result = await tcs.Task;
+            return result == "Save" || result == "Don't Save";
         }
     }
 }
