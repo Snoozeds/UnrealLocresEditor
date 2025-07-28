@@ -388,6 +388,10 @@ namespace UnrealLocresEditor.Views
                         AddNewRow(sender, null);
                         e.Handled = true;
                         break;
+                    case Key.T:
+                        CopySourceToTarget(sender, null);
+                        e.Handled = true;
+                        break;
                 }
             }
             else if (e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
@@ -396,6 +400,10 @@ namespace UnrealLocresEditor.Views
                 {
                     case Key.Space:
                         DeleteSelectedRow(sender, null);
+                        e.Handled = true;
+                        break;
+                    case Key.T:
+                        CopySourceToTargetMultiple(sender, null);
                         e.Handled = true;
                         break;
                 }
@@ -786,6 +794,165 @@ namespace UnrealLocresEditor.Views
             await dialog.ShowDialog(this);
             return await taskCompletionSource.Task;
         }
+
+        #region Copy Source to Target operation
+        private void CopySourceToTarget(object sender, RoutedEventArgs e)
+        {
+            if (_dataGrid.SelectedItem is not DataRow selectedRow)
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "No Selection",
+                        "Please select a row to copy from source to target.",
+                        NotificationType.Information
+                    )
+                );
+                return;
+            }
+
+            // Find the source and target column indices
+            int sourceColumnIndex = -1;
+            int targetColumnIndex = -1;
+
+            for (int i = 0; i < _dataGrid.Columns.Count; i++)
+            {
+                var header = ((DataGridTextColumn)_dataGrid.Columns[i]).Header?.ToString();
+                if (header?.Equals("source", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    sourceColumnIndex = i;
+                }
+                else if (header?.Equals("target", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    targetColumnIndex = i;
+                }
+            }
+
+            if (sourceColumnIndex == -1)
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "Column Not Found",
+                        "Source column not found.",
+                        NotificationType.Warning
+                    )
+                );
+                return;
+            }
+
+            if (targetColumnIndex == -1)
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "Column Not Found",
+                        "Target column not found.",
+                        NotificationType.Warning
+                    )
+                );
+                return;
+            }
+
+            // Copy the text from source to target
+            string sourceText = selectedRow.Values[sourceColumnIndex];
+            selectedRow.Values[targetColumnIndex] = sourceText;
+
+            // Mark as having unsaved changes
+            _hasUnsavedChanges = true;
+
+            var currentItems = _dataGrid.ItemsSource;
+            _dataGrid.ItemsSource = null;
+            _dataGrid.ItemsSource = currentItems;
+
+            // Restore selection
+            _dataGrid.SelectedItem = selectedRow;
+
+            _notificationManager.Show(
+                new Notification(
+                    "Text Copied",
+                    "Source text copied to target column.",
+                    NotificationType.Success
+                )
+            );
+        }
+
+        private void CopySourceToTargetMultiple(object sender, RoutedEventArgs e)
+        {
+            var selectedRows = _dataGrid.SelectedItems?.Cast<DataRow>().ToList();
+
+            if (selectedRows == null || !selectedRows.Any())
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "No Selection",
+                        "Please select one or more rows to copy from source to target.",
+                        NotificationType.Information
+                    )
+                );
+                return;
+            }
+
+            // Find the source and target column indices
+            int sourceColumnIndex = -1;
+            int targetColumnIndex = -1;
+
+            for (int i = 0; i < _dataGrid.Columns.Count; i++)
+            {
+                var header = ((DataGridTextColumn)_dataGrid.Columns[i]).Header?.ToString();
+                if (header?.Equals("source", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    sourceColumnIndex = i;
+                }
+                else if (header?.Equals("target", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    targetColumnIndex = i;
+                }
+            }
+
+            if (sourceColumnIndex == -1 || targetColumnIndex == -1)
+            {
+                _notificationManager.Show(
+                    new Notification(
+                        "Columns Not Found",
+                        "Source or target column not found.",
+                        NotificationType.Warning
+                    )
+                );
+                return;
+            }
+
+            int copiedCount = 0;
+            foreach (var row in selectedRows)
+            {
+                string sourceText = row.Values[sourceColumnIndex];
+                if (!string.IsNullOrEmpty(sourceText))
+                {
+                    row.Values[targetColumnIndex] = sourceText;
+                    copiedCount++;
+                }
+            }
+
+            // Mark as having unsaved changes
+            _hasUnsavedChanges = true;
+
+            var currentItems = _dataGrid.ItemsSource;
+            var currentSelection = selectedRows;
+            _dataGrid.ItemsSource = null;
+            _dataGrid.ItemsSource = currentItems;
+
+            // Restore selection
+            foreach (var row in currentSelection)
+            {
+                _dataGrid.SelectedItems.Add(row);
+            }
+
+            _notificationManager.Show(
+                new Notification(
+                    "Text Copied",
+                    $"Source text copied to target column for {copiedCount} row(s).",
+                    NotificationType.Success
+                )
+            );
+        }
+        #endregion
 
         private static string GetOrCreateTempDirectory()
         {

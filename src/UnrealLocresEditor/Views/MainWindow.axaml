@@ -63,6 +63,14 @@
                     Header="Find and replace"
                     InputGesture="Ctrl+H" />
                 <MenuItem
+                    Click="CopySourceToTarget"
+                    Header="Copy _Source to Target"
+                    InputGesture="Ctrl+T" />
+                <MenuItem
+                    Click="CopySourceToTargetMultiple"
+                    Header="Copy Source to Target (_Multiple)"
+                    InputGesture="Ctrl+Shift+T" />
+                <MenuItem
                     Name="uiAddNewRowMenuItem"
                     Click="AddNewRow"
                     Header="New Row"
