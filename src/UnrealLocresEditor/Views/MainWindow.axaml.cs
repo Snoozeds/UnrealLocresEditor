@@ -49,7 +49,6 @@ namespace UnrealLocresEditor.Views
 
         // Misc
         public string csvFile = "";
-        public bool shownSourceWarningDialog = false;
         public bool shownAddRowWarningDialog = false;
 
         public MainWindow()
@@ -76,9 +75,6 @@ namespace UnrealLocresEditor.Views
             DataContext = this;
 
             _discordRPC.idleStartTime = DateTime.UtcNow;
-
-            // For displaying warning upon clicking cell in second (source) column
-            _dataGrid.CellPointerPressed += DataGrid_CellPointerPressed;
 
             // For preventing shutdown if the work is unsaved
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -973,11 +969,16 @@ namespace UnrealLocresEditor.Views
                     {
                         for (int i = 0; i < stringValues.Length; i++)
                         {
+                            var columnHeader = stringValues[i];
                             var column = new DataGridTextColumn
                             {
-                                Header = stringValues[i],
+                                Header = columnHeader,
                                 Binding = new Binding($"Values[{i}]"),
-                                IsReadOnly = false,
+                                // Make the source column read-only
+                                IsReadOnly = columnHeader.Equals(
+                                    "source",
+                                    StringComparison.OrdinalIgnoreCase
+                                ),
                                 Width = new DataGridLength(AppConfig.Instance.DefaultColumnWidth),
                             };
                             columns.Add(column);
@@ -998,57 +999,6 @@ namespace UnrealLocresEditor.Views
                 }
             }
             _dataGrid.ItemsSource = _rows;
-        }
-
-        private void DataGrid_CellPointerPressed(
-            object sender,
-            DataGridCellPointerPressedEventArgs e
-        )
-        {
-            if (e.Column?.Header?.ToString() == "source")
-            {
-                if (shownSourceWarningDialog == false)
-                {
-                    ShowWarningDialog();
-                    shownSourceWarningDialog = true;
-                }
-            }
-        }
-
-        private void ShowWarningDialog()
-        {
-            var messageBox = new Window
-            {
-                Title = "Warning",
-                Width = 400,
-                Height = 200,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                Content = new StackPanel
-                {
-                    Children =
-                    {
-                        new TextBlock
-                        {
-                            Text =
-                                "This is the source column, this is the original text, but you should not edit it to replace the text - instead write the text you want to replace this with in the target column next to it.",
-                            TextWrapping = TextWrapping.Wrap,
-                            Margin = new Thickness(10),
-                        },
-                        new Avalonia.Controls.Button
-                        {
-                            Content = "OK",
-                            HorizontalAlignment = HorizontalAlignment.Center,
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Margin = new Thickness(10),
-                        },
-                    },
-                },
-            };
-
-            var button = (Avalonia.Controls.Button)((StackPanel)messageBox.Content).Children[1];
-            button.Click += (s, e) => messageBox.Close();
-
-            messageBox.ShowDialog(this);
         }
 
         private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
