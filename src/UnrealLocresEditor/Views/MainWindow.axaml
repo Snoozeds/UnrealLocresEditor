@@ -70,16 +70,6 @@
                     Click="CopySourceToTargetMultiple"
                     Header="Copy Source to Target (_Multiple)"
                     InputGesture="Ctrl+Shift+T" />
-                <MenuItem
-                    Name="uiAddNewRowMenuItem"
-                    Click="AddNewRow"
-                    Header="New Row"
-                    InputGesture="Ctrl+Space" />
-                <MenuItem
-                    Name="uiDeleteRowMenuItem"
-                    Click="DeleteSelectedRow"
-                    Header="Delete Row"
-                    InputGesture="Ctrl+Shift+Space" />
                 <MenuItem Header="-" />
                 <MenuItem Name="uiPreferencesMenuItem" Header="Preferences" />
             </MenuItem>
