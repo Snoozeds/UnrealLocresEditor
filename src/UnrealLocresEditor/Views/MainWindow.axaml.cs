@@ -417,6 +417,49 @@ namespace UnrealLocresEditor.Views
                 }
             }
 
+            // Handle Delete key to clear cell content
+            if (e.Key == Key.Delete && e.KeyModifiers == KeyModifiers.None)
+            {
+                var focusedControl = FocusManager.GetFocusedElement() as TextBox;
+                if (focusedControl != null)
+                {
+                    // If we're already editing a cell, let the default behavior handle it
+                    return;
+                }
+
+                // If we have a selected cell but aren't editing it, clear the cell content
+                if (_dataGrid.SelectedItem is DataRow selectedRow)
+                {
+                    int selectedColumnIndex = _dataGrid.Columns.IndexOf(_dataGrid.CurrentColumn);
+                    if (selectedColumnIndex >= 0)
+                    {
+                        // Check if the column is read-only or the "key" column (some users may accidentally hit delete on the key column as it is selected by default, and key names can be very long, so.)
+                        var column = _dataGrid.CurrentColumn as DataGridTextColumn;
+                        var columnHeader = column?.Header?.ToString();
+
+                        if (column != null && !column.IsReadOnly &&
+                            !columnHeader.Equals("key", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Clear the cell content
+                            selectedRow.Values[selectedColumnIndex] = string.Empty;
+
+                            // Mark as having unsaved changes
+                            _hasUnsavedChanges = true;
+
+                            // Refresh the DataGrid to show the change
+                            var currentItems = _dataGrid.ItemsSource;
+                            _dataGrid.ItemsSource = null;
+                            _dataGrid.ItemsSource = currentItems;
+
+                            // Restore selection
+                            _dataGrid.SelectedItem = selectedRow;
+
+                            e.Handled = true;
+                        }
+                    }
+                }
+            }
+
             // Handle Ctrl+C / Ctrl+V for copy-pasting when a cell is focused but not being directly edited.
             if (e.KeyModifiers == KeyModifiers.Control)
             {
