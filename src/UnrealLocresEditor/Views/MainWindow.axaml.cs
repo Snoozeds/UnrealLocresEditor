@@ -437,8 +437,11 @@ namespace UnrealLocresEditor.Views
                         var column = _dataGrid.CurrentColumn as DataGridTextColumn;
                         var columnHeader = column?.Header?.ToString();
 
-                        if (column != null && !column.IsReadOnly &&
-                            !columnHeader.Equals("key", StringComparison.OrdinalIgnoreCase))
+                        if (
+                            column != null
+                            && !column.IsReadOnly
+                            && !columnHeader.Equals("key", StringComparison.OrdinalIgnoreCase)
+                        )
                         {
                             // Clear the cell content
                             selectedRow.Values[selectedColumnIndex] = string.Empty;

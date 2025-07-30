@@ -197,7 +197,6 @@ namespace UnrealLocresEditor.Views
                             }
                             else
                             {
-                                // Add null check here to prevent the exception
                                 matchFound = cellText.IndexOf(searchTerm, comparison) >= 0;
                             }
 
