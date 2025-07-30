@@ -632,17 +632,12 @@ namespace UnrealLocresEditor.Views
 
             // Copy the text from source to target
             string sourceText = selectedRow.Values[sourceColumnIndex];
-            selectedRow.Values[targetColumnIndex] = sourceText;
+            var newValues = (string[])selectedRow.Values.Clone();
+            newValues[targetColumnIndex] = sourceText;
+            selectedRow.Values = newValues;
 
             // Mark as having unsaved changes
             _hasUnsavedChanges = true;
-
-            var currentItems = _dataGrid.ItemsSource;
-            _dataGrid.ItemsSource = null;
-            _dataGrid.ItemsSource = currentItems;
-
-            // Restore selection
-            _dataGrid.SelectedItem = selectedRow;
 
             _notificationManager.Show(
                 new Notification(
@@ -704,24 +699,16 @@ namespace UnrealLocresEditor.Views
                 string sourceText = row.Values[sourceColumnIndex];
                 if (!string.IsNullOrEmpty(sourceText))
                 {
-                    row.Values[targetColumnIndex] = sourceText;
+                    // Copy the text from source to target
+                    var newValues = (string[])row.Values.Clone();
+                    newValues[targetColumnIndex] = sourceText;
+                    row.Values = newValues;
                     copiedCount++;
                 }
             }
 
             // Mark as having unsaved changes
             _hasUnsavedChanges = true;
-
-            var currentItems = _dataGrid.ItemsSource;
-            var currentSelection = selectedRows;
-            _dataGrid.ItemsSource = null;
-            _dataGrid.ItemsSource = currentItems;
-
-            // Restore selection
-            foreach (var row in currentSelection)
-            {
-                _dataGrid.SelectedItems.Add(row);
-            }
 
             _notificationManager.Show(
                 new Notification(
