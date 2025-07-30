@@ -97,6 +97,17 @@ namespace UnrealLocresEditor.Views
             if (items == null || dataGrid.Columns.Count == 0)
                 return;
 
+            // Early exit if searching new keys only but no new keys exist
+            if (searchNewKeysOnly && !items.Any(row => row.IsNewKey))
+            {
+                _currentMatchIndex = -1;
+                _currentRowIndex = -1;
+                uiMatchCountTextBlock.Text = string.IsNullOrWhiteSpace(searchTerm)
+                    ? "No new keys found."
+                    : "No matches found.";
+                return;
+            }
+
             StringComparison comparison = isMatchCase
                 ? StringComparison.Ordinal
                 : StringComparison.OrdinalIgnoreCase;
@@ -124,6 +135,11 @@ namespace UnrealLocresEditor.Views
                 int rowIndex = forward
                     ? (startRow + 1 + i) % rowCount
                     : (startRow - 1 - i + rowCount) % rowCount;
+
+                // Bounds checking
+                if (rowIndex < 0 || rowIndex >= items.Count)
+                    continue;
+
                 var row = items[rowIndex];
 
                 // Skip this row if "search new keys only" is enabled and this row is not a new key
@@ -160,6 +176,11 @@ namespace UnrealLocresEditor.Views
                     for (int j = 0; j < colCount; j++)
                     {
                         int colIndex = forward ? j : (colCount - 1 - j);
+
+                        // Bounds checking for column access
+                        if (colIndex < 0 || colIndex >= row.Values.Length)
+                            continue;
+
                         var cellContent = row.Values[colIndex];
 
                         if (cellContent is string cellText && !string.IsNullOrEmpty(cellText))
