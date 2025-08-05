@@ -444,18 +444,12 @@ namespace UnrealLocresEditor.Views
                         )
                         {
                             // Clear the cell content
-                            selectedRow.Values[selectedColumnIndex] = string.Empty;
+                            var newValues = (string[])selectedRow.Values.Clone();
+                            newValues[selectedColumnIndex] = string.Empty;
+                            selectedRow.Values = newValues;
 
                             // Mark as having unsaved changes
                             _hasUnsavedChanges = true;
-
-                            // Refresh the DataGrid to show the change
-                            var currentItems = _dataGrid.ItemsSource;
-                            _dataGrid.ItemsSource = null;
-                            _dataGrid.ItemsSource = currentItems;
-
-                            // Restore selection
-                            _dataGrid.SelectedItem = selectedRow;
 
                             e.Handled = true;
                         }
