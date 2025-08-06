@@ -13,6 +13,7 @@ namespace UnrealLocresEditor.Views
 {
     public partial class FindReplaceDialog : Window
     {
+
         public FindReplaceDialog()
         {
             AvaloniaXamlLoader.Load(this);
@@ -92,10 +93,6 @@ namespace UnrealLocresEditor.Views
             bool isMatchWholeWord = uiMatchWholeWordCheckBox.IsChecked ?? false;
             bool isMatchEntireCell = uiMatchCellCheckBox.IsChecked ?? false;
 
-            StringComparison comparison = isMatchCase
-                ? StringComparison.Ordinal
-                : StringComparison.OrdinalIgnoreCase;
-
             int rowCount = items.Count;
             int colCount = dataGrid.Columns.Count;
 
@@ -127,20 +124,7 @@ namespace UnrealLocresEditor.Views
 
                     if (cellContent is string cellText && !string.IsNullOrEmpty(cellText))
                     {
-                        bool matchFound = false;
-
-                        if (isMatchEntireCell)
-                        {
-                            matchFound = string.Equals(cellText, searchTerm, comparison);
-                        }
-                        else if (isMatchWholeWord)
-                        {
-                            matchFound = IsWholeWordMatch(cellText, searchTerm, comparison);
-                        }
-                        else
-                        {
-                            matchFound = cellText.IndexOf(searchTerm, comparison) >= 0;
-                        }
+                        bool matchFound = IsTextMatch(cellText, searchTerm, isMatchCase, isMatchWholeWord, isMatchEntireCell);
 
                         if (matchFound)
                         {
@@ -171,6 +155,141 @@ namespace UnrealLocresEditor.Views
             }
         }
 
+        private bool IsTextMatch(string cellText, string searchTerm, bool isMatchCase, bool isMatchWholeWord, bool isMatchEntireCell)
+        {
+            if (string.IsNullOrEmpty(cellText) || string.IsNullOrEmpty(searchTerm))
+                return false;
+
+            StringComparison comparison = isMatchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            RegexOptions regexOptions = isMatchCase ? RegexOptions.None : RegexOptions.IgnoreCase;
+
+            if (isMatchEntireCell)
+            {
+                // For entire cell matching, we normalize line breaks and compare
+                string normalizedCellText = NormalizeLineBreaks(cellText);
+                string normalizedSearchTerm = NormalizeLineBreaks(searchTerm);
+                return string.Equals(normalizedCellText, normalizedSearchTerm, comparison);
+            }
+            else if (isMatchWholeWord)
+            {
+                // For whole word matching across line breaks, we use regex
+                string escapedSearchTerm = Regex.Escape(NormalizeLineBreaks(searchTerm));
+                string pattern = @"\b" + escapedSearchTerm + @"\b";
+                string normalizedCellText = NormalizeLineBreaks(cellText);
+
+                return Regex.IsMatch(normalizedCellText, pattern, regexOptions);
+            }
+            else
+            {
+                // For regular substring matching across line breaks
+                string normalizedCellText = NormalizeLineBreaks(cellText);
+                string normalizedSearchTerm = NormalizeLineBreaks(searchTerm);
+                return normalizedCellText.IndexOf(normalizedSearchTerm, comparison) >= 0;
+            }
+        }
+
+        private string NormalizeLineBreaks(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            // Replace various line break patterns with single spaces
+            // This allows searching across line breaks as if they were spaces
+            string normalized = Regex.Replace(text, @"\r\n|\r|\n", " ", RegexOptions.Multiline);
+            normalized = Regex.Replace(normalized, @"\s+", " "); // Collapse multiple spaces into single space
+            return normalized.Trim();
+        }
+
+        private string ReplaceTextAcrossLineBreaks(string cellText, string searchTerm, string replaceText, bool isMatchCase, bool isMatchWholeWord, bool isMatchEntireCell)
+        {
+            if (string.IsNullOrEmpty(cellText) || string.IsNullOrEmpty(searchTerm))
+                return cellText;
+
+            RegexOptions regexOptions = isMatchCase ? RegexOptions.None : RegexOptions.IgnoreCase;
+
+            if (isMatchEntireCell)
+            {
+                // For entire cell replacement, normalize and check if it matches, then replace entirely
+                string normalizedCellText = NormalizeLineBreaks(cellText);
+                string normalizedSearchTerm = NormalizeLineBreaks(searchTerm);
+                StringComparison comparison = isMatchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
+                if (string.Equals(normalizedCellText, normalizedSearchTerm, comparison))
+                {
+                    return replaceText;
+                }
+                return cellText;
+            }
+            else if (isMatchWholeWord)
+            {
+                // For whole word replacement across line breaks
+                string normalizedSearchTerm = NormalizeLineBreaks(searchTerm);
+                string escapedSearchTerm = Regex.Escape(normalizedSearchTerm);
+                string pattern = @"\b" + escapedSearchTerm + @"\b";
+
+                // Create a mapping of normalized positions back to original positions
+                return ReplaceWithLineBreakPreservation(cellText, searchTerm, replaceText, pattern, regexOptions);
+            }
+            else
+            {
+                // For regular substring replacement across line breaks
+                string normalizedSearchTerm = NormalizeLineBreaks(searchTerm);
+                string escapedSearchTerm = Regex.Escape(normalizedSearchTerm);
+
+                return ReplaceWithLineBreakPreservation(cellText, searchTerm, replaceText, escapedSearchTerm, regexOptions);
+            }
+        }
+
+        private string ReplaceWithLineBreakPreservation(string originalText, string searchTerm, string replaceText, string pattern, RegexOptions options)
+        {
+            // Create a normalized version for pattern matching
+            string normalizedText = NormalizeLineBreaks(originalText);
+            string normalizedSearchTerm = NormalizeLineBreaks(searchTerm);
+
+            // Find matches in the normalized text
+            var matches = Regex.Matches(normalizedText, pattern, options);
+
+            if (matches.Count == 0)
+                return originalText;
+
+            // Work backwards through matches to preserve indices
+            string result = originalText;
+            for (int i = matches.Count - 1; i >= 0; i--)
+            {
+                var match = matches[i];
+
+                // Map the normalized position back to the original text position
+                var originalMatch = FindCorrespondingTextInOriginal(originalText, normalizedSearchTerm, match.Index, match.Length);
+
+                if (originalMatch.HasValue)
+                {
+                    result = result.Remove(originalMatch.Value.Start, originalMatch.Value.Length)
+                                  .Insert(originalMatch.Value.Start, replaceText);
+                }
+            }
+
+            return result;
+        }
+        private (int Start, int Length)? FindCorrespondingTextInOriginal(string originalText, string searchTerm, int normalizedStart, int normalizedLength)
+        {
+            string normalizedOriginal = NormalizeLineBreaks(originalText);
+
+            // If the match is found in the normalized version, try to find it in the original
+            string matchedText = normalizedOriginal.Substring(normalizedStart, normalizedLength);
+
+            // Look for this pattern in the original text, accounting for line breaks
+            string patternWithLineBreaks = Regex.Escape(searchTerm);
+            patternWithLineBreaks = patternWithLineBreaks.Replace("\\ ", @"[\s\r\n]+"); // Allow any whitespace/line breaks
+
+            var match = Regex.Match(originalText, patternWithLineBreaks, RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                return (match.Index, match.Length);
+            }
+
+            return null;
+        }
+
         private int CountTotalMatches(string searchTerm)
         {
             int matchCount = 0;
@@ -188,10 +307,6 @@ namespace UnrealLocresEditor.Views
             bool isMatchWholeWord = uiMatchWholeWordCheckBox.IsChecked ?? false;
             bool isMatchEntireCell = uiMatchCellCheckBox.IsChecked ?? false;
 
-            StringComparison comparison = isMatchCase
-                ? StringComparison.Ordinal
-                : StringComparison.OrdinalIgnoreCase;
-
             foreach (var row in items)
             {
                 for (int colIndex = 0; colIndex < dataGrid.Columns.Count; colIndex++)
@@ -199,20 +314,7 @@ namespace UnrealLocresEditor.Views
                     var cellContent = row.Values[colIndex];
                     if (cellContent is string cellText && !string.IsNullOrEmpty(cellText))
                     {
-                        bool matchFound = false;
-
-                        if (isMatchEntireCell)
-                        {
-                            matchFound = string.Equals(cellText, searchTerm, comparison);
-                        }
-                        else if (isMatchWholeWord)
-                        {
-                            matchFound = IsWholeWordMatch(cellText, searchTerm, comparison);
-                        }
-                        else
-                        {
-                            matchFound = cellText.IndexOf(searchTerm, comparison) >= 0;
-                        }
+                        bool matchFound = IsTextMatch(cellText, searchTerm, isMatchCase, isMatchWholeWord, isMatchEntireCell);
 
                         if (matchFound)
                         {
@@ -288,6 +390,7 @@ namespace UnrealLocresEditor.Views
                         );
                     }
 
+                    MainWindow._hasUnsavedChanges = true; // Mark as having unsaved changes
                     MainWindow._dataGrid.ItemsSource = new ObservableCollection<DataRow>(
                         MainWindow._dataGrid.ItemsSource.Cast<DataRow>().ToList()
                     );
@@ -303,7 +406,7 @@ namespace UnrealLocresEditor.Views
 
             var searchText = uiSearchTextBox.Text;
             var replaceText = uiReplaceTextBox.Text;
-            if (string.IsNullOrEmpty(searchText) || string.IsNullOrEmpty(replaceText))
+            if (string.IsNullOrEmpty(searchText))
                 return;
 
             var items = MainWindow._dataGrid.ItemsSource.Cast<DataRow>().ToList();
@@ -354,6 +457,7 @@ namespace UnrealLocresEditor.Views
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
+                MainWindow._hasUnsavedChanges = true; // Mark as having unsaved changes
                 MainWindow._dataGrid.ItemsSource = new ObservableCollection<DataRow>(items);
             });
         }
@@ -369,24 +473,16 @@ namespace UnrealLocresEditor.Views
         {
             for (int i = 0; i < row.Values.Length; i++)
             {
-                if (
-                    ShouldReplaceInCell(
+                if (ShouldReplaceInCell(row.Values[i], searchText, matchCase, matchWholeWord, matchCell))
+                {
+                    row.Values[i] = ReplaceTextAcrossLineBreaks(
                         row.Values[i],
                         searchText,
+                        replaceText,
                         matchCase,
                         matchWholeWord,
                         matchCell
-                    )
-                )
-                {
-                    row.Values[i] = row.Values[i]
-                        .Replace(
-                            searchText,
-                            replaceText,
-                            matchCase
-                                ? StringComparison.Ordinal
-                                : StringComparison.OrdinalIgnoreCase
-                        );
+                    );
                 }
             }
             row.OnPropertyChanged(nameof(row.Values));
@@ -401,12 +497,16 @@ namespace UnrealLocresEditor.Views
             bool matchCell
         )
         {
-            if (
-                ShouldReplaceInCell(row.Values[1], searchText, matchCase, matchWholeWord, matchCell)
-            )
+            if (ShouldReplaceInCell(row.Values[1], searchText, matchCase, matchWholeWord, matchCell))
             {
-                row.Values[2] = row.Values[1]
-                    .Replace(searchText, replaceText, StringComparison.OrdinalIgnoreCase);
+                row.Values[2] = ReplaceTextAcrossLineBreaks(
+                    row.Values[1],
+                    searchText,
+                    replaceText,
+                    matchCase,
+                    matchWholeWord,
+                    matchCell
+                );
             }
             row.OnPropertyChanged(nameof(row.Values));
         }
@@ -419,42 +519,7 @@ namespace UnrealLocresEditor.Views
             bool matchCell
         )
         {
-            StringComparison comparison = matchCase
-                ? StringComparison.Ordinal
-                : StringComparison.OrdinalIgnoreCase;
-
-            if (matchCase)
-            {
-                if (!cellValue.Contains(searchText, StringComparison.Ordinal))
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                if (!cellValue.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-            }
-
-            if (matchWholeWord)
-            {
-                if (!IsWholeWordMatch(cellValue, searchText, comparison))
-                {
-                    return false;
-                }
-            }
-
-            if (matchCell)
-            {
-                if (!IsEntireCellMatch(cellValue, searchText, matchCase))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return IsTextMatch(cellValue, searchText, matchCase, matchWholeWord, matchCell);
         }
 
         private async Task ReplaceTextInRowAsync(
@@ -468,24 +533,16 @@ namespace UnrealLocresEditor.Views
         {
             for (int i = 0; i < row.Values.Length; i++)
             {
-                if (
-                    ShouldReplaceInCell(
+                if (ShouldReplaceInCell(row.Values[i], searchText, matchCase, matchWholeWord, matchCell))
+                {
+                    row.Values[i] = ReplaceTextAcrossLineBreaks(
                         row.Values[i],
                         searchText,
+                        replaceText,
                         matchCase,
                         matchWholeWord,
                         matchCell
-                    )
-                )
-                {
-                    row.Values[i] = row.Values[i]
-                        .Replace(
-                            searchText,
-                            replaceText,
-                            matchCase
-                                ? StringComparison.Ordinal
-                                : StringComparison.OrdinalIgnoreCase
-                        );
+                    );
                 }
 
                 await Dispatcher.UIThread.InvokeAsync(

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -185,20 +186,7 @@ namespace UnrealLocresEditor.Views
 
                         if (cellContent is string cellText && !string.IsNullOrEmpty(cellText))
                         {
-                            bool matchFound = false;
-
-                            if (isMatchEntireCell)
-                            {
-                                matchFound = string.Equals(cellText, searchTerm, comparison);
-                            }
-                            else if (isMatchWholeWord)
-                            {
-                                matchFound = IsWholeWordMatch(cellText, searchTerm, comparison);
-                            }
-                            else
-                            {
-                                matchFound = cellText.IndexOf(searchTerm, comparison) >= 0;
-                            }
+                            bool matchFound = IsTextMatch(cellText, searchTerm, isMatchCase, isMatchWholeWord, isMatchEntireCell);
 
                             if (matchFound)
                             {
@@ -238,6 +226,51 @@ namespace UnrealLocresEditor.Views
             {
                 uiMatchCountTextBlock.Text = $"Matches found: {_totalMatches}";
             }
+        }
+
+        private bool IsTextMatch(string cellText, string searchTerm, bool isMatchCase, bool isMatchWholeWord, bool isMatchEntireCell)
+        {
+            if (string.IsNullOrEmpty(cellText) || string.IsNullOrEmpty(searchTerm))
+                return false;
+
+            StringComparison comparison = isMatchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            RegexOptions regexOptions = isMatchCase ? RegexOptions.None : RegexOptions.IgnoreCase;
+
+            if (isMatchEntireCell)
+            {
+                // For entire cell matching, we normalize line breaks and compare
+                string normalizedCellText = NormalizeLineBreaks(cellText);
+                string normalizedSearchTerm = NormalizeLineBreaks(searchTerm);
+                return string.Equals(normalizedCellText, normalizedSearchTerm, comparison);
+            }
+            else if (isMatchWholeWord)
+            {
+                // For whole word matching across line breaks, we use regex
+                string escapedSearchTerm = Regex.Escape(NormalizeLineBreaks(searchTerm));
+                string pattern = @"\b" + escapedSearchTerm + @"\b";
+                string normalizedCellText = NormalizeLineBreaks(cellText);
+
+                return Regex.IsMatch(normalizedCellText, pattern, regexOptions);
+            }
+            else
+            {
+                // For regular substring matching across line breaks
+                string normalizedCellText = NormalizeLineBreaks(cellText);
+                string normalizedSearchTerm = NormalizeLineBreaks(searchTerm);
+                return normalizedCellText.IndexOf(normalizedSearchTerm, comparison) >= 0;
+            }
+        }
+
+        private string NormalizeLineBreaks(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            // Replace various line break patterns with single spaces
+            // This allows searching across line breaks as if they were spaces
+            string normalized = Regex.Replace(text, @"\r\n|\r|\n", " ", RegexOptions.Multiline);
+            normalized = Regex.Replace(normalized, @"\s+", " "); // Collapse multiple spaces into single space
+            return normalized.Trim();
         }
 
         private int CountTotalMatches(string searchTerm)
