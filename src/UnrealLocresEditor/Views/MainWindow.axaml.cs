@@ -91,6 +91,9 @@ namespace UnrealLocresEditor.Views
             ApplyTheme(_appConfig.IsDarkTheme);
             ApplyAccent(Color.Parse(_appConfig.AccentColor));
 
+            // NEW: Clean up old junk from previous crashes
+            CleanupStaleTempDirectories();
+
             // Clear temp directory at startup
             GetOrCreateTempDirectory();
 
@@ -165,6 +168,44 @@ namespace UnrealLocresEditor.Views
             ConfigureAutoSaveTimer();
         }
 
+        // Cleanup-After-Crash
+        private void CleanupStaleTempDirectories()
+        {
+            try
+            {
+                var exeDirectory = AppContext.BaseDirectory;
+                var currentInstanceId = Process.GetCurrentProcess().Id.ToString();
+
+                // Find all folders that look like ".temp-UnrealLocresEditor-XXXX"
+                var directories = Directory.GetDirectories(exeDirectory, ".temp-UnrealLocresEditor-*");
+
+                foreach (var dir in directories)
+                {
+                    // IMPORTANT: Don't delete the folder we just created for THIS session!
+                    if (dir.EndsWith(currentInstanceId))
+                        continue;
+
+                    try
+                    {
+                        // Try to delete the folder.
+                        // If another instance of the app is currently running, Windows will lock the files
+                        // and throw an exception. We catch that exception and simply skip it.
+                        // This ensures we only delete folders from closed/crashed instances.
+                        Directory.Delete(dir, true);
+                        Console.WriteLine($"Cleaned up stale directory: {dir}");
+                    }
+                    catch
+                    {
+                        // Folder is locked (another app instance is running). Leave it alone.
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // General error (permissions, etc). Just ignore.
+                Console.WriteLine($"Cleanup warning: {ex.Message}");
+            }
+        }
         private void SaveSelectedDocumentState()
         {
             if (_selectedDocument == null)
