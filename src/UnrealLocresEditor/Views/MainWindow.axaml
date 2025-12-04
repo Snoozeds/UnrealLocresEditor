@@ -10,105 +10,141 @@
     Foreground="{DynamicResource TextColor}"
     Icon="/Assets/ULE-icon.ico"
     WindowStartupLocation="CenterScreen">
-    <Window.Styles>
-        <Style Selector="DataGridCell">
-            <Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis" />
-            <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
-        </Style>
-        <Style Selector="DataGridColumnHeader">
-            <Setter Property="Background" Value="{DynamicResource DataGridHeaderColor}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-        </Style>
-        <Style Selector="DataGridRow:nth-child(2n)">
-            <Setter Property="Background" Value="{DynamicResource DataGridAlternateRowColor}" />
-        </Style>
+	<Window.Styles>
+		<Style Selector="DataGridCell">
+			<Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis" />
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+		</Style>
+		<Style Selector="DataGridColumnHeader">
+			<Setter Property="Background" Value="{DynamicResource DataGridHeaderColor}" />
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+		</Style>
+		<Style Selector="DataGridRow:nth-child(2n)">
+			<Setter Property="Background" Value="{DynamicResource DataGridAlternateRowColor}" />
+		</Style>
 
-    </Window.Styles>
+		<!-- Optional: Style for the TabStrip Items to make them look nice -->
+		<Style Selector="TabStripItem">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="Margin" Value="0,0,0,0"/>
+			<Setter Property="Padding" Value="10,5"/>
+		</Style>
+		<Style Selector="TabStripItem:selected">
+			<Setter Property="Background" Value="{DynamicResource DataGridHeaderColor}"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+		</Style>
+	</Window.Styles>
 
-    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*,Auto">
-        <Menu Grid.Row="0" Grid.ColumnSpan="2">
-            <MenuItem Header="_File">
-                <MenuItem
-                    Name="uiOpenMenuItem"
-                    Click="OpenMenuItem_Click"
-                    Header="Open locres" />
-                <MenuItem
-                    Name="uiSaveMenuItem"
-                    Click="SaveMenuItem_Click"
-                    Header="Export locres" />
-                <MenuItem
-                    Name="uiMergeMenuItem"
-                    Click="MergeMenuItem_Click"
-                    Header="Merge locres" />
-                <MenuItem Header="-" />
-                <MenuItem
-                    Name="uiOpenSpreadsheetMenuItem"
-                    Click="OpenSpreadsheetMenuItem_Click"
-                    Header="Open Spreadsheet" />
-                <MenuItem
-                    Name="uiSaveAsMenuItem"
-                    Click="SaveAsMenuItem_Click"
-                    Header="Save As..." />
-            </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem
-                    Name="uiFindMenuItem"
-                    Click="FindMenuItem_Click"
-                    Header="Find"
-                    InputGesture="Ctrl+F" />
-                <MenuItem
-                    Name="uiFindReplaceMenuItem"
-                    Click="FindReplaceMenuItem_Click"
-                    Header="Find and replace"
-                    InputGesture="Ctrl+H" />
-                <MenuItem
-                    Click="CopySourceToTarget"
-                    Header="Copy _Source to Target"
-                    InputGesture="Ctrl+T" />
-                <MenuItem
-                    Click="CopySourceToTargetMultiple"
-                    Header="Copy Source to Target (_Multiple)"
-                    InputGesture="Ctrl+Shift+T" />
-                <MenuItem Header="-" />
-                <MenuItem Name="uiPreferencesMenuItem" Header="Preferences" />
-            </MenuItem>
-            <MenuItem Name="uiLinuxHeader" Header="_Linux">
-                <MenuItem
-                    Name="uiWinePrefix"
-                    Click="WinePrefix_Click"
-                    Header="Attempt wine prefix" />
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem
-                    Name="reportIssueMenuItem"
-                    Click="ReportIssueMenuItem_Click"
-                    Header="Report issue" />
-                <MenuItem
-                    Name="uiAboutMenuItem"
-                    Click="AboutMenuItem_Click"
-                    Header="About" />
-            </MenuItem>
-        </Menu>
-        <DataGrid
-            x:Name="uiDataGrid"
-            Grid.Row="1"
-            Grid.ColumnSpan="2"
-            AutoGenerateColumns="False"
-            Background="{DynamicResource BackgroundColor}"
-            BorderBrush="{DynamicResource BorderColor}"
-            BorderThickness="2"
-            CanUserResizeColumns="True"
-            ClipboardCopyMode="IncludeHeader"
-            GridLinesVisibility="All"
-            IsReadOnly="False"
-            MinColumnWidth="50">
-            <DataGrid.Styles>
-                <Style Selector="DataGridCell">
-                    <Setter Property="MaxWidth" Value="{Binding Width, RelativeSource={RelativeSource AncestorType=DataGridColumn}}" />
-                    <Setter Property="Foreground" Value="{DynamicResource TextColor}" />
-                </Style>
-            </DataGrid.Styles>
-        </DataGrid>
-    </Grid>
+	<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,*">
+		<Menu Grid.Row="0" Grid.ColumnSpan="2">
+			<MenuItem Header="_File">
+				<MenuItem
+						Name="uiOpenMenuItem"
+						Click="OpenMenuItem_Click"
+						Header="Open locres" />
+				<MenuItem
+						Name="uiSaveMenuItem"
+						Click="SaveMenuItem_Click"
+						Header="Export locres" />
+				<MenuItem
+						Name="uiCloseMenuItem"
+						Click="CloseMenuItem_Click"
+						Header="Close locres" />
+				<MenuItem
+						Name="uiMergeMenuItem"
+						Click="MergeMenuItem_Click"
+						Header="Merge locres" />
+				<MenuItem Header="-" />
+				<MenuItem
+						Name="uiOpenSpreadsheetMenuItem"
+						Click="OpenSpreadsheetMenuItem_Click"
+						Header="Open Spreadsheet" />
+				<MenuItem
+						Name="uiSaveAsMenuItem"
+						Click="SaveAsMenuItem_Click"
+						Header="Save As..." />
+			</MenuItem>
+			<MenuItem Header="_Edit">
+				<MenuItem
+						Name="uiFindMenuItem"
+						Click="FindMenuItem_Click"
+						Header="Find"
+						InputGesture="Ctrl+F" />
+				<MenuItem
+						Name="uiFindReplaceMenuItem"
+						Click="FindReplaceMenuItem_Click"
+						Header="Find and replace"
+						InputGesture="Ctrl+H" />
+				<MenuItem
+						Click="CopySourceToTarget"
+						Header="Copy _Source to Target"
+						InputGesture="Ctrl+T" />
+				<MenuItem
+						Click="CopySourceToTargetMultiple"
+						Header="Copy Source to Target (_Multiple)"
+						InputGesture="Ctrl+Shift+T" />
+				<MenuItem Header="-" />
+				<MenuItem Name="uiPreferencesMenuItem" Header="Preferences" />
+			</MenuItem>
+			<MenuItem Name="uiLinuxHeader" Header="_Linux">
+				<MenuItem
+						Name="uiWinePrefix"
+						Click="WinePrefix_Click"
+						Header="Attempt wine prefix" />
+			</MenuItem>
+			<MenuItem Header="_Help">
+				<MenuItem
+						Name="reportIssueMenuItem"
+						Click="ReportIssueMenuItem_Click"
+						Header="Report issue" />
+				<MenuItem
+						Name="uiAboutMenuItem"
+						Click="AboutMenuItem_Click"
+						Header="About" />
+			</MenuItem>
+		</Menu>
+
+		<!-- REPLACED COMBOBOX WITH TABSTRIP -->
+		<TabStrip
+				x:Name="uiDocumentTabs"
+				Grid.Row="1"
+				Grid.ColumnSpan="2"
+				Margin="0"
+				Background="Transparent"
+				x:CompileBindings="False"
+				ItemsSource="{Binding Documents}"
+				SelectedItem="{Binding SelectedDocument}">
+			<TabStrip.ItemTemplate>
+				<DataTemplate>
+					<StackPanel Orientation="Horizontal" Spacing="5">
+						<!-- Displays the file name (e.g. Game.locres) -->
+						<TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+						<!-- Tip: If you want an unsaved indicator (*) you could add a binding to HasUnsavedChanges here later -->
+					</StackPanel>
+				</DataTemplate>
+			</TabStrip.ItemTemplate>
+		</TabStrip>
+
+		<DataGrid
+				x:Name="uiDataGrid"
+				Grid.Row="2"
+				Grid.ColumnSpan="2"
+				AutoGenerateColumns="False"
+				Background="{DynamicResource BackgroundColor}"
+				BorderBrush="{DynamicResource BorderColor}"
+				BorderThickness="2"
+				CanUserResizeColumns="True"
+				ClipboardCopyMode="IncludeHeader"
+				GridLinesVisibility="All"
+				IsReadOnly="False"
+				MinColumnWidth="50">
+			<DataGrid.Styles>
+				<Style Selector="DataGridCell">
+					<Setter Property="MaxWidth" Value="{Binding Width, RelativeSource={RelativeSource AncestorType=DataGridColumn}}" />
+					<Setter Property="Foreground" Value="{DynamicResource TextColor}" />
+				</Style>
+			</DataGrid.Styles>
+		</DataGrid>
+	</Grid>
 </Window>

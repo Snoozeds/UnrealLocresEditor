@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -29,7 +31,7 @@ using UnrealLocresEditor.Utils;
 
 namespace UnrealLocresEditor.Views
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         // Main
         public DataGrid _dataGrid;
@@ -51,11 +53,36 @@ namespace UnrealLocresEditor.Views
         public string csvFile = "";
         public bool shownAddRowWarningDialog = false;
 
+        private readonly ObservableCollection<LocresDocument> _documents = new();
+        private LocresDocument _selectedDocument;
+
+        public ObservableCollection<LocresDocument> Documents => _documents;
+
+        public LocresDocument SelectedDocument
+        {
+            get => _selectedDocument;
+            set
+            {
+                if (_selectedDocument != value)
+                {
+                    SaveSelectedDocumentState();
+                    _selectedDocument = value;
+                    RaisePropertyChanged(nameof(SelectedDocument));
+                    ApplySelectedDocumentState();
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void RaisePropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
         public MainWindow()
         {
             _appConfig = AppConfig.Load();
             InitializeComponent();
-            InitializeAutoSave();
+            _dataGrid.CellEditEnded += DataGrid_CellEditEnded;
 
             UseWine = _appConfig.UseWine;
             _discordRPC = new DiscordRPC();
@@ -73,6 +100,9 @@ namespace UnrealLocresEditor.Views
 
             _rows = new ObservableCollection<DataRow>();
             DataContext = this;
+            _dataGrid.ItemsSource = _rows;
+            Documents.CollectionChanged += Documents_CollectionChanged;
+            ConfigureAutoSaveTimer();
 
             _discordRPC.idleStartTime = DateTime.UtcNow;
 
@@ -84,44 +114,222 @@ namespace UnrealLocresEditor.Views
         }
 
         // Initialize auto saving
-        private void InitializeAutoSave()
+        private void ConfigureAutoSaveTimer()
         {
-            if (_appConfig.AutoSaveEnabled)
+            if (_autoSaveTimer != null)
             {
-                int autoSaveIntervalMs = (int)_appConfig.AutoSaveInterval.TotalMilliseconds;
-                _autoSaveTimer = new System.Timers.Timer();
-                _autoSaveTimer.Interval = _appConfig.AutoSaveInterval.TotalMilliseconds;
-                _autoSaveTimer.Elapsed += AutoSave_Elapsed;
-                _autoSaveTimer.Start();
-            }
-            else
-            {
+                _autoSaveTimer.Stop();
+                _autoSaveTimer.Elapsed -= AutoSave_Elapsed;
+                _autoSaveTimer.Dispose();
                 _autoSaveTimer = null;
             }
 
-            _dataGrid.CellEditEnded += DataGrid_CellEditEnded;
+            if (_appConfig.AutoSaveEnabled && HasAutoSaveCandidates())
+            {
+                _autoSaveTimer = new System.Timers.Timer
+                {
+                    Interval = _appConfig.AutoSaveInterval.TotalMilliseconds,
+                    AutoReset = true,
+                };
+                _autoSaveTimer.Elapsed += AutoSave_Elapsed;
+                _autoSaveTimer.Start();
+            }
+        }
+
+        private bool HasAutoSaveCandidates() =>
+            _documents.Any(
+                d => !string.IsNullOrWhiteSpace(d.WorkingPath) && d.Rows.Count > 0
+            );
+
+        private void Documents_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (_documents.Count == 0)
+            {
+                _rows.Clear();
+                _dataGrid.ItemsSource = _rows;
+                _currentLocresFilePath = null;
+                csvFile = string.Empty;
+                _hasUnsavedChanges = false;
+                if (_selectedDocument != null)
+                {
+                    _selectedDocument = null;
+                    RaisePropertyChanged(nameof(SelectedDocument));
+                }
+            }
+            else if (_selectedDocument == null || !_documents.Contains(_selectedDocument))
+            {
+                SelectedDocument = _documents.Last();
+            }
+
+            RefreshUnsavedChangesFlag();
+            ConfigureAutoSaveTimer();
+        }
+
+        private void SaveSelectedDocumentState()
+        {
+            if (_selectedDocument == null)
+            {
+                return;
+            }
+
+            _selectedDocument.WorkingPath = _currentLocresFilePath ?? string.Empty;
+            _selectedDocument.ActiveCsvPath = string.IsNullOrWhiteSpace(csvFile)
+                ? null
+                : csvFile;
+            _selectedDocument.HasUnsavedChanges = _hasUnsavedChanges;
+        }
+
+        private void ApplySelectedDocumentState()
+        {
+            if (_selectedDocument == null)
+            {
+                _rows = new ObservableCollection<DataRow>();
+                _dataGrid.ItemsSource = _rows;
+                _dataGrid.Columns.Clear();
+                _currentLocresFilePath = null;
+                csvFile = string.Empty;
+                _hasUnsavedChanges = false;
+                UpdateDiscordPresence(null);
+                return;
+            }
+
+            _rows = _selectedDocument.Rows;
+            _dataGrid.ItemsSource = _rows;
+            ApplyColumnsForDocument(_selectedDocument);
+
+            _currentLocresFilePath = string.IsNullOrWhiteSpace(_selectedDocument.WorkingPath)
+                ? null
+                : _selectedDocument.WorkingPath;
+            csvFile = _selectedDocument.ActiveCsvPath ?? string.Empty;
+            _hasUnsavedChanges = _selectedDocument.HasUnsavedChanges;
+            UpdateDiscordPresence(_currentLocresFilePath);
+        }
+
+        private void ApplyColumnsForDocument(LocresDocument document)
+        {
+            if (_dataGrid == null)
+            {
+                return;
+            }
+
+            _dataGrid.Columns.Clear();
+
+            for (int i = 0; i < document.ColumnHeaders.Count; i++)
+            {
+                var header = document.ColumnHeaders[i];
+                var column = new DataGridTextColumn
+                {
+                    Header = header,
+                    Binding = new Binding($"Values[{i}]")
+                    {
+                        Mode = BindingMode.TwoWay,
+                    },
+                    IsReadOnly = header.Equals("source", StringComparison.OrdinalIgnoreCase),
+                    Width = new DataGridLength(AppConfig.Instance.DefaultColumnWidth),
+                };
+
+                _dataGrid.Columns.Add(column);
+            }
+        }
+
+        private void RefreshUnsavedChangesFlag()
+        {
+            _hasUnsavedChanges = _documents.Any(d => d.HasUnsavedChanges);
+        }
+
+        private void MarkDocumentDirty(LocresDocument document)
+        {
+            if (document == null)
+            {
+                return;
+            }
+
+            document.HasUnsavedChanges = true;
+            _hasUnsavedChanges = true;
+        }
+
+        private void ClearDocumentDirty(LocresDocument document)
+        {
+            if (document == null)
+            {
+                return;
+            }
+
+            document.HasUnsavedChanges = false;
+            RefreshUnsavedChangesFlag();
+        }
+
+        private void UpdateDiscordPresence(string? path)
+        {
+            _discordRPC.UpdatePresence(_appConfig.DiscordRPCEnabled, path);
         }
 
         private void DataGrid_CellEditEnded(object sender, DataGridCellEditEndedEventArgs e)
         {
-            _hasUnsavedChanges = true;
+            if (SelectedDocument != null)
+            {
+                MarkDocumentDirty(SelectedDocument);
+            }
         }
+        private void SaveDocument(LocresDocument document, bool openExplorer, bool isAutoSave)
+        {
+            if (document == null)
+                return;
+
+            var originalDocument = SelectedDocument;
+
+            try
+            {
+                if (originalDocument != document)
+                {
+                    SaveSelectedDocumentState();
+
+                    SelectedDocument = document;
+                }
+
+                SaveEditedData(openExplorer);
+
+                ClearDocumentDirty(document);
+            }
+            finally
+            {
+                if (originalDocument != null && originalDocument != document)
+                {
+                    SelectedDocument = originalDocument;
+                }
+
+                RefreshUnsavedChangesFlag();
+            }
+        }
+
 
         private void AutoSave_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (_hasUnsavedChanges && _currentLocresFilePath != null)
+            var documentsToSave = _documents
+                .Where(
+                    d =>
+                        d.HasUnsavedChanges
+                        && !string.IsNullOrWhiteSpace(d.WorkingPath)
+                        && d.Rows.Count > 0
+                )
+                .ToList();
+
+            if (documentsToSave.Count == 0)
             {
-                // Dispatch to UI thread since we're in a timer callback
-                Dispatcher.UIThread.InvokeAsync(() =>
+                return;
+            }
+
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                foreach (var document in documentsToSave)
                 {
                     try
                     {
-                        SaveEditedData(false); // Do not open file explorer window for auto save, as it'd be annoying.
-                        _hasUnsavedChanges = false;
+                        SaveDocument(document, openExplorer: false, isAutoSave: true);
                         _notificationManager.Show(
                             new Notification(
                                 "Auto-save",
-                                "Your changes have been automatically saved.",
+                                $"Automatically saved {document.DisplayName}.",
                                 NotificationType.Information
                             )
                         );
@@ -131,13 +339,13 @@ namespace UnrealLocresEditor.Views
                         _notificationManager.Show(
                             new Notification(
                                 "Auto-save Error",
-                                $"Failed to auto-save: {ex.Message}",
+                                $"Failed to auto-save {document.DisplayName}: {ex.Message}",
                                 NotificationType.Error
                             )
                         );
                     }
-                });
-            }
+                }
+            });
         }
 
         // Apply theme based off of config
@@ -750,6 +958,14 @@ namespace UnrealLocresEditor.Views
             return $"{baseName}_{instanceId}{extension}";
         }
 
+        private void CloseMenuItem_Click(object? sender, RoutedEventArgs e)
+        {
+            if (SelectedDocument == null)
+                return;
+
+            // TODO: better unsaved changes.
+            _documents.Remove(SelectedDocument);
+        }
         private async void OpenMenuItem_Click(object sender, RoutedEventArgs e)
         {
             var storageProvider = StorageProvider;
@@ -848,6 +1064,7 @@ namespace UnrealLocresEditor.Views
 
                         LoadCsv(csvFile);
                     }
+
                     finally
                     {
                         if (File.Exists(csvFile))
@@ -876,59 +1093,95 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        private void LoadCsv(string csvFile)
+        private void LoadCsv(string csvFilePath)
         {
-            _rows.Clear();
-            var columns = new List<DataGridColumn>();
-
-            using (var reader = new StreamReader(csvFile))
-            using (
-                var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture))
-            )
+            try
             {
-                bool isFirstRow = true;
-                while (csv.Read())
-                {
-                    string[] stringValues = new string[csv.Parser.Count];
-                    for (int i = 0; i < csv.Parser.Count; i++)
-                    {
-                        stringValues[i] = csv.GetField(i);
-                    }
+                // 1. PREPARE DATA CONTAINERS (Don't touch the UI yet!)
+                var tempRows = new ObservableCollection<DataRow>();
+                var tempHeaders = new List<string>();
 
-                    if (isFirstRow)
+                // 2. READ THE FILE
+                using (var reader = new StreamReader(csvFilePath))
+                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+                {
+                    bool isFirstRow = true;
+                    while (csv.Read())
                     {
-                        for (int i = 0; i < stringValues.Length; i++)
+                        // Get values for this row
+                        string[] stringValues = new string[csv.Parser.Count];
+                        for (int i = 0; i < csv.Parser.Count; i++)
                         {
-                            var columnHeader = stringValues[i];
-                            var column = new DataGridTextColumn
+                            stringValues[i] = csv.GetField(i);
+                        }
+
+                        // If header row, save headers
+                        if (isFirstRow)
+                        {
+                            for (int i = 0; i < stringValues.Length; i++)
                             {
-                                Header = columnHeader,
-                                Binding = new Binding($"Values[{i}]"),
-                                // Make the source column read-only
-                                IsReadOnly = columnHeader.Equals(
-                                    "source",
-                                    StringComparison.OrdinalIgnoreCase
-                                ),
-                                Width = new DataGridLength(AppConfig.Instance.DefaultColumnWidth),
-                            };
-                            columns.Add(column);
+                                tempHeaders.Add(stringValues[i]);
+                            }
+                            isFirstRow = false;
                         }
-                        _dataGrid.Columns.Clear();
-                        foreach (var column in columns)
+                        else
                         {
-                            _dataGrid.Columns.Add(column);
+                            // If data row, create DataRow
+                            var key = stringValues[0];
+                            var isNew = _newKeySet != null && _newKeySet.Contains(key);
+                            tempRows.Add(new DataRow { Values = stringValues, IsNewKey = isNew });
                         }
-                        isFirstRow = false;
-                    }
-                    else
-                    {
-                        var key = stringValues[0];
-                        var isNew = _newKeySet != null && _newKeySet.Contains(key);
-                        _rows.Add(new DataRow { Values = stringValues, IsNewKey = isNew });
                     }
                 }
+
+                // 3. UPDATE THE DOCUMENT MODEL
+                // Check if this document is already open
+                LocresDocument doc = null;
+
+                if (!string.IsNullOrWhiteSpace(_currentLocresFilePath))
+                {
+                    doc = _documents.FirstOrDefault(d =>
+                            string.Equals(d.WorkingPath, _currentLocresFilePath, StringComparison.OrdinalIgnoreCase));
+                }
+
+                // If not found, create a new one
+                if (doc == null)
+                {
+                    // Fix 1: Pass the path to the constructor
+                    doc = new LocresDocument(_currentLocresFilePath);
+                    _documents.Add(doc);
+                }
+
+                // Update the document's data
+                doc.ActiveCsvPath = csvFilePath;
+
+                // Fix 3: Clear and copy rows (don't overwrite the collection instance)
+                doc.Rows.Clear();
+                foreach (var row in tempRows)
+                {
+                    doc.Rows.Add(row);
+                }
+
+                // Update headers for this document
+                doc.ColumnHeaders.Clear();
+                foreach (var header in tempHeaders)
+                {
+                    doc.ColumnHeaders.Add(header);
+                }
+
+                doc.HasUnsavedChanges = _hasUnsavedChanges;
+
+                // 4. UPDATE THE UI (This is the safe moment to switch)
+                // This triggers 'ApplySelectedDocumentState', which handles the Grid columns/rows safely
+                SelectedDocument = doc;
+
             }
-            _dataGrid.ItemsSource = _rows;
+            catch (Exception ex)
+            {
+                // If something breaks, show a message instead of crashing silently
+                _notificationManager.Show(new Notification("Error Loading CSV", ex.Message, NotificationType.Error));
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
