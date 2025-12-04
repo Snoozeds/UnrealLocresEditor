@@ -9,8 +9,11 @@ namespace UnrealLocresEditor.Models
     public class LocresDocument : INotifyPropertyChanged
     {
         private readonly Guid _id = Guid.NewGuid();
+
+        // Changed to ObservableCollection for better UI compatibility
         private readonly ObservableCollection<DataRow> _rows = new();
-        private readonly List<string> _columnHeaders = new();
+        private readonly ObservableCollection<string> _columnHeaders = new();
+
         private bool _hasUnsavedChanges;
         private string _workingPath = string.Empty;
         private string? _activeCsvPath;
@@ -43,7 +46,8 @@ namespace UnrealLocresEditor.Models
 
         public ObservableCollection<DataRow> Rows => _rows;
 
-        public IList<string> ColumnHeaders => _columnHeaders;
+        // Changed return type to ObservableCollection to match field
+        public ObservableCollection<string> ColumnHeaders => _columnHeaders;
 
         public bool HasUnsavedChanges
         {
@@ -91,6 +95,7 @@ namespace UnrealLocresEditor.Models
             }
         }
 
+        // This creates a header like "Game.locres *" if unsaved
         public string TabHeader => HasUnsavedChanges ? $"{DisplayName} *" : DisplayName;
 
         public void SetDisplayName(string? displayName)

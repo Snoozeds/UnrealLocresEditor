@@ -172,7 +172,6 @@ namespace UnrealLocresEditor.Views
                 return;
             }
 
-            _selectedDocument.WorkingPath = _currentLocresFilePath ?? string.Empty;
             _selectedDocument.ActiveCsvPath = string.IsNullOrWhiteSpace(csvFile)
                 ? null
                 : csvFile;
@@ -974,10 +973,10 @@ namespace UnrealLocresEditor.Views
                 {
                     FileTypeFilter = new[]
                     {
-                        new FilePickerFileType("Localization Files")
-                        {
-                            Patterns = new[] { "*.locres" },
-                        },
+                new FilePickerFileType("Localization Files")
+                {
+                    Patterns = new[] { "*.locres" },
+                },
                     },
                     AllowMultiple = false,
                 }
@@ -985,18 +984,24 @@ namespace UnrealLocresEditor.Views
 
             if (result != null && result.Count > 0)
             {
-                _currentLocresFilePath = result[0].Path.LocalPath;
+                // 1. Get the path the user selected (Local Variable)
+                string originalFilePath = result[0].Path.LocalPath;
 
-                // Update timers for RPC
+                // Update Discord RPC
                 _discordRPC.editStartTime = DateTime.UtcNow;
                 _discordRPC.idleStartTime = null;
+                _discordRPC.UpdatePresence(_appConfig.DiscordRPCEnabled, originalFilePath);
 
-                _discordRPC.UpdatePresence(_appConfig.DiscordRPCEnabled, _currentLocresFilePath); // Display opened file in Discord RPC
-
+                // 2. Prepare unique CSV filename
                 var instanceId = Process.GetCurrentProcess().Id;
-                var csvFileName =
-                    $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}_{instanceId}.csv";
+                var csvFileName = $"{Path.GetFileNameWithoutExtension(originalFilePath)}_{instanceId}.csv";
                 csvFile = Path.Combine(Directory.GetCurrentDirectory(), csvFileName);
+
+                // Safety: Delete any old CSV with this name
+                if (File.Exists(csvFile))
+                {
+                    File.Delete(csvFile);
+                }
 
                 // Check if UnrealLocres.exe exists
                 var downloader = new UnrealLocresDownloader(this, _notificationManager);
@@ -1005,68 +1010,67 @@ namespace UnrealLocresEditor.Views
                     return;
                 }
 
-                // Run UnrealLocres.exe
+                // 3. Run UnrealLocres.exe
                 var process = new Process
                 {
                     StartInfo = ProcessUtils.GetProcessStartInfo(
                         command: "export",
-                        locresFilePath: _currentLocresFilePath,
+                        locresFilePath: originalFilePath,
                         useWine: this.UseWine,
                         csvFileName: csvFileName
                     ),
                 };
 
                 process.Start();
-                process.WaitForExit();
+                await process.WaitForExitAsync(); // Non-blocking wait
 
                 if (process.ExitCode == 0)
                 {
                     try
                     {
-                        // Original csv file UnrealLocres makes (usually something like Game.csv)
-                        var originalCsvFile = Path.Combine(
-                            Directory.GetCurrentDirectory(),
-                            $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}.csv"
-                        );
-
-                        // Verify the CSV file exists before trying to load it
-                        if (!File.Exists(originalCsvFile))
+                        // 4. Verify CSV creation (Handle tool ignoring custom name)
+                        if (!File.Exists(csvFile))
                         {
-                            _notificationManager.Show(
-                                new Notification(
-                                    "Error",
-                                    $"CSV file not found after export: {originalCsvFile}",
-                                    NotificationType.Error
-                                )
+                            // Check for the default name (e.g., Game.csv)
+                            var defaultCsvFile = Path.Combine(
+                                Directory.GetCurrentDirectory(),
+                                $"{Path.GetFileNameWithoutExtension(originalFilePath)}.csv"
                             );
-                            return;
+
+                            if (File.Exists(defaultCsvFile))
+                            {
+                                // Rename it to our unique name
+                                File.Move(defaultCsvFile, csvFile, overwrite: true);
+                            }
+                            else
+                            {
+                                _notificationManager.Show(new Notification("Error", "CSV file not found after export.", NotificationType.Error));
+                                return;
+                            }
                         }
 
-                        // Rename it to have the instance id to avoid file conflicts when multiple instances of ULE are open
-                        File.Move(originalCsvFile, csvFile);
-
+                        // 5. Create a specific working copy of the .locres file
+                        // This ensures every opened file has a unique path in the temp folder,
+                        // preventing tabs from overwriting each other.
                         var importedLocresDir = GetOrCreateTempDirectory();
-                        var uniqueFileName =
-                            $"{Path.GetFileNameWithoutExtension(_currentLocresFilePath)}_{Process.GetCurrentProcess().Id}{Path.GetExtension(_currentLocresFilePath)}";
-                        var importedLocresPath = Path.Combine(importedLocresDir, uniqueFileName);
+                        var uniqueLocresFileName = $"{Path.GetFileNameWithoutExtension(originalFilePath)}_{instanceId}{Path.GetExtension(originalFilePath)}";
+                        var importedLocresPath = Path.Combine(importedLocresDir, uniqueLocresFileName);
 
-                        if (File.Exists(importedLocresPath))
-                        {
-                            // If file exists, just use it
-                            _currentLocresFilePath = importedLocresPath;
-                        }
-                        else
-                        {
-                            // Otherwise copy
-                            File.Copy(_currentLocresFilePath, importedLocresPath, true);
-                            _currentLocresFilePath = importedLocresPath;
-                        }
+                        File.Copy(originalFilePath, importedLocresPath, true);
 
-                        LoadCsv(csvFile);
+                        // Update global tracking (optional, but LoadCsv handles the critical part now)
+                        _currentLocresFilePath = importedLocresPath;
+
+                        // 6. Load data into the tab
+                        LoadCsv(csvFile, importedLocresPath, originalFilePath);
                     }
-
+                    catch (Exception ex)
+                    {
+                        _notificationManager.Show(new Notification("Error Opening File", ex.Message, NotificationType.Error));
+                    }
                     finally
                     {
+                        // Cleanup temp CSV
                         if (File.Exists(csvFile))
                         {
                             File.Delete(csvFile);
@@ -1075,58 +1079,51 @@ namespace UnrealLocresEditor.Views
                 }
                 else
                 {
-                    Console.WriteLine(
-                        $"Error reading locres data: {process.StandardOutput.ReadToEnd()}"
-                    );
+                    // Handle Process Failure
+                    var output = await process.StandardOutput.ReadToEndAsync();
+                    Console.WriteLine($"Error reading locres data: {output}");
                     _notificationManager.Show(
                         new Notification(
                             "Error reading locres data:",
-                            $"{process.StandardOutput.ReadToEnd()}",
+                            output,
                             NotificationType.Error
                         )
                     );
+
                     if (File.Exists(csvFile))
                     {
-                        File.Delete(csvFile); // Clean up if UnrealLocres failed
+                        File.Delete(csvFile);
                     }
                 }
             }
         }
 
-        private void LoadCsv(string csvFilePath)
+        // Change signature to accept locresPath
+        // Change signature to accept locresPath
+        private void LoadCsv(string csvFilePath, string locresPath, string originalUserPath = null)
         {
             try
             {
-                // 1. PREPARE DATA CONTAINERS (Don't touch the UI yet!)
+                // 1. PREPARE DATA
                 var tempRows = new ObservableCollection<DataRow>();
                 var tempHeaders = new List<string>();
 
-                // 2. READ THE FILE
                 using (var reader = new StreamReader(csvFilePath))
                 using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
                 {
                     bool isFirstRow = true;
                     while (csv.Read())
                     {
-                        // Get values for this row
                         string[] stringValues = new string[csv.Parser.Count];
-                        for (int i = 0; i < csv.Parser.Count; i++)
-                        {
-                            stringValues[i] = csv.GetField(i);
-                        }
+                        for (int i = 0; i < csv.Parser.Count; i++) stringValues[i] = csv.GetField(i);
 
-                        // If header row, save headers
                         if (isFirstRow)
                         {
-                            for (int i = 0; i < stringValues.Length; i++)
-                            {
-                                tempHeaders.Add(stringValues[i]);
-                            }
+                            for (int i = 0; i < stringValues.Length; i++) tempHeaders.Add(stringValues[i]);
                             isFirstRow = false;
                         }
                         else
                         {
-                            // If data row, create DataRow
                             var key = stringValues[0];
                             var isNew = _newKeySet != null && _newKeySet.Contains(key);
                             tempRows.Add(new DataRow { Values = stringValues, IsNewKey = isNew });
@@ -1134,53 +1131,49 @@ namespace UnrealLocresEditor.Views
                     }
                 }
 
-                // 3. UPDATE THE DOCUMENT MODEL
-                // Check if this document is already open
-                LocresDocument doc = null;
+                // 2. FIND OR CREATE DOCUMENT
+                // We identify documents by their WORKING path (the temp file)
+                var doc = _documents.FirstOrDefault(d =>
+                        string.Equals(d.WorkingPath, locresPath, StringComparison.OrdinalIgnoreCase));
 
-                if (!string.IsNullOrWhiteSpace(_currentLocresFilePath))
-                {
-                    doc = _documents.FirstOrDefault(d =>
-                            string.Equals(d.WorkingPath, _currentLocresFilePath, StringComparison.OrdinalIgnoreCase));
-                }
-
-                // If not found, create a new one
                 if (doc == null)
                 {
-                    // Fix 1: Pass the path to the constructor
-                    doc = new LocresDocument(_currentLocresFilePath);
+                    // FIX: Initialize with the "Pretty" path (originalUserPath) if we have it.
+                    // This sets the 'OriginalPath' property in the model, which DisplayName uses.
+                    string pathForDisplay = !string.IsNullOrEmpty(originalUserPath) ? originalUserPath : locresPath;
+
+                    doc = new LocresDocument(pathForDisplay);
+
+                    // CRITICAL: Ensure WorkingPath points to the actual temp file we are editing
+                    doc.WorkingPath = locresPath;
+
                     _documents.Add(doc);
                 }
 
-                // Update the document's data
+                // 3. UPDATE DOCUMENT DATA
                 doc.ActiveCsvPath = csvFilePath;
 
-                // Fix 3: Clear and copy rows (don't overwrite the collection instance)
                 doc.Rows.Clear();
-                foreach (var row in tempRows)
-                {
-                    doc.Rows.Add(row);
-                }
+                foreach (var row in tempRows) doc.Rows.Add(row);
 
-                // Update headers for this document
                 doc.ColumnHeaders.Clear();
-                foreach (var header in tempHeaders)
-                {
-                    doc.ColumnHeaders.Add(header);
-                }
+                foreach (var header in tempHeaders) doc.ColumnHeaders.Add(header);
 
                 doc.HasUnsavedChanges = _hasUnsavedChanges;
 
-                // 4. UPDATE THE UI (This is the safe moment to switch)
-                // This triggers 'ApplySelectedDocumentState', which handles the Grid columns/rows safely
-                SelectedDocument = doc;
-
+                // 4. UPDATE UI
+                if (SelectedDocument == doc)
+                {
+                    ApplySelectedDocumentState();
+                }
+                else
+                {
+                    SelectedDocument = doc;
+                }
             }
             catch (Exception ex)
             {
-                // If something breaks, show a message instead of crashing silently
                 _notificationManager.Show(new Notification("Error Loading CSV", ex.Message, NotificationType.Error));
-                Console.WriteLine(ex.ToString());
             }
         }
 
@@ -1341,16 +1334,23 @@ namespace UnrealLocresEditor.Views
 
         private async void OpenSpreadsheetMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            // Safety check: We can only import a CSV if we already have a Locres file open
+            if (string.IsNullOrEmpty(_currentLocresFilePath))
+            {
+                _notificationManager.Show(new Notification("Error", "Please open a .locres file first before importing a spreadsheet.", NotificationType.Warning));
+                return;
+            }
+
             var storageProvider = StorageProvider;
             var result = await storageProvider.OpenFilePickerAsync(
                 new FilePickerOpenOptions
                 {
                     FileTypeFilter = new[]
                     {
-                        new FilePickerFileType("Spreadsheet Files")
-                        {
-                            Patterns = new[] { "*.csv" },
-                        },
+                new FilePickerFileType("Spreadsheet Files")
+                {
+                    Patterns = new[] { "*.csv" },
+                },
                     },
                     AllowMultiple = false,
                 }
@@ -1360,14 +1360,14 @@ namespace UnrealLocresEditor.Views
             {
                 string filePath = result[0].Path.LocalPath;
 
-                // Load the CSV file
-                LoadCsv(filePath);
+                // Pass BOTH the CSV path and the current Locres path
+                LoadCsv(filePath, _currentLocresFilePath);
 
-                csvFile = filePath; // Update to the newly opened CSV file
+                csvFile = filePath;
                 _discordRPC.editStartTime = DateTime.UtcNow;
                 _discordRPC.idleStartTime = null;
 
-                _discordRPC.UpdatePresence(_appConfig.DiscordRPCEnabled, _currentLocresFilePath); // Update Discord presence
+                _discordRPC.UpdatePresence(_appConfig.DiscordRPCEnabled, _currentLocresFilePath);
             }
         }
 
@@ -1836,7 +1836,8 @@ namespace UnrealLocresEditor.Views
 
                 // Open merged file in editor
                 _currentLocresFilePath = mergedLocresPath;
-                LoadCsv(mergedCsv);
+                LoadCsv(mergedCsv, mergedLocresPath, null);
+
 
                 // Clean up temp CSV files
                 try

@@ -11,6 +11,7 @@
     Icon="/Assets/ULE-icon.ico"
     WindowStartupLocation="CenterScreen">
 	<Window.Styles>
+		<!-- Existing DataGrid Styles -->
 		<Style Selector="DataGridCell">
 			<Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis" />
 			<Setter Property="Foreground" Value="{DynamicResource TextColor}" />
@@ -24,15 +25,42 @@
 			<Setter Property="Background" Value="{DynamicResource DataGridAlternateRowColor}" />
 		</Style>
 
-		<!-- Optional: Style for the TabStrip Items to make them look nice -->
+		<!-- TAB STYLES -->
+
+		<!-- 1. Default State (Normal) -->
 		<Style Selector="TabStripItem">
 			<Setter Property="FontSize" Value="12"/>
-			<Setter Property="Margin" Value="0,0,0,0"/>
-			<Setter Property="Padding" Value="10,5"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="Margin" Value="0,0,2,0"/>
+			<Setter Property="Padding" Value="15,8"/>
+			<Setter Property="CornerRadius" Value="4 4 0 0"/>
+			<Setter Property="Cursor" Value="Hand"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+			<Setter Property="BorderThickness" Value="1,1,1,0"/>
+			<Setter Property="Transitions">
+				<Transitions>
+					<BrushTransition Property="Background" Duration="0:0:0.1"/>
+				</Transitions>
+			</Setter>
 		</Style>
+
+		<!-- 2. Hover State (Unselected) -->
+		<!-- Using a slightly stronger gray so it shows up on White themes too -->
+		<Style Selector="TabStripItem:pointerover">
+			<Setter Property="Background" Value="#40808080"/>
+		</Style>
+
+		<!-- 3. Selected State (Active) -->
 		<Style Selector="TabStripItem:selected">
 			<Setter Property="Background" Value="{DynamicResource DataGridHeaderColor}"/>
 			<Setter Property="FontWeight" Value="Bold"/>
+		</Style>
+
+		<!-- 4. Selected + Hover State -->
+		<!-- This prevents the Active tab from turning gray when you mouse over it -->
+		<Style Selector="TabStripItem:selected:pointerover">
+			<Setter Property="Background" Value="{DynamicResource DataGridHeaderColor}"/>
 		</Style>
 	</Window.Styles>
 
@@ -107,20 +135,21 @@
 
 		<!-- REPLACED COMBOBOX WITH TABSTRIP -->
 		<TabStrip
-				x:Name="uiDocumentTabs"
-				Grid.Row="1"
-				Grid.ColumnSpan="2"
-				Margin="0"
-				Background="Transparent"
-				x:CompileBindings="False"
-				ItemsSource="{Binding Documents}"
-				SelectedItem="{Binding SelectedDocument}">
+            x:Name="uiDocumentTabs"
+            Grid.Row="1"
+            Grid.ColumnSpan="2"
+            Margin="5,5,5,0"
+            MinHeight="30"
+            Background="Transparent"
+            x:CompileBindings="False"
+            ItemsSource="{Binding Documents}"
+            SelectedItem="{Binding SelectedDocument}">
 			<TabStrip.ItemTemplate>
 				<DataTemplate>
+					<!-- We removed the Border here so the TabStripItem Style handles the background -->
 					<StackPanel Orientation="Horizontal" Spacing="5">
-						<!-- Displays the file name (e.g. Game.locres) -->
-						<TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
-						<!-- Tip: If you want an unsaved indicator (*) you could add a binding to HasUnsavedChanges here later -->
+						<TextBlock Text="{Binding TabHeader}"
+											 VerticalAlignment="Center"/>
 					</StackPanel>
 				</DataTemplate>
 			</TabStrip.ItemTemplate>
@@ -141,7 +170,6 @@
 				MinColumnWidth="50">
 			<DataGrid.Styles>
 				<Style Selector="DataGridCell">
-					<Setter Property="MaxWidth" Value="{Binding Width, RelativeSource={RelativeSource AncestorType=DataGridColumn}}" />
 					<Setter Property="Foreground" Value="{DynamicResource TextColor}" />
 				</Style>
 			</DataGrid.Styles>

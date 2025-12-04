@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using UnrealLocresEditor.ViewModels;
 using UnrealLocresEditor.Views;
+// Removed "using UnrealLocresEditor.ViewModels;" because we don't use it anymore!
 
 namespace UnrealLocresEditor
 {
@@ -44,11 +44,14 @@ namespace UnrealLocresEditor
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainWindow { DataContext = new MainViewModel() };
+                // FIX: Removed "{ DataContext = new MainViewModel() }"
+                // Now MainWindow keeps the DataContext it set for itself.
+                desktop.MainWindow = new MainWindow();
             }
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
             {
-                singleViewPlatform.MainView = new MainWindow { DataContext = new MainViewModel() };
+                // FIX: Same here for mobile/browser support
+                singleViewPlatform.MainView = new MainWindow();
             }
 
             base.OnFrameworkInitializationCompleted();
