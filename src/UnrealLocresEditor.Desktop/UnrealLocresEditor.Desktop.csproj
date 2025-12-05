@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TrimmerRootAssembly Include="UnrealLocresEditor" />
     <ProjectReference Include="..\UnrealLocresEditor\UnrealLocresEditor.csproj" />
   </ItemGroup>
 </Project>

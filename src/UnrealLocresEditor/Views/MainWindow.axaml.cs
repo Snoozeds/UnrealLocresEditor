@@ -1,17 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Data;
@@ -24,6 +11,19 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CsvHelper;
 using CsvHelper.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
 using UnrealLocresEditor.Models;
 using UnrealLocresEditor.Utils;
 
@@ -709,89 +709,105 @@ namespace UnrealLocresEditor.Views
             if (e.KeyModifiers == KeyModifiers.Control)
             {
                 var focusedControl = FocusManager.GetFocusedElement() as TextBox;
+
+                // CASE A: Editing a specific text box? Let default copy/paste happen.
                 if (focusedControl != null)
                 {
-                    if (e.Key == Key.C)
+                    return; // Don't handle it, let the TextBox handle it
+                }
+
+                // CASE B: Not editing? Handle Grid row copying.
+                if (e.Key == Key.C)
+                {
+                    // NEW: Check if we have rows selected
+                    var selectedItems = _dataGrid.SelectedItems;
+                    if (selectedItems != null && selectedItems.Count > 0)
                     {
-                        if (!string.IsNullOrEmpty(focusedControl.SelectedText))
+                        var sb = new StringBuilder();
+                        foreach (DataRow row in selectedItems)
                         {
-                            await this.Clipboard.SetTextAsync(focusedControl.SelectedText);
-                            e.Handled = true;
+                            // Convert row to tab-separated string
+                            // This pastes perfectly into Excel/Google Sheets
+                            sb.AppendLine(string.Join("\t", row.Values));
                         }
-                    }
-                    else if (e.Key == Key.V)
-                    {
-                        var clipboardText = await this.Clipboard.GetTextAsync();
-                        if (!string.IsNullOrEmpty(clipboardText))
-                        {
-                            int caretIndex = focusedControl.CaretIndex;
-                            focusedControl.Text = focusedControl.Text.Insert(
-                                caretIndex,
-                                clipboardText
-                            );
-                            focusedControl.CaretIndex = caretIndex + clipboardText.Length;
-                            e.Handled = true;
-                        }
+
+                        await this.Clipboard.SetTextAsync(sb.ToString());
+                        e.Handled = true; // Stop Avalonia from trying to copy just one cell
                     }
                 }
-                else if (_dataGrid.SelectedItem is DataRow selectedRow)
+                else if (e.Key == Key.V)
                 {
-                    int selectedColumnIndex = _dataGrid.Columns.IndexOf(_dataGrid.CurrentColumn);
-                    if (selectedColumnIndex < 0)
-                        return;
-
-                    if (e.Key == Key.C)
+                    var clipboardText = await this.Clipboard.GetTextAsync();
+                    if (!string.IsNullOrEmpty(clipboardText))
                     {
-                        // Copy cell content from the underlying data.
-                        string cellValue = selectedRow.Values[selectedColumnIndex];
-                        await this.Clipboard.SetTextAsync(cellValue);
-                        e.Handled = true;
-                    }
-                    else if (e.Key == Key.V)
-                    {
-                        // Begin editing if not already editing.
-                        _dataGrid.BeginEdit();
-
-                        // Defer the paste operation until the editing control (TextBox) is available.
-                        Dispatcher.UIThread.Post(
-                            async () =>
-                            {
-                                var editTextBox = FocusManager.GetFocusedElement() as TextBox;
-                                if (editTextBox != null)
-                                {
-                                    var clipboardText = await this.Clipboard.GetTextAsync();
-                                    if (!string.IsNullOrEmpty(clipboardText))
-                                    {
-                                        // If user has selected text, replace that
-                                        if (!string.IsNullOrEmpty(editTextBox.SelectedText))
-                                        {
-                                            int selectionStart = editTextBox.SelectionStart;
-                                            editTextBox.Text = editTextBox
-                                                .Text.Remove(
-                                                    selectionStart,
-                                                    editTextBox.SelectionEnd - selectionStart
-                                                )
-                                                .Insert(selectionStart, clipboardText);
-                                            editTextBox.CaretIndex =
-                                                selectionStart + clipboardText.Length;
-                                        }
-                                        // Otherwise, replace entire cell
-                                        else
-                                        {
-                                            editTextBox.Text = clipboardText;
-                                            editTextBox.CaretIndex = clipboardText.Length;
-                                        }
-                                    }
-                                }
-                            },
-                            DispatcherPriority.Background
+                        int caretIndex = focusedControl.CaretIndex;
+                        focusedControl.Text = focusedControl.Text.Insert(
+                            caretIndex,
+                            clipboardText
                         );
-
+                        focusedControl.CaretIndex = caretIndex + clipboardText.Length;
                         e.Handled = true;
                     }
                 }
             }
+            else if (_dataGrid.SelectedItem is DataRow selectedRow)
+            {
+                int selectedColumnIndex = _dataGrid.Columns.IndexOf(_dataGrid.CurrentColumn);
+                if (selectedColumnIndex < 0)
+                    return;
+
+                if (e.Key == Key.C)
+                {
+                    // Copy cell content from the underlying data.
+                    string cellValue = selectedRow.Values[selectedColumnIndex];
+                    await this.Clipboard.SetTextAsync(cellValue);
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.V)
+                {
+                    // Begin editing if not already editing.
+                    _dataGrid.BeginEdit();
+
+                    // Defer the paste operation until the editing control (TextBox) is available.
+                    Dispatcher.UIThread.Post(
+                        async () =>
+                        {
+                            var editTextBox = FocusManager.GetFocusedElement() as TextBox;
+                            if (editTextBox != null)
+                            {
+                                var clipboardText = await this.Clipboard.GetTextAsync();
+                                if (!string.IsNullOrEmpty(clipboardText))
+                                {
+                                    // If user has selected text, replace that
+                                    if (!string.IsNullOrEmpty(editTextBox.SelectedText))
+                                    {
+                                        int selectionStart = editTextBox.SelectionStart;
+                                        editTextBox.Text = editTextBox
+                                            .Text.Remove(
+                                                selectionStart,
+                                                editTextBox.SelectionEnd - selectionStart
+                                            )
+                                            .Insert(selectionStart, clipboardText);
+                                        editTextBox.CaretIndex =
+                                            selectionStart + clipboardText.Length;
+                                    }
+                                    // Otherwise, replace entire cell
+                                    else
+                                    {
+                                        editTextBox.Text = clipboardText;
+                                        editTextBox.CaretIndex = clipboardText.Length;
+                                    }
+                                }
+                            }
+                        },
+                        DispatcherPriority.Background
+                    );
+
+                    e.Handled = true;
+                }
+            }
         }
+
 
         private void ShowFindDialog()
         {
@@ -1218,6 +1234,221 @@ namespace UnrealLocresEditor.Views
             }
         }
 
+        private async void ExportTxtMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (_rows == null || _rows.Count == 0)
+            {
+                _notificationManager.Show(new Notification("No Data", "There is no data to export.", NotificationType.Warning));
+                return;
+            }
+
+            var saveOptions = new FilePickerSaveOptions
+            {
+                Title = "Export to Text (TSV)",
+                SuggestedFileName = Path.ChangeExtension(SelectedDocument.DisplayName, ".txt"),
+                FileTypeChoices = new[]
+        {
+            new FilePickerFileType("Text (Tab Separated)") { Patterns = new[] { "*.txt", "*.tsv" } },
+        },
+            };
+
+            var storageFile = await StorageProvider.SaveFilePickerAsync(saveOptions);
+
+            if (storageFile != null)
+            {
+                var filePath = storageFile.Path.LocalPath;
+
+                try
+                {
+                    // NEW CONFIGURATION: Cleaner Output
+                    var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                    {
+                        Delimiter = "\t",
+                        // This function decides when to add quotes.
+                        // We tell it: ONLY quote if the text contains a Tab, Newline, or Quote.
+                        // We do NOT quote just for spaces.
+                        ShouldQuote = args =>
+                        {
+                            if (string.IsNullOrEmpty(args.Field)) return false;
+
+                            return args.Field.Contains("\t")
+                                || args.Field.Contains("\n")
+                                || args.Field.Contains("\r")
+                                || args.Field.Contains("\"");
+                        }
+                    };
+
+                    using (var writer = new StreamWriter(filePath, false, Encoding.UTF8))
+                    using (var csv = new CsvWriter(writer, config))
+                    {
+                        // Write Headers
+                        for (int i = 0; i < _dataGrid.Columns.Count; i++)
+                        {
+                            csv.WriteField(((DataGridTextColumn)_dataGrid.Columns[i]).Header);
+                        }
+                        csv.NextRecord();
+
+                        // Write Rows
+                        foreach (DataRow row in _rows)
+                        {
+                            for (int i = 0; i < row.Values.Length; i++)
+                            {
+                                csv.WriteField(row.Values[i]);
+                            }
+                            csv.NextRecord();
+                        }
+                    }
+
+                    _notificationManager.Show(new Notification("Success", $"Exported to {Path.GetFileName(filePath)}", NotificationType.Success));
+                }
+                catch (Exception ex)
+                {
+                    _notificationManager.Show(new Notification("Export Error", ex.Message, NotificationType.Error));
+                }
+            }
+        }
+
+        private async void ImportTxtMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_currentLocresFilePath))
+            {
+                _notificationManager.Show(new Notification("Error", "Please open a .locres file first.", NotificationType.Warning));
+                return;
+            }
+
+            var result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Import Text (Supports TSV or Old App Format)",
+                FileTypeFilter = new[] { new FilePickerFileType("Text Files") { Patterns = new[] { "*.txt", "*.tsv" } } },
+                AllowMultiple = false
+            });
+
+            if (result != null && result.Count > 0)
+            {
+                var filePath = result[0].Path.LocalPath;
+                try
+                {
+                    var lines = await File.ReadAllLinesAsync(filePath);
+
+                    // CHECK: Is this the "Old App" format?
+                    bool isOldFormat = lines.Length > 0 && lines[0].Contains("[~NAMES-INCLUDED~]");
+
+                    var importedData = new Dictionary<string, string>();
+
+                    if (isOldFormat)
+                    {
+                        // --- STRATEGY A: PARSE OLD FORMAT (Key=Value) ---
+                        foreach (var line in lines)
+                        {
+                            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("//") || line.StartsWith("[~")) continue;
+
+                            // Split only on the FIRST '=' found
+                            var parts = line.Split(new[] { '=' }, 2);
+                            if (parts.Length == 2)
+                            {
+                                var key = parts[0].Trim();
+                                var val = parts[1].Trim();
+
+                                // Old app often wraps values in quotes like "Hello World", we should remove them
+                                if (val.StartsWith("\"") && val.EndsWith("\"") && val.Length >= 2)
+                                {
+                                    val = val.Substring(1, val.Length - 2);
+                                }
+
+                                // Handle escaped newlines from old format
+                                val = val.Replace("\\n", "\n").Replace("\\r", "");
+
+                                importedData[key] = val;
+                                // Add slash version too, just in case
+                                if (!key.StartsWith("/")) importedData["/" + key] = val;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // --- STRATEGY B: PARSE STANDARD TSV (Key \t Source \t Target) ---
+                        // We use manual splitting instead of CsvHelper here to be robust against bad quoting
+                        foreach (var line in lines)
+                        {
+                            if (string.IsNullOrWhiteSpace(line)) continue;
+
+                            var parts = line.Split('\t');
+
+                            // Assume 3 columns: Key, Source, Target
+                            // Or 2 columns: Key, Target
+                            if (parts.Length >= 2)
+                            {
+                                var key = parts[0].Trim();
+                                // If 3 parts, Target is usually index 2. If 2 parts, Target is index 1.
+                                var val = parts.Length >= 3 ? parts[2] : parts[1];
+
+                                // Clean quotes if TSV has them
+                                val = val.Trim();
+                                if (val.StartsWith("\"") && val.EndsWith("\"")) val = val.Substring(1, val.Length - 2);
+
+                                // Handle standard CSV double-quote escaping ("" -> ")
+                                val = val.Replace("\"\"", "\"");
+
+                                importedData[key] = val;
+                            }
+                        }
+                    }
+
+                    // --- APPLY TO GRID ---
+                    int keyIndex = -1;
+                    int targetIndex = -1;
+
+                    for (int i = 0; i < _dataGrid.Columns.Count; i++)
+                    {
+                        var header = ((DataGridTextColumn)_dataGrid.Columns[i]).Header?.ToString().ToLower();
+                        if (header == "key") keyIndex = i;
+                        else if (header == "target") targetIndex = i;
+                    }
+
+                    if (keyIndex == -1 || targetIndex == -1) return;
+
+                    int matchCount = 0;
+                    foreach (var row in _rows)
+                    {
+                        string currentKey = row.Values[keyIndex];
+
+                        // Try exact match, then try adding/removing slash
+                        string foundValue = null;
+                        if (importedData.TryGetValue(currentKey, out var v1)) foundValue = v1;
+                        else if (currentKey.StartsWith("/") && importedData.TryGetValue(currentKey.Substring(1), out var v2)) foundValue = v2;
+
+                        if (foundValue != null)
+                        {
+                            var oldValues = row.Values;
+                            // Only update if different
+                            if (oldValues[targetIndex] != foundValue)
+                            {
+                                oldValues[targetIndex] = foundValue;
+                                matchCount++;
+                            }
+                        }
+                    }
+
+                    // Force update
+                    _dataGrid.InvalidateVisual();
+                    if (matchCount > 0)
+                    {
+                        _hasUnsavedChanges = true;
+                        if (SelectedDocument != null) SelectedDocument.HasUnsavedChanges = true;
+                        RefreshUnsavedChangesFlag();
+                        _notificationManager.Show(new Notification("Import Successful", $"Updated {matchCount} rows from {(isOldFormat ? "Old Format" : "TSV")}.", NotificationType.Success));
+                    }
+                    else
+                    {
+                        _notificationManager.Show(new Notification("Import Result", "No matching keys found to update.", NotificationType.Warning));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _notificationManager.Show(new Notification("Import Error", ex.Message, NotificationType.Error));
+                }
+            }
+        }
         private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (_currentLocresFilePath == null)
@@ -1306,11 +1537,9 @@ namespace UnrealLocresEditor.Views
 
             if (process.ExitCode == 0)
             {
-                var instanceId = Process.GetCurrentProcess().Id.ToString();
                 var modifiedLocres = _currentLocresFilePath + ".new";
 
-                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(modifiedLocres);
-                var baseFileName = fileNameWithoutExtension.Split('_')[0];
+                var newFileName = SelectedDocument.DisplayName;
 
                 // Create export directory with current date and time
                 var exportDirectory = Path.Combine(exeDirectory, "export");
@@ -1322,13 +1551,13 @@ namespace UnrealLocresEditor.Views
                     Directory.CreateDirectory(destinationDirectory);
                 }
 
-                var newFileName = baseFileName + ".locres";
                 var destinationFile = Path.Combine(destinationDirectory, newFileName);
 
                 try
                 {
                     // Move and rename
                     File.Move(modifiedLocres, destinationFile);
+
 
                     // Open file explorer/equivalent window to where locres has been saved.
                     if (openExplorer)
@@ -1418,11 +1647,13 @@ namespace UnrealLocresEditor.Views
             {
                 var saveOptions = new FilePickerSaveOptions
                 {
-                    SuggestedFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath),
+                    // OLD: SuggestedFileName = Path.GetFileNameWithoutExtension(_currentLocresFilePath),
+                    // NEW:
+                    SuggestedFileName = Path.ChangeExtension(SelectedDocument.DisplayName, ".csv"),
                     FileTypeChoices = new[]
                     {
-                        new FilePickerFileType("CSV file") { Patterns = new[] { "*.csv" } },
-                    },
+                new FilePickerFileType("CSV file") { Patterns = new[] { "*.csv" } },
+            },
                 };
 
                 var storageFile = await StorageProvider.SaveFilePickerAsync(saveOptions);
@@ -1908,23 +2139,46 @@ namespace UnrealLocresEditor.Views
             }
         }
 
-        #endregion
+        // Close
 
+        private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+        #endregion
 
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
+
+            // DataGrid is critical
             _dataGrid = this.FindControl<DataGrid>("uiDataGrid");
-            _dataGrid.AddHandler(KeyDownEvent, DataGrid_PreviewKeyDown, RoutingStrategies.Tunnel);
+            if (_dataGrid != null)
+            {
+                _dataGrid.AddHandler(KeyDownEvent, DataGrid_PreviewKeyDown, RoutingStrategies.Tunnel);
+            }
 
+            // Safety check for Linux Menu
             var linuxMenuItem = this.FindControl<MenuItem>("uiLinuxHeader");
-            linuxMenuItem.IsVisible = PlatformUtils.IsLinux();
+            if (linuxMenuItem != null)
+            {
+                linuxMenuItem.IsVisible = PlatformUtils.IsLinux();
+            }
 
+            // Safety check for Preferences
             var preferencesMenuItem = this.FindControl<MenuItem>("uiPreferencesMenuItem");
-            preferencesMenuItem.Click += PreferencesMenuItem_Click;
+            if (preferencesMenuItem != null)
+            {
+                preferencesMenuItem.Click += PreferencesMenuItem_Click;
+            }
 
+            // Safety check for Wine Prefix
             var winePrefixMenuItem = this.FindControl<MenuItem>("uiWinePrefix");
-            winePrefixMenuItem.IsVisible = PlatformUtils.IsLinux();
+            if (winePrefixMenuItem != null)
+            {
+                winePrefixMenuItem.IsVisible = PlatformUtils.IsLinux();
+            }
         }
 
         // Find dialog

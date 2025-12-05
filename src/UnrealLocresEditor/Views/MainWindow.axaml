@@ -2,6 +2,7 @@
     x:Class="UnrealLocresEditor.Views.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="clr-namespace:UnrealLocresEditor.Models"
     Title="Unreal Locres Editor"
     Width="800"
     Height="450"
@@ -66,87 +67,112 @@
 
 	<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,*">
 		<Menu Grid.Row="0" Grid.ColumnSpan="2">
+
+			<!-- FILE MENU -->
 			<MenuItem Header="_File">
-				<MenuItem
-						Name="uiOpenMenuItem"
-						Click="OpenMenuItem_Click"
-						Header="Open locres" />
-				<MenuItem
-						Name="uiSaveMenuItem"
-						Click="SaveMenuItem_Click"
-						Header="Export locres" />
-				<MenuItem
-						Name="uiCloseMenuItem"
-						Click="CloseMenuItem_Click"
-						Header="Close locres" />
-				<MenuItem
-						Name="uiMergeMenuItem"
-						Click="MergeMenuItem_Click"
-						Header="Merge locres" />
+				<!-- Main Actions -->
+				<MenuItem Name="uiOpenMenuItem"
+                  Click="OpenMenuItem_Click"
+                  Header="Open locres"
+                  InputGesture="Ctrl+O" />
+				<MenuItem Name="uiMergeMenuItem"
+                  Click="MergeMenuItem_Click"
+                  Header="Merge locres" />
+
 				<MenuItem Header="-" />
-				<MenuItem
-						Name="uiOpenSpreadsheetMenuItem"
-						Click="OpenSpreadsheetMenuItem_Click"
-						Header="Open Spreadsheet" />
-				<MenuItem
-						Name="uiSaveAsMenuItem"
-						Click="SaveAsMenuItem_Click"
-						Header="Save As..." />
+
+				<!-- Save Actions -->
+				<MenuItem Name="uiSaveMenuItem"
+                  Click="SaveMenuItem_Click"
+                  Header="Save / Export locres"
+                  InputGesture="Ctrl+S" />
+
+				<MenuItem Header="-" />
+
+				<!-- Import / Export Submenu -->
+				<MenuItem Header="Import / Export Data">
+					<MenuItem Name="uiOpenSpreadsheetMenuItem"
+										Click="OpenSpreadsheetMenuItem_Click"
+										Header="Import CSV (Spreadsheet)" />
+					<MenuItem Name="uiImportTxtMenuItem"
+										Click="ImportTxtMenuItem_Click"
+										Header="Import TXT (TSV)" />
+					<MenuItem Header="-" />
+					<MenuItem Name="uiSaveAsMenuItem"
+										Click="SaveAsMenuItem_Click"
+										Header="Export to CSV" />
+					<MenuItem Name="uiExportTxtMenuItem"
+										Click="ExportTxtMenuItem_Click"
+										Header="Export to TXT (TSV)" />
+				</MenuItem>
+
+				<MenuItem Header="-" />
+
+				<!-- Closing Actions -->
+				<MenuItem Name="uiCloseMenuItem"
+                  Click="CloseMenuItem_Click"
+                  Header="Close Current Tab"
+                  InputGesture="Ctrl+W" />
+
+				<MenuItem Name="uiExitMenuItem"
+                  Click="ExitMenuItem_Click"
+                  Header="Exit"
+                  InputGesture="Alt+F4" />
 			</MenuItem>
+
+			<!-- EDIT MENU (Restored!) -->
 			<MenuItem Header="_Edit">
-				<MenuItem
-						Name="uiFindMenuItem"
-						Click="FindMenuItem_Click"
-						Header="Find"
-						InputGesture="Ctrl+F" />
-				<MenuItem
-						Name="uiFindReplaceMenuItem"
-						Click="FindReplaceMenuItem_Click"
-						Header="Find and replace"
-						InputGesture="Ctrl+H" />
-				<MenuItem
-						Click="CopySourceToTarget"
-						Header="Copy _Source to Target"
-						InputGesture="Ctrl+T" />
-				<MenuItem
-						Click="CopySourceToTargetMultiple"
-						Header="Copy Source to Target (_Multiple)"
-						InputGesture="Ctrl+Shift+T" />
+				<MenuItem Name="uiFindMenuItem"
+                  Click="FindMenuItem_Click"
+                  Header="Find"
+                  InputGesture="Ctrl+F" />
+				<MenuItem Name="uiFindReplaceMenuItem"
+                  Click="FindReplaceMenuItem_Click"
+                  Header="Find and replace"
+                  InputGesture="Ctrl+H" />
+				<MenuItem Click="CopySourceToTarget"
+                  Header="Copy _Source to Target"
+                  InputGesture="Ctrl+T" />
+				<MenuItem Click="CopySourceToTargetMultiple"
+                  Header="Copy Source to Target (_Multiple)"
+                  InputGesture="Ctrl+Shift+T" />
 				<MenuItem Header="-" />
-				<MenuItem Name="uiPreferencesMenuItem" Header="Preferences" />
+				<!-- Note: This has a Name because the C# code hooks up the click event manually -->
+				<MenuItem Name="uiPreferencesMenuItem"
+                  Header="Preferences" />
 			</MenuItem>
+
+			<!-- LINUX MENU (Restored!) -->
 			<MenuItem Name="uiLinuxHeader" Header="_Linux">
-				<MenuItem
-						Name="uiWinePrefix"
-						Click="WinePrefix_Click"
-						Header="Attempt wine prefix" />
+				<MenuItem Name="uiWinePrefix"
+                  Click="WinePrefix_Click"
+                  Header="Attempt wine prefix" />
 			</MenuItem>
+
+			<!-- HELP MENU (Restored!) -->
 			<MenuItem Header="_Help">
-				<MenuItem
-						Name="reportIssueMenuItem"
-						Click="ReportIssueMenuItem_Click"
-						Header="Report issue" />
-				<MenuItem
-						Name="uiAboutMenuItem"
-						Click="AboutMenuItem_Click"
-						Header="About" />
+				<MenuItem Name="reportIssueMenuItem"
+                  Click="ReportIssueMenuItem_Click"
+                  Header="Report issue" />
+				<MenuItem Name="uiAboutMenuItem"
+                  Click="AboutMenuItem_Click"
+                  Header="About" />
 			</MenuItem>
 		</Menu>
 
 		<!-- REPLACED COMBOBOX WITH TABSTRIP -->
 		<TabStrip
-            x:Name="uiDocumentTabs"
-            Grid.Row="1"
-            Grid.ColumnSpan="2"
-            Margin="5,5,5,0"
-            MinHeight="30"
-            Background="Transparent"
-            x:CompileBindings="False"
-            ItemsSource="{Binding Documents}"
-            SelectedItem="{Binding SelectedDocument}">
+    x:Name="uiDocumentTabs"
+    Grid.Row="1"
+    Grid.ColumnSpan="2"
+    Margin="5,5,5,0"
+    MinHeight="30"
+    Background="Transparent"
+    x:CompileBindings="False"
+    ItemsSource="{Binding Documents}"
+    SelectedItem="{Binding SelectedDocument}">
 			<TabStrip.ItemTemplate>
-				<DataTemplate>
-					<!-- We removed the Border here so the TabStripItem Style handles the background -->
+				<DataTemplate x:DataType="models:LocresDocument">
 					<StackPanel Orientation="Horizontal" Spacing="5">
 						<TextBlock Text="{Binding TabHeader}"
 											 VerticalAlignment="Center"/>
@@ -157,6 +183,7 @@
 
 		<DataGrid
 				x:Name="uiDataGrid"
+				x:DataType="models:DataRow"
 				Grid.Row="2"
 				Grid.ColumnSpan="2"
 				AutoGenerateColumns="False"
