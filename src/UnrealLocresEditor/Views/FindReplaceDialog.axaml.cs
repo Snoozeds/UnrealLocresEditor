@@ -522,35 +522,6 @@ namespace UnrealLocresEditor.Views
             return IsTextMatch(cellValue, searchText, matchCase, matchWholeWord, matchCell);
         }
 
-        private async Task ReplaceTextInRowAsync(
-            DataRow row,
-            string searchText,
-            string replaceText,
-            bool matchCase,
-            bool matchWholeWord,
-            bool matchCell
-        )
-        {
-            for (int i = 0; i < row.Values.Length; i++)
-            {
-                if (ShouldReplaceInCell(row.Values[i], searchText, matchCase, matchWholeWord, matchCell))
-                {
-                    row.Values[i] = ReplaceTextAcrossLineBreaks(
-                        row.Values[i],
-                        searchText,
-                        replaceText,
-                        matchCase,
-                        matchWholeWord,
-                        matchCell
-                    );
-                }
-
-                await Dispatcher.UIThread.InvokeAsync(
-                    () => row.OnPropertyChanged(nameof(row.Values))
-                );
-            }
-        }
-
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);

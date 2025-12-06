@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:UnrealLocresEditor.ViewModels"
+        x:Class="UnrealLocresEditor.Views.UnsavedChanges"
+        Title="Unsaved Changes"
+        Width="400"
+        Height="200"
+        WindowStartupLocation="CenterOwner"
+		Icon="/Assets/ULE-icon.ico"
+		CanResize="False"
+        Background="{DynamicResource BackgroundColor}"
+        Foreground="{DynamicResource TextColor}">
+
+    <Window.Styles>
+		<Style Selector="TextBlock">
+			<Setter Property="Foreground" Value="{DynamicResource TextColor}"/>
+		</Style>
+        <Style Selector="Button">
+			<Setter Property="Background" Value="{DynamicResource ButtonColor}"/>
+			<Setter Property="Foreground" Value="{DynamicResource ButtonTextColor}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+		</Style>
+	</Window.Styles>
+
+    <Grid>
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="30">
+        <TextBlock x:Name="MessageText" FontSize="16">You have unsaved changes.<LineBreak/>Do you want to save before closing?</TextBlock>
+
+        <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
+            <Button x:Name="YesButton" Width="75" HorizontalContentAlignment="Center">Yes</Button>
+            <Button x:Name="NoButton" Width="75" HorizontalContentAlignment="Center">No</Button>
+            <Button x:Name="CancelButton" Width="75" HorizontalContentAlignment="Center">Cancel</Button>
+        </StackPanel>
+    </StackPanel>
+</Grid>
+</Window>

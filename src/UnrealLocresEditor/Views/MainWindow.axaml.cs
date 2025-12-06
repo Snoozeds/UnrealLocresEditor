@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Data;
@@ -22,8 +11,20 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CsvHelper;
 using CsvHelper.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
 using UnrealLocresEditor.Models;
 using UnrealLocresEditor.Utils;
+using static UnrealLocresEditor.Views.UnsavedChanges;
 
 #nullable disable
 
@@ -217,7 +218,7 @@ namespace UnrealLocresEditor.Views
         private bool _closingHandled = false;
         private bool _isSystemShutdown = false;
 
-        private void OnSystemShutdown(object? sender, EventArgs e)
+        private void OnSystemShutdown(object sender, EventArgs e)
         {
             _isSystemShutdown = true;
         }
@@ -233,48 +234,16 @@ namespace UnrealLocresEditor.Views
                 e.Cancel = true;
 
                 // Display prompt to save changes
-                var dialog = new Window
+                var dialog = new UnsavedChanges(UnsavedChangesMode.Closing)
                 {
-                    Title = _isSystemShutdown
-                        ? "System Shutdown - Unsaved Changes"
-                        : "Unsaved Changes",
-                    Width = 300,
-                    Height = 150,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Content = new StackPanel
-                    {
-                        Margin = new Thickness(20),
-                        Spacing = 20,
-                        Children =
-                        {
-                            new TextBlock
-                            {
-                                Text = _isSystemShutdown
-                                    ? "The system is shutting down. Do you want to save changes before exiting?"
-                                    : "You have unsaved changes. Do you want to save before closing?",
-                                TextWrapping = TextWrapping.Wrap,
-                            },
-                            new StackPanel
-                            {
-                                Orientation = Orientation.Horizontal,
-                                Spacing = 10,
-                                HorizontalAlignment = HorizontalAlignment.Center,
-                                Children =
-                                {
-                                    new Avalonia.Controls.Button { Content = "Save" },
-                                    new Avalonia.Controls.Button { Content = "Don't Save" },
-                                    new Avalonia.Controls.Button { Content = "Cancel" },
-                                },
-                            },
-                        },
-                    },
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
                 };
 
-                var result = await ShowCustomDialog(dialog);
+                var result = await dialog.ShowDialog<UnsavedChangesResult>(this);
 
                 switch (result)
                 {
-                    case "Save":
+                    case UnsavedChangesResult.Yes:
                         try
                         {
                             SaveEditedData();
@@ -283,20 +252,16 @@ namespace UnrealLocresEditor.Views
                         catch (Exception ex)
                         {
                             _notificationManager.Show(
-                                new Notification(
-                                    "Save Error",
-                                    $"Failed to save changes: {ex.Message}",
-                                    NotificationType.Error
-                                )
+                                new Notification("Save Error", $"Failed to save: {ex.Message}", NotificationType.Error)
                             );
                         }
                         break;
 
-                    case "Don't Save":
+                    case UnsavedChangesResult.No:
                         CompleteClosing(e);
                         break;
 
-                    case "Cancel":
+                    case UnsavedChangesResult.Cancel:
                         break;
                 }
             }
@@ -349,27 +314,6 @@ namespace UnrealLocresEditor.Views
         }
 
         private TaskCompletionSource<string> _dialogResult;
-
-        private async Task<string> ShowCustomDialog(Window dialog)
-        {
-            _dialogResult = new TaskCompletionSource<string>();
-
-            var buttons = (
-                (StackPanel)((StackPanel)dialog.Content).Children[1]
-            ).Children.OfType<Avalonia.Controls.Button>();
-
-            foreach (var button in buttons)
-            {
-                button.Click += (s, e) =>
-                {
-                    _dialogResult.SetResult(((Avalonia.Controls.Button)s).Content.ToString());
-                    dialog.Close();
-                };
-            }
-
-            await dialog.ShowDialog(this);
-            return await _dialogResult.Task;
-        }
 
         // Keybinds
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
@@ -1764,77 +1708,40 @@ namespace UnrealLocresEditor.Views
             if (!_hasUnsavedChanges)
                 return true;
 
-            var dialog = new Window
+            var dialog = new UnsavedChanges(UnsavedChangesMode.Merging)
             {
-                Title = "Unsaved Changes",
-                Width = 400,
-                Height = 150,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Content = new StackPanel
-                {
-                    Margin = new Avalonia.Thickness(20),
-                    Spacing = 20,
-                    Children =
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+
+            var result = await dialog.ShowDialog<UnsavedChangesResult>(this);
+
+            switch (result)
+            {
+                case UnsavedChangesResult.Yes:
+                    try
                     {
-                        new TextBlock
-                        {
-                            Text =
-                                "You have unsaved changes. Would you like to save before merging?",
-                            TextWrapping = TextWrapping.Wrap,
-                        },
-                        new StackPanel
-                        {
-                            Orientation = Orientation.Horizontal,
-                            Spacing = 10,
-                            HorizontalAlignment = HorizontalAlignment.Center,
-                            Children =
-                            {
-                                new Avalonia.Controls.Button { Content = "Save" },
-                                new Avalonia.Controls.Button { Content = "Don't Save" },
-                                new Avalonia.Controls.Button { Content = "Cancel" },
-                            },
-                        },
-                    },
-                },
-            };
+                        SaveEditedData();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        _notificationManager.Show(
+                            new Notification(
+                                "Save Error",
+                                $"Failed to save: {ex.Message}",
+                                NotificationType.Error
+                            )
+                        );
+                        return false;
+                    }
 
-            var tcs = new TaskCompletionSource<string>();
-            var buttons = ((StackPanel)((StackPanel)dialog.Content).Children[1]).Children;
-            ((Avalonia.Controls.Button)buttons[0]).Click += (s, e) =>
-            {
-                try
-                {
-                    SaveEditedData();
-                    tcs.SetResult("Save");
-                    dialog.Close();
-                }
-                catch (Exception ex)
-                {
-                    _notificationManager.Show(
-                        new Notification(
-                            "Save Error",
-                            $"Failed to save: {ex.Message}",
-                            NotificationType.Error
-                        )
-                    );
-                    tcs.SetResult("Cancel");
-                    dialog.Close();
-                }
-            };
-            ((Avalonia.Controls.Button)buttons[1]).Click += (s, e) =>
-            {
-                tcs.SetResult("Don't Save");
-                dialog.Close();
-            };
-            ((Avalonia.Controls.Button)buttons[2]).Click += (s, e) =>
-            {
-                tcs.SetResult("Cancel");
-                dialog.Close();
-            };
+                case UnsavedChangesResult.No:
+                    return true;
 
-            await dialog.ShowDialog(this);
-            var result = await tcs.Task;
-            return result == "Save" || result == "Don't Save";
+                case UnsavedChangesResult.Cancel:
+                default:
+                    return false;
+            }
         }
 
         private void OpenDirectoryInExplorer(string directoryPath)
