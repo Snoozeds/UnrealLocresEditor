@@ -2,7 +2,7 @@
 
 A GUI tool to edit Unreal Engine localisation files using [UnrealLocres](https://github.com/akintos/UnrealLocres). \
 <br />
-[![Ko-fi Badge](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/snoozeds) [![Patreon](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://patreon.com/snoozeds)
+[![Github Sponsors Badge](https://img.shields.io/badge/Github%20Sponsors-2f3742?style=for-the-badge&logo=github-sponsors&logoColor=c96198)](https://github.com/sponsors/snoozeds) [![Ko-fi Badge](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/snoozeds) [![Patreon](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://patreon.com/snoozeds)
 
 
 ## Previews:
