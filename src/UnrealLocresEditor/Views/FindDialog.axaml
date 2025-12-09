@@ -3,8 +3,8 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Find"
-    Width="350"
-    Height="220"
+    Width="360"
+    Height="260"
     Background="{DynamicResource BackgroundColor}"
     CanResize="False"
     Foreground="{DynamicResource TextColor}"
@@ -33,65 +33,65 @@
         </Style>
     </Window.Styles>
 
-    <Grid
-        Margin="10"
-        ColumnDefinitions="*,Auto"
-        RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+    <Grid Margin="12" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,*,Auto">
         <TextBox
             x:Name="uiSearchTextBox"
             Grid.Row="0"
             Grid.Column="0"
-            Margin="0,0,5,0"
+            Margin="0,0,8,8"
             Watermark="Find" />
         <Button
             Name="uiFindButton"
             Grid.Row="0"
             Grid.Column="1"
-            Content="Find" />
+            Width="84"
+            Content="Find"
+            IsDefault="True"
+            Margin="0,0,0,8"/>
         <TextBlock
             x:Name="uiMatchCountTextBlock"
             Grid.Row="1"
             Grid.ColumnSpan="2"
             HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Text="" />
+            Margin="0,0,0,0" />
         <StackPanel
             Grid.Row="2"
             Grid.ColumnSpan="2"
             HorizontalAlignment="Center"
             Orientation="Horizontal"
-            Spacing="10">
-            <Button
-                x:Name="uiFindNextButton"
-                Width="100"
-                Content="Next" />
-            <Button
-                x:Name="uiFindPreviousButton"
-                Width="100"
-                Content="Previous" />
+            Spacing="10"
+            Margin="0,0,0,8">
+            <Button x:Name="uiFindNextButton" Width="100" Content="Next" />
+            <Button x:Name="uiFindPreviousButton" Width="100" Content="Previous" />
         </StackPanel>
-        <StackPanel
+        <Border
             Grid.Row="3"
             Grid.ColumnSpan="2"
-            HorizontalAlignment="Center"
-            Orientation="Horizontal">
-            <CheckBox
-                x:Name="uiMatchCaseCheckBox"
-                Margin="10"
-                Content="Match case" />
-            <CheckBox x:Name="uiMatchWholeWordCheckBox" Content="Match whole word" />
-        </StackPanel>
-        <StackPanel
-            Grid.Row="4"
-            Grid.ColumnSpan="2"
-            HorizontalAlignment="Center"
-            Orientation="Horizontal">
-            <CheckBox x:Name="uiMatchCellCheckBox" Content="Match Entire cell contents" />
-            <CheckBox
-                x:Name="uiSearchNewKeysOnlyCheckBox"
-                Margin="10,0,0,0"
-                Content="New keys only"
-                ToolTip.Tip="Only search new keys from a merge operation" />
-        </StackPanel>
+            Margin="0,4,0,0"
+            Padding="8"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1"
+            CornerRadius="4">
+
+            <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,*">
+                <TextBlock
+                    Grid.Row="0"
+                    Grid.ColumnSpan="2"
+                    Text="Options"
+                    FontWeight="Bold"
+                    Margin="0,0,0,6" />
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Spacing="8" Margin="0,0,8,0">
+                    <CheckBox x:Name="uiMatchCaseCheckBox" Content="Match case" />
+                    <CheckBox x:Name="uiMatchCellCheckBox" Content="Match entire cell contents" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical" Spacing="8" Margin="8,0,0,0">
+                    <CheckBox x:Name="uiMatchWholeWordCheckBox" Content="Match whole word" />
+                    <CheckBox
+                        x:Name="uiSearchNewKeysOnlyCheckBox"
+                        Content="New keys only"
+                        ToolTip.Tip="Only search new keys from a merge operation." />
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
