@@ -1038,10 +1038,10 @@ namespace UnrealLocresEditor.Views
                 {
                     FileTypeFilter = new[]
                     {
-                        new FilePickerFileType("Spreadsheet Files")
-                        {
-                            Patterns = new[] { "*.csv" },
-                        },
+                new FilePickerFileType("Spreadsheet Files")
+                {
+                    Patterns = new[] { "*.csv" },
+                },
                     },
                     AllowMultiple = false,
                 }
@@ -1050,6 +1050,43 @@ namespace UnrealLocresEditor.Views
             if (result != null && result.Count > 0)
             {
                 string filePath = result[0].Path.LocalPath;
+
+                // Ask user to select the base locres file to modify
+                var locresResult = await storageProvider.OpenFilePickerAsync(
+                    new FilePickerOpenOptions
+                    {
+                        Title = "Select base locres file to modify",
+                        FileTypeFilter = new[]
+                        {
+                    new FilePickerFileType("Localization Files")
+                    {
+                        Patterns = new[] { "*.locres" },
+                    },
+                        },
+                        AllowMultiple = false,
+                    }
+                );
+
+                if (locresResult == null || locresResult.Count == 0)
+                {
+                    _notificationManager.Show(
+                        new Notification(
+                            "No Base File",
+                            "You need to select a base locres file to modify with this CSV.",
+                            NotificationType.Warning
+                        )
+                    );
+                    return;
+                }
+
+                // Copy the base locres to temp directory
+                var tempDir = GetOrCreateTempDirectory();
+                var instanceId = Process.GetCurrentProcess().Id;
+                var uniqueFileName = $"{Path.GetFileNameWithoutExtension(locresResult[0].Path.LocalPath)}_{instanceId}{Path.GetExtension(locresResult[0].Path.LocalPath)}";
+                var tempLocresPath = Path.Combine(tempDir, uniqueFileName);
+
+                File.Copy(locresResult[0].Path.LocalPath, tempLocresPath, true);
+                _currentLocresFilePath = tempLocresPath;
 
                 // Load the CSV file
                 LoadCsv(filePath);
