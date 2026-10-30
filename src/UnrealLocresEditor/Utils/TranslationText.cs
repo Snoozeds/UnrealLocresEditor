@@ -18,10 +18,13 @@ namespace UnrealLocresEditor.Utils
      *
      * Everything between two "@@ " lines is the text, kept as is
      * (spaces, tabs, empty lines). Keys are matched case-sensitively.
+     * A line starting with "@@#" is a comment: it ends the current text
+     * and is ignored (useful for section titles).
      */
     public static class TranslationText
     {
         public const string KeyMarker = "@@ ";
+        public const string CommentMarker = "@@#";
 
         public class Entry
         {
@@ -47,9 +50,15 @@ namespace UnrealLocresEditor.Utils
             {
                 var line = lines[i];
                 if (i == 0)
-                    line = line.TrimStart('﻿');
+                    line = line.TrimStart('\uFEFF');
 
-                if (line.StartsWith(KeyMarker, StringComparison.Ordinal))
+                if (line.StartsWith(CommentMarker, StringComparison.Ordinal))
+                {
+                    Close(current, textLines, entries);
+                    current = null;
+                    textLines.Clear();
+                }
+                else if (line.StartsWith(KeyMarker, StringComparison.Ordinal))
                 {
                     Close(current, textLines, entries);
                     var key = line.Substring(KeyMarker.Length).TrimEnd();
@@ -61,7 +70,7 @@ namespace UnrealLocresEditor.Utils
                 else if (current == null)
                 {
                     if (line.Trim().Length > 0)
-                        errors.Add($"Line {i + 1}: text before the first \"{KeyMarker}key\" line.");
+                        errors.Add($"Line {i + 1}: text outside a \"{KeyMarker}key\" block.");
                 }
                 else
                 {
@@ -171,7 +180,8 @@ namespace UnrealLocresEditor.Utils
         public static bool HasKeyMarkerLine(string text)
         {
             return !string.IsNullOrEmpty(text)
-                && text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').Any(l => l.StartsWith(KeyMarker, StringComparison.Ordinal));
+                && text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').Any(l =>
+                    l.StartsWith(KeyMarker, StringComparison.Ordinal) || l.StartsWith(CommentMarker, StringComparison.Ordinal));
         }
     }
 }
