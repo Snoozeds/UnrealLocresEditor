@@ -74,6 +74,12 @@ namespace UnrealLocresEditor.Utils
                 }
                 else
                 {
+                    // Most likely "@@key" with the space forgotten: it would silently
+                    // become text of the previous key, so say so (it is still kept as text).
+                    if (line.StartsWith("@@", StringComparison.Ordinal))
+                        errors.Add(
+                            $"Line {i + 1}: \"{line}\" is kept as text of \"{current.Key}\" (a key line starts with \"{KeyMarker}\")."
+                        );
                     textLines.Add(line);
                 }
             }
