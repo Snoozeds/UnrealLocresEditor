@@ -39,3 +39,29 @@ Exported locres files will be saved in the following directory: \
 11. Now type `WINEPREFIX=` and paste the output you just copied using ctrl+shift+v. Now type: `wine msiexec /i wine-mono-` hit the tab key, and the file name should auto complete. Now hit enter. Wait for it to finish.
 12. Once it has finished, run `./UnrealLocresEditor.Desktop` in the terminal again. You should now be able to save and export files!
 13. We no longer need the .msi file that we downloaded, so you can now safely delete it if you want to.
+
+## Translation text files (.loctxt):
+Translations can be kept in a plain text file and applied to a locres in one step, with every space, tab and empty line kept exactly as written. After a game update, open the new locres and import the same file again.
+
+- **File > Import translations (.txt)** writes each text of the file into the `target` column of its key. Problems (unknown keys, keys in several namespaces, two texts for one key) are listed before anything changes, and texts that are already the same are left untouched.
+- **File > Export translations (.txt)** writes every key with its current text (the target, or the source when there is no target).
+
+Format (UTF-8, `.loctxt` or `.txt`):
+
+```
+@@# MISSION 1 : GAS STATION
+@@ /9CACA24541F48BBC52EAAE9C5C60FF37
+First line of the text
+	Indented line
+
+Line after an empty line
+@@ SwatCommandTable/Judge
+Marco
+```
+
+- `@@ Namespace/Key` starts a text (the key as shown in the key column; the key without its namespace also works when only one namespace has it). Keys are case-sensitive.
+- Everything up to the next `@@ ` or `@@#` line is the text, kept exactly as written. A text made of a single space is valid.
+- `@@#` lines are comments, ignored on import.
+- The final newline at the end of the file is not part of the last text.
+
+Notepad++ users can get highlighting and a key list for `.loctxt` files: see [extras/notepad++](extras/notepad++/README.md).

@@ -50,6 +50,15 @@
                     Name="uiSaveAsMenuItem"
                     Click="SaveAsMenuItem_Click"
                     Header="Save As..." />
+                <MenuItem Header="-" />
+                <MenuItem
+                    Name="uiImportTranslationsMenuItem"
+                    Click="ImportTranslationsMenuItem_Click"
+                    Header="Import translations (.txt)" />
+                <MenuItem
+                    Name="uiExportTranslationsMenuItem"
+                    Click="ExportTranslationsMenuItem_Click"
+                    Header="Export translations (.txt)" />
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem
