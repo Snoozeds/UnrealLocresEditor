@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Function List parser for "Locres translations" (.loctxt): lists the
+     "@@# ..." titles and the "@@ CODE" keys, in file order. -->
+<NotepadPlus>
+    <functionList>
+        <parser displayName="Locres translations" id="loctxt_syntax" commentExpr="">
+            <function mainExpr="^@@[# ][^\r\n]*\S">
+                <functionName>
+                    <nameExpr expr="[^@#\s][^\r\n]*" />
+                </functionName>
+            </function>
+        </parser>
+    </functionList>
+</NotepadPlus>
